@@ -7,8 +7,8 @@
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
 require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
-require "cgi"
-require "FileUtils"
+# require "cgi"
+# require "FileUtils"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
 
 # set $web_root to an existing directory where the blogsmith.js file will be stored
