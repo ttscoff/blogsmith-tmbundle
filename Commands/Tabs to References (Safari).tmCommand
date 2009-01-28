@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>bundleUUID</key>
+	<string>90A7F438-5416-4EA5-92B6-4E76B28AC9B7</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -wKU
+require ENV['TM_SUPPORT_PATH'] + '/lib/escape'
+require ENV['TM_SUPPORT_PATH'] + '/lib/exit_codes'
+require 'erb'
+
+urllist = %x{osascript -e 'tell application \"Safari\"' -e 'set tabList to every tab of window 1' -e 'set urlList to \"\"' -e 'repeat with aTab in tabList' -e 'set aLink to (URL of aTab &amp; " \\"" &amp; name of aTab &amp; "\\"" &amp; ASCII character 10)' -e 'set urlList to urlList &amp; aLink' -e 'end repeat' -e 'return urlList' -e 'end tell' 2&gt;/dev/null}
+urllist.chomp!
+counter = 1
+urllist.collect { |line| 
+	puts "[${#{counter}:#{counter}}]: #{line}"
+	counter += 1
+}</string>
+	<key>input</key>
+	<string>none</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Tabs to References (Safari)</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown,text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>tabs</string>
+	<key>uuid</key>
+	<string>6C1B5472-C629-439C-BC50-560EB3766C19</string>
+</dict>
+</plist>

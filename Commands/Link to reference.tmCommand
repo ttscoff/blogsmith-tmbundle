@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require 'erb'
+
+document = STDIN.read
+ENV['TM_SELECTED_TEXT'] ? input = ENV['TM_SELECTED_TEXT'] : input = ENV['TM_CURRENT_WORD']
+refs = document.scan(/\[([^\]]+)\]\:\s/)
+refs.sort!
+linklist = refs.collect { |e| { 'title' =&gt; e.to_s } }
+
+    plist = { 'menuItems' =&gt; linklist }.to_plist
+
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+
+right_char = %x{echo ${TM_CURRENT_LINE:TM_LINE_INDEX}}
+if right_char.match /^\]/
+	TextMate.exit_insert_text "][" + res['selectedMenuItem']['title']
+else
+	print "[#{input}][#{res['selectedMenuItem']['title']}]"
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Link to reference</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>][</string>
+	<key>uuid</key>
+	<string>837FCCC9-FEA0-40AE-A752-E469547290C7</string>
+</dict>
+</plist>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>bundleUUID</key>
+	<string>79741B2E-271D-4CBC-A61A-380C83D36863</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/progress'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
+
+$line = ENV['TM_CURRENT_LINE']
+$text = STDIN.read
+
+$skipwords = %r/^(Im|thats|its|arent|weve|ive|didnt|dont|the|of|to|and|a|in|is|it|you|that|he|was|for|on|are|with|as|I|his|they|be|at|one|have|this|from|or|had|by|hot|but|some|what|there|we|can|out|were|all|your|when|up|use|how|said|an|each|she|which|do|their|if|will|way|many|then|them|would|like|so|these|her|see|him|has|more|could|go|come|did|my|no|get|me|say|too|here|must|such|try|us|own|oh|any|youll|youre|also)$/i
+
+$goodtags = ["AirPort","AirTunes","Airport Express","Airport Extreme","Al Gore","App Store","Apple Ceo","Apple Store","Apple Store Down","Best Of The Week","Best Of The Year","Black Berry","BootCamp","Candy Bar","ChaChing","Comic Life","Crash Bandicoot","Credit Card","Delivery Status","Dvd Studio Pro","Fake Steve","File Vault","First Look","Flickr Export","Flickr Find","Free Feed","Google Reader","Google Tech Talks","Guided Tour","I Am Rich","Ipod Classic","Itunes Japan","Itunes Store","MacBook","MacBook Air","MacBook Pro","Mac Mini","Mac Os","Mac Os X","MadTv","MagSafe","Microsoft Office","Mobile Me","Mobile Phones","Mod My iFone","Most Popular","NetNewsWire","Network Location","New Bloggers","OS X","Path Finder","Rapid Weaver","ScreenFlow","Secure Your Mac","Snow Leopard","SoHo","Software Update","SpringBoard","Steve Jobs","SuperDuper","Text Editor","The Hit List","Third Party Applications","Time Capsule","Time Machine","Time Management","Tuaw Tip","VisualHub","Web Mail","Weekend Review","Wolf Quest","ZiPhone"]
+
+$alwaystags = ["@not-iphone","@tweet-this"]
+
+def e_sh(str)
+	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+end
+
+def strip_html(str)
+   str.strip!
+   tag_pat = %r,[\[&lt;](?:(?:/?)|(?:\s*)).*?[&gt;\]],m
+   str.gsub(tag_pat, '')
+end
+
+def strip_headers(str)
+   str.strip!
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,'')
+   str.gsub(/^[^ ]+\: [^\n]+/, '')
+end
+
+def url_escape(string)
+	string.gsub(/([^a-zA-Z0-9_.-]+)/n) do
+		'%' + $1.unpack('H2' * $1.size).join('%').upcase
+	end
+end
+
+$text = strip_headers($text)
+
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
+	$text = %x{echo #{e_sh $text}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+end
+
+TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
+
+$text = strip_html($text)
+
+TextMate.call_with_progress(:title =&gt;'Retrieving Tag Suggestions',
+                        :summary =&gt; 'Contacting Yahoo...',
+                        :indeterminate =&gt; false,
+                        :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
+dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 50 }
+	words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
+    words.delete_if{|word| word =~ $skipwords }
+    query = words.join('+')
+
+    yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
+	
+	ysorted = nil
+    unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
+    ysorted = yahoo.parse_analysis.sort do |a,b|
+      a.upcase &lt;=&gt; b.upcase
+    end
+	end
+    dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
+
+tags = []
+
+    $goodtags.each {|tag|
+     	 tags.push(tag)
+		}
+    
+    words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
+    words.delete_if{|word| word =~ $skipwords }
+    porterwords = words.map{|word| Text::PorterStemming.stem(word).downcase}
+
+    freqs = Hash.new(0)
+    words.each { |word| freqs[word] += 1 }
+    freqs = freqs.sort_by {|x,y| y }
+    freqs.reverse!
+	
+    matches = []
+	
+    tags.each{|tag|
+		if tag =~ /.+(\s.+)+/
+			multiword = $text.downcase.match(/#{tag.downcase}/)
+			matches.push(tag) unless multiword.nil?
+		else
+	    		matches.push(tag) if porterwords.include? Text::PorterStemming.stem(tag).downcase
+		end
+    }
+	freqs.each {|f| matches.push(f[0]) if f[1] &gt; 3 }
+	$alwaystags.each {|tag| matches.push(tag) }
+    ysorted.each {|tag| matches.push(tag) } unless ysorted.nil?
+    TextMate.exit_show_tool_tip "No tag matches in text" if matches.nil? || matches.empty?
+    sorted = matches.sort do |a,b|
+      a.upcase &lt;=&gt; b.upcase
+    end
+    tarray = []
+    sorted.each { |tag|
+        tarray &lt;&lt; { 
+    	 	 'title' =&gt; tag, 
+          'tag' =&gt; tag 
+        }
+    }
+dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
+    plist = { 'tags' =&gt; tarray }.to_plist
+    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags2`)
+
+    TextMate.exit_discard if res['returnButton'] == "Cancel"
+    returnedtags = res['result']['returnArgument']
+    tagslist = ''
+    returnedtags.map {|tag| 
+    	tagslist += ";" unless tagslist == ''
+    	tagslist += tag }  
+    print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
+    print "#{tagslist.chomp}"
+end</string>
+	<key>input</key>
+	<string>document</string>
+	<key>name</key>
+	<string>Blogsmith Autotag</string>
+	<key>output</key>
+	<string>afterSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
+	<key>tabTrigger</key>
+	<string>auto</string>
+	<key>uuid</key>
+	<string>102E56B3-5ABE-4EEB-BAD5-99ECBC28EE19</string>
+</dict>
+</plist>

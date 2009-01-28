@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env perl
+use strict;
+
+my $input = `pbpaste`;
+my @linklist = split("\n",$input);
+my $currline = 1;
+for my $line (@linklist) {
+	$line =~ s/^\s+//g;
+	$line =~ s/(\s+)?\"[^\"]+\"//g;
+	unless ( $line =~ /^http/ ) { $line = "http://" . $line; }
+	printf("[\${%d:%d}]: %s\n",$currline,$currline,$line);
+	$currline++;
+}
+</string>
+	<key>fallbackInput</key>
+	<string>none</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Paste Reference List (Markdown)</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
+	<key>tabTrigger</key>
+	<string>refs</string>
+	<key>uuid</key>
+	<string>3C33DA03-210D-4965-A4AB-68FB9476874F</string>
+</dict>
+</plist>

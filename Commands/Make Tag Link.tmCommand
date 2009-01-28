@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'erb'
+
+input = STDIN.read
+blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
+linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
+TextMate.exit_discard unless linktext
+
+query = e_url('intitle:"Posts tagged" '+ linktext + " site:#{blogsite}")
+
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
+
+if yahoo.parse_results.length &gt; 0
+ysuggest = []
+    yahoo.parse_results.each {|result|
+		if result['Title'] =~ /^Posts tagged/ &amp;&amp; !(result['Url'] =~ /bloglines|page/)
+			tag_title = result['Title'].match(/^Posts tagged (.+) at/)[1]
+        ysuggest &lt;&lt; { 
+          'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
+          'url' =&gt; result['Url']}
+		end
+    }
+
+    plist = { 'menuItems' =&gt; ysuggest }.to_plist
+    
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+    url = res['selectedMenuItem']['url']
+    title = res['selectedMenuItem']['title']
+
+    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+	input = "tag" + title.chomp.gsub(/\s+/,"_")
+	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+else
+
+query = e_url(linktext + " inurl:tag/ site:#{blogsite}")
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 10, 1, nil, 1)
+
+ysuggest = []
+    yahoo.parse_results.each {|result| 
+        if result['Title'] =~ /^Posts tagged/
+			tag_title = result['Title'].match(/^Posts tagged (.+) at/)[1]
+        ysuggest &lt;&lt; { 
+          'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
+          'url' =&gt; result['Url']}
+		end
+    }
+    plist = { 'menuItems' =&gt; ysuggest }.to_plist
+    
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_show_tool_tip "No valid tags found" unless res.has_key? 'selectedMenuItem'
+    url = res['selectedMenuItem']['url']
+    title = res['selectedMenuItem']['title']
+    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+	input = "tag" + title.chomp.gsub(/\s+/,"_")
+	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Make Tag Link</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<key>tabTrigger</key>
+	<string>tag</string>
+	<key>uuid</key>
+	<string>66D64733-D941-4B0B-AFA1-497C77BB03F1</string>
+</dict>
+</plist>

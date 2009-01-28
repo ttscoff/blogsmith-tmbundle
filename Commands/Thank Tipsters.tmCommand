@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+
+messages = %x{osascript &lt;&lt;APPLESCRIPT
+	tell application "Mail"
+		set _sel to selection
+		set _output to {}
+		repeat with _msg in _sel
+			if ") tips" is in subject of _msg then
+				set end of _output to content of _msg
+			end if
+		end repeat
+		if _output is {} then return "false"
+		return _output
+	end tell
+APPLESCRIPT
+}
+
+TextMate.exit_show_tool_tip "No selection or selected message(s) aren't tips" if messages =~ /false/
+
+msgarray = messages.split(/^,\s+\n$/)
+
+tipsters = []
+msgarray.each {|msg|
+	tipsters.push(msg.match(/Name:\s([^\s]+)\s/)[1])
+}
+if ENV['TM_SCOPE'] =~ /html\.basic/
+	print "&lt;em&gt;Thanks "
+else
+	print "*Thanks, "
+end
+counter = 1
+tipsters.reverse!
+tipsters.each {|name|
+	print "${#{counter}:#{name.capitalize}}"
+	print ", " if counter &lt; (tipsters.length - 1)
+	print " and " if counter == (tipsters.length - 1)
+	counter += 1
+}
+if ENV['TM_SCOPE'] =~ /html\.basic/
+	print "!&lt;/em&gt;$0"
+else
+	print "!*$0"
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>none</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Thank Tipsters</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>tip</string>
+	<key>uuid</key>
+	<string>4D1F163A-FF8B-4CC2-A1CC-3B3FA63230FD</string>
+</dict>
+</plist>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
+require "#{SUPPORT}/lib/exit_codes.rb"
+load "#{BUNDLESUPPORT}/lib/utilities.rb"
+require SUPPORT + '/lib/ui'
+require "#{BUNDLESUPPORT}/lib/cooldialog.rb"
+
+def e_sh(str)
+	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+end
+def has_dialog2
+	tm_dialog = e_sh ENV['DIALOG']
+	! tm_dialog.match(/2$/).nil? 
+end
+html = STDIN.read
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
+	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+end
+unless html.to_s.empty?
+	stripped_text = strip_tags(html)
+end
+
+word_count = %x{echo "#{stripped_text}"|wc -w}
+character_count = %x{echo "#{stripped_text}"|wc -c}
+
+newoutput = %^Word Count:#{word_count}\n^
+newoutput += %^Char Count:#{character_count}^
+
+TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Statistics</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
+	<key>uuid</key>
+	<string>4FFF49DA-159C-4822-9FB9-91AEB7556591</string>
+</dict>
+</plist>

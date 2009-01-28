@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -wKU
+require ENV['TM_SUPPORT_PATH'] + '/lib/escape.rb'
+require 'erb' 
+
+def entity_escape(text)
+  text.gsub(/&amp;(?!([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)/, '&amp;amp;')
+end
+
+def make_link(text)
+  case text
+  when %r{\A(mailto:)?(.*?@.*\..*)\z}:
+    "mailto:#{$2.gsub(/./) {sprintf("&amp;#x%02X;", $&amp;.unpack("U")[0])}}"
+  when %r{http://www.(amazon.(?:com|co.uk|co.jp|ca|fr|de))/.+?/([A-Z0-9]{10})/[-a-zA-Z0-9_./%?=&amp;]+}:
+    "http://#{$1}/dp/#{$2}"
+  when %r{\A[a-zA-Z][a-zA-Z0-9.+-]*://.*\z}:
+    entity_escape(text)
+  when %r{\A(www\..*|.*\.(com|uk|net|org|info))\z}:
+    "http://#{entity_escape text}"
+  when %r{\A.*\.(com|uk|net|org|info)\z}:
+    "http://#{entity_escape text}"
+#  when %r{\A\S+\z}:
+#    entity_escape(text)
+  else
+    "http://some-site.com/"
+  end
+end
+
+title = nil
+url = make_link %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+input = STDIN.read
+
+if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+	print ERB.new(ENV['TM_REF_BLINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Link</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<key>uuid</key>
+	<string>A350595A-C95E-48AD-85DA-132429747C64</string>
+</dict>
+</plist>

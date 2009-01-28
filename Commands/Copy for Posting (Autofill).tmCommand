@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+require "cgi"
+require "FileUtils"
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
+
+# set $web_root to an existing directory where the blogsmith.js file will be stored
+# if you change this, you'll need to modify the bookmarklet accordingly
+$web_root = '~/Sites/autotags'
+
+def e_sh(str)
+	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+end
+
+def url_escape(string)
+	string.gsub(/([^a-zA-Z0-9_.-]+)/n) do
+		'%' + $1.unpack('H2' * $1.size).join('%').upcase
+	end
+end
+
+def url_unescape(string)
+	string.gsub(/((?:%[0-9a-fA-F]{2})+)/n) do
+		[$1.delete('%')].pack('H*')
+	end
+end
+
+def get_headers(html)
+	headers = []
+	html.scan(/^([A-Za-z]+)\: ([^\n]+)/m) { |match|
+		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1] } unless match[0] == 'doctype'
+	}
+	headers
+end
+
+html = STDIN.read
+headers = get_headers(html)
+html.gsub!(/^[A-Za-z]+\: [^\n]+\n+/,"")
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
+	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+end
+html.gsub!(/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?/,'')
+
+unless html.to_s.empty?
+	o = "function doit() {"
+	o += "var link=false;var title=false;var categories=false;var tags=false;var content=false;var continued=false;"
+	headers.each {|h| o += %Q{var #{h['title'].to_s}="#{h['value'].to_s}";} }
+	content = nil
+	continued = nil
+	if html.match(/(.*)&lt;!--\s?more\s?--&gt;.*/m).nil?
+		o += %Q{content="#{url_escape(html)}";}
+	else
+		content = url_escape(html.match(/(.*)&lt;!--\s?more\s?--&gt;.*/m)[1])
+		continued = url_escape(html.match(/.*&lt;!--\s?more\s?--&gt;(.*)/m)[1])
+		o += %Q{content="#{content}";continued="#{continued}";}
+	end
+	o += %Q^if(categories){var cats=categories.split(";");^
+	o += %Q^for(i=0;i&lt;cats.length;i++){addCat(document.getElementById(cats[i]));}}^
+	o += %Q^if(title)blogsmith.setTitle(title);^
+	o += %Q^if(tags)blogsmith.setTags(tags);^
+	o += %Q^if(link)blogsmith.setLinks(link);^
+	o += %Q^var oEditor1=FCKeditorAPI.GetInstance("postcontent");oEditor1.SetHTML(unescape(content));^
+	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
+	o += %Q^document.getElementById("postsaveconfirm").disabled=false;^
+	o += "}"
+	jsfile = File.new(File.expand_path("#{$web_root}/blogsmith.js"),'w')
+	jsfile.puts o
+	output = "Javascript file saved to: "
+	output += File.expand_path("#{$web_root}/blogsmith.js")
+	TextMate::CoolDialog.cool_tool_tip(output)
+	exit
+end</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Copy for Posting (Autofill)</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
+	<key>uuid</key>
+	<string>09259730-9B8E-4A90-A0FD-0A551FCEECE5</string>
+</dict>
+</plist>

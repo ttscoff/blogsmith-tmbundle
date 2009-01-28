@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
+	
+	bodytext=`cat $STDIN|perl -pe 's/^[^ \[]+\: [^\n]+\n+//g;'|perl -pe 's/&lt;!--\s?more\s?--&gt;//g;'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
+else
+	bodytext=`cat $STDIN`
+fi
+bodytext=`echo "$bodytext"|sed s/[“”]/\"/g|sed s/[‘’]/\'/g`
+fullHTML=`echo "$bodytext"|grep -i "&lt;body&gt;"`
+if [ $fullHTML ]
+then
+	 bodytext=`echo "$bodytext"|sed -e '1,/&lt;body&gt;/ s/.*//' -e '/&lt;\/body&gt;/,$ s/.*//'| awk 'NF{print $0 ""}'`
+fi
+if [[ -n $TM_FILENAME ]]; then
+	filename="`basename "$TM_FILENAME"`"
+	extension=".`echo "$filename"|awk -F. '{print $NF }'`"
+	title="`basename -s $extension $filename`"
+else
+	title="Untitled Post"
+fi
+
+realname="`finger -lsmp $USER|awk '{match($0,/Name\: (.*)/);print substr($0, RSTART+6, RLENGTH);}'`"
+_date=`date +%m-%d-%Y`
+cat &lt;&lt;HEADER
+&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;head&gt;
+	&lt;meta name="generator" content="HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 13), see www.w3.org" /&gt;
+
+	&lt;title&gt;TUAW Preview&lt;/title&gt;
+	&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8" /&gt;
+	&lt;meta http-equiv="pragma" content="no-cache" /&gt;
+	&lt;meta http-equiv="imagetoolbar" content="no" /&gt;
+	&lt;meta name="robots" content="all" /&gt;
+	&lt;link rel="stylesheet" type="text/css" href="http://www.blogsmithmedia.com/www.tuaw.com/media/theme.css" media="screen, projection" /&gt;
+	&lt;link rel="shortcut icon" href="http://www.blogsmithmedia.com/www.tuaw.com/media/favicon-v4.png" type="image/png" /&gt;
+	&lt;link rel="apple-touch-icon" href="http://www.blogsmithmedia.com/www.tuaw.com/media/apple-touch-icon.png" type="image/png" /&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+	&lt;p class="hide-me"&gt;&lt;a href="#content"&gt;Skip to Content&lt;/a&gt;&lt;/p&gt;
+
+	&lt;div id="outerslice"&gt;
+		&lt;div id="slice"&gt;
+			&lt;a href="#"&gt;Your ad here. Or Psystar's. Maybe Jenny Craig.&lt;/a&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;&lt;a href="http://www.switched.com" target="_blank" class="cobrand"&gt;AOL Tech&lt;/a&gt;
+
+	&lt;div id="container"&gt;
+		&lt;div class="topleader"&gt;&lt;/div&gt;&lt;!-- /topleader --&gt;
+
+		&lt;div id="header"&gt;
+			&lt;div id="hat" class="clear"&gt;&lt;/div&gt;
+
+			&lt;div id="headerMiddle" class="clear"&gt;
+				&lt;div id="logo"&gt;
+					&lt;h1&gt;&lt;a class="imglink" title="The Unofficial Apple Weblog (TUAW) home" href="/"&gt;The Unofficial Apple Weblog (TUAW)&lt;/a&gt;&lt;/h1&gt;
+				&lt;/div&gt;&lt;!-- /logo --&gt;
+
+
+			&lt;/div&gt;&lt;!-- /headerMiddle --&gt;
+
+			&lt;div id="headerBottom" class="clearfix"&gt;
+				&lt;ul class="category-nav"&gt;
+					&lt;li class="first parent"&gt;&lt;a href="/category/iphone/"&gt;iPhone&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="parent"&gt;&lt;a href="/category/apple-corporate/"&gt;Apple News&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="parent"&gt;&lt;a href="/category/app-store/"&gt;App Store&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="parent"&gt;&lt;a href="/category/mac-101/"&gt;Mac 101&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="parent"&gt;&lt;a href="/tag/@not-iphone/" title="Filter out iPhone posts"&gt;&lt;strike&gt;iPhone&lt;/strike&gt;&lt;/a&gt;&lt;/li&gt;
+				&lt;/ul&gt;
+
+				&lt;ul class="tools"&gt;
+					&lt;li class="first parent"&gt;&lt;a href="/tips"&gt;Send us Tips&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="feed parent"&gt;&lt;a href="/feeds"&gt;&lt;span&gt;RSS Feeds&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;
+
+					&lt;li class="parent"&gt;
+						&lt;a href="/gallery/" class="parentlink"&gt;Photos ↓&lt;/a&gt;
+
+						&lt;ul class="catlist"&gt;
+							&lt;li class="child"&gt;&lt;a href="/gallery/"&gt;TUAW Photo Gallery&lt;/a&gt;&lt;/li&gt;
+
+							&lt;li class="child"&gt;&lt;a href="http://www.flickr.com/photos/tuaw/pool/"&gt;TUAW Flickr Pool&lt;/a&gt;&lt;/li&gt;
+						&lt;/ul&gt;
+					&lt;/li&gt;
+				&lt;/ul&gt;
+			&lt;/div&gt;&lt;!-- /headerBottom --&gt;
+		&lt;/div&gt;&lt;!-- /header --&gt;
+
+		&lt;div id="main" class="clearfix"&gt;
+			&lt;div id="col-1"&gt;
+				&lt;div id="content"&gt;
+					&lt;div id="p1328251"&gt;
+						&lt;div class="post"&gt;
+							&lt;p class="filed-under"&gt;Filed under: &lt;a href="#"&gt;Cat 1&lt;/a&gt;, &lt;a href="#"&gt;Cat 2&lt;/a&gt;, &lt;a href="#"&gt;Cat 3&lt;/a&gt;&lt;/p&gt;
+
+							&lt;h2 class="posttitle"&gt;&lt;a href="#" rel="bookmark"&gt;&lt;span id="ppt1328251"&gt;`echo $title`&lt;/span&gt;&lt;/a&gt;&lt;/h2&gt;
+
+							&lt;p class="byline"&gt;by &lt;strong&gt;&lt;a href="/bloggers/"&gt;`echo $realname`&lt;/a&gt;&lt;/strong&gt; on `echo $_date`&lt;/p&gt;
+
+							&lt;div class="postbody"&gt;
+	
+HEADER
+
+echo "$bodytext"
+
+cat &lt;&lt;-'FOOTER'
+&lt;/div&gt;
+
+&lt;div class="postmeta"&gt;
+	&lt;p class="posttags"&gt;&lt;strong&gt;Tags:&lt;/strong&gt; &lt;a href="#"&gt;Tag 1&lt;/a&gt;, &lt;a href="#"&gt;Tag 2&lt;/a&gt;&lt;/p&gt;
+
+	&lt;div class="navbar clearfix"&gt;
+		&lt;ul&gt;
+			&lt;li class="permalink"&gt;&lt;a href="#"&gt;Source&lt;/a&gt;&lt;/li&gt;
+
+			&lt;li class="email-this"&gt;&lt;a href="#" title="Send this entry to a friend via email"&gt;Email this&lt;/a&gt;&lt;/li&gt;
+
+			&lt;li&gt;
+				&lt;!-- AddThis Button BEGIN --&gt;&lt;script type="text/javascript"&gt;
+//&lt;![CDATA[
+				addthis_pub     = 'weblogsinc'; addthis_options = 'digg, facebook, delicious, myspace, aolfav, propeller, google, live, stumbleupon, reddit, favorites, technorati, aim, more'; 
+				//]]&gt;
+				&lt;/script&gt; &lt;a class="sharelink" href="#"&gt;Share&lt;/a&gt;
+			&lt;/li&gt;
+
+			&lt;li class="comments"&gt;&lt;a href="#" title="View reader comments on this entry"&gt;Comments (&lt;em&gt;0&lt;/em&gt;)&lt;/a&gt;&lt;/li&gt;
+		&lt;/ul&gt;
+	&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+
+
+
+
+
+&lt;div id="comments"&gt;
+&lt;h3 id="addcomments"&gt;Add your comments&lt;/h3&gt;
+
+&lt;form action="#comments" id="commentform" name="commentform" method="post" onsubmit="return inputValidation();"&gt;
+&lt;div id="cmttabs"&gt;
+	&lt;ul&gt;
+		&lt;li id="cmtutab_email"&gt;&lt;a href="#" onclick="tabTo('email');return false;"&gt;New Readers&lt;/a&gt;&lt;/li&gt;
+
+		&lt;li id="cmtutab_blogsmith" class="currenttab"&gt;&lt;a href="#" onclick="tabTo('blogsmith');return false;"&gt;Returning&lt;/a&gt;&lt;/li&gt;
+
+		&lt;li id="cmtutab_sns"&gt;&lt;a href="#" onclick="tabTo('sns');return false;" class="cmtaol" title="Sign in with your AOL/AIM username!"&gt;&lt;b&gt;AOL&lt;/b&gt;&lt;/a&gt;&lt;/li&gt;
+	&lt;/ul&gt;
+&lt;/div&gt;
+
+&lt;div id="formerrors" class='formerrors'&gt;&lt;/div&gt;&lt;!-- email --&gt;
+
+&lt;div id="cmtuinfo_email" class="cmtuinfo clearfix" style="display: none;"&gt;
+	&lt;p class="instructions"&gt;First time? A confirmation email will be sent to you after submitting.&lt;/p&gt;&lt;label for="AuthorName" class="first"&gt;Name:&lt;br /&gt;
+	&lt;input type="text" name="AuthorName" id="AuthorName" class="form" value="" /&gt;&lt;/label&gt; &lt;label for="AuthorEmail"&gt;E-mail:&lt;br /&gt;
+	&lt;input type="text" name="AuthorEmail" id="AuthorEmail" class="form" value="" /&gt;&lt;/label&gt;
+&lt;/div&gt;&lt;!-- /email --&gt;
+&lt;!-- blogsmith --&gt;
+
+&lt;div id="cmtuinfo_blogsmith" class="cmtuinfo clearfix" style="display: none;"&gt;
+	&lt;p class="instructions"&gt;Members enter your username and password.&lt;/p&gt;&lt;label for="C_Author" class="first"&gt;E-mail:&lt;br /&gt;
+	&lt;input id="C_AuthorEmail" type="text" class="formtext" name="C_AuthorEmail" value="" /&gt;&lt;/label&gt; &lt;label for="C_AuthorPass"&gt;Password:&lt;br /&gt;
+	&lt;input id="C_AuthorPass" type="password" class="formtext" name="AuthorPassword" value="" /&gt;&lt;/label&gt;
+&lt;/div&gt;&lt;!-- /blogsmith --&gt;
+&lt;!-- SNS --&gt;
+
+&lt;div id="cmtuinfo_sns" class="cmtuinfo clearfix" style="display: none;"&gt;
+	&lt;p class="instructions"&gt;Enter your AOL or AIM screenname and password.&lt;/p&gt;
+
+	&lt;div id="sns"&gt;
+		&lt;p align="center"&gt;&lt;img src="/media/loading.gif" /&gt;&lt;/p&gt;
+	&lt;/div&gt;&lt;!--&lt;input id="snslogin" type="button" onclick="sns.calls.login();" value="Login"&gt;--&gt;
+&lt;/div&gt;&lt;!-- /SNS --&gt;
+
+&lt;div id="cmtmain"&gt;
+	&lt;div id="replyindicator"&gt;&lt;/div&gt;
+
+	&lt;div&gt;
+		&lt;label for="Comments"&gt;Your comments:&lt;/label&gt; 
+		&lt;textarea name="Comments" id="Comments" rows="8" style="width:98%"&gt;
+&lt;/textarea&gt;
+	&lt;/div&gt;
+
+	&lt;div class="cmtchecks"&gt;
+		&lt;input type="checkbox" checked="checked" id="RememberMeYes" name="RememberMe" /&gt; &lt;label for="RememberMeYes"&gt;Remember me&lt;/label&gt;
+	&lt;/div&gt;
+
+	&lt;div class="cmtchecks"&gt;
+		&lt;input type="checkbox" checked="checked" id="EmailMe" name="EmailMe" /&gt; &lt;label for="EmailMe"&gt;E-Mail me when someone replies to this comment&lt;/label&gt;
+	&lt;/div&gt;
+
+	&lt;div id="cmtbuttons"&gt;
+		&lt;input type="submit" id="addCommentButton" value="Add Comment" /&gt;
+	&lt;/div&gt;&lt;input type="hidden" name="Form" value="Comments" /&gt;&lt;input type="hidden" name="ButtonSave" value="Save" /&gt; &lt;input type="hidden" id="sourceID" name="SourceID" value="" /&gt; &lt;input type="hidden" id="postID" name="PostID" value="" /&gt;
+&lt;/div&gt;
+
+&lt;div id="instructions"&gt;
+	&lt;p class="preamble"&gt;Please keep your comments relevant to this blog entry. &lt;strong&gt;Email addresses are never displayed, but they are required to confirm your comments.&lt;/strong&gt;&lt;/p&gt;
+
+	&lt;p&gt;When you enter your name and email address, you'll be sent a link to confirm your comment, and a password. To leave another comment, just use that password.&lt;/p&gt;
+
+	&lt;p&gt;To create a live link, simply type the URL (including http://) or email address and we will make it a live link for you. You can put up to 3 URLs in your comments. Line breaks and paragraphs are automatically converted — no need to use &amp;lt;p&amp;gt; or &amp;lt;br /&amp;gt; tags.&lt;/p&gt;
+&lt;/div&gt;&lt;input type="hidden" name="referer" value="http://www.tuaw.com:1080/2008/09/29/facebook-v2-for-iphone-goes-live/" /&gt;
+&lt;/form&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;!-- /content --&gt;
+&lt;/div&gt;&lt;!-- /col-1 --&gt;
+
+&lt;div id="col-2"&gt;
+
+
+&lt;/div&gt;
+
+&lt;div id="footer"&gt;
+&lt;div class="searchform"&gt;
+&lt;ul class="searchnav clearfix"&gt;
+&lt;li id="search-tab-blog2" class="selected"&gt;&lt;a onclick="return searchTarget('/search/?q=', 0, 'search-tab-blog2');" href="#"&gt;TUAW&lt;/a&gt;&lt;/li&gt;
+
+&lt;li id="search-tab-Web2" class=""&gt;&lt;a href="http://search.aol.com/aol/search?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Web&lt;/a&gt;&lt;/li&gt;
+
+&lt;li id="search-tab-Images2" class=""&gt;&lt;a href="http://search.aol.com/aol/image?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Images&lt;/a&gt;&lt;/li&gt;
+
+&lt;li id="search-tab-Video2" class=""&gt;&lt;a href="http://search.aol.com/aol/video?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Video&lt;/a&gt;&lt;/li&gt;
+
+&lt;li id="search-tab-News2" class=""&gt;&lt;a href="http://search.aol.com/aol/news?invocationType=wl-tuaw-ft&amp;amp;query="&gt;News&lt;/a&gt;&lt;/li&gt;
+
+&lt;li id="search-tab-Local2" class=""&gt;&lt;a href="http://local.aol.com/aol/local?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Local&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;form name="s_form2" action="/search/"&gt;
+&lt;fieldset&gt;
+&lt;input type="text" name="q" id="queryname2" value="" class="text" /&gt;&lt;button id="searchsubmit" onclick="return submitHeaderSearch('onclick');" type="submit" name="searchsubmit" title="Search"&gt;&lt;/button&gt;&lt;input type="hidden" name="invocationType" value="wl-tuaw-ft" /&gt;
+&lt;/fieldset&gt;
+&lt;/form&gt;
+&lt;/div&gt;&lt;!-- /show-footer-search.html.php --&gt;
+
+
+&lt;div id="legal"&gt;
+&lt;a href="http://news.aol.com" target="_blank" class="cobrand-footer"&gt;AOL News&lt;/a&gt;
+
+&lt;p&gt;All contents copyright © 2003-2008, &lt;a href="http://www.weblogsinc.com/"&gt;Weblogs, Inc.&lt;/a&gt; All rights reserved&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=""&gt;The Unofficial Apple Weblog (TUAW)&lt;/a&gt; is a member of the &lt;a href="http://www.weblogsinc.com/"&gt;Weblogs, Inc. Network&lt;/a&gt;. &lt;a href="http://www.weblogsinc.com/privacy/"&gt;Privacy Policy&lt;/a&gt;, &lt;a href="http://www.weblogsinc.com/terms/"&gt;Terms of Service&lt;/a&gt;, &lt;a href="http://www.weblogsinc.com/report/"&gt;Notify AOL&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;&lt;!-- /legal --&gt;
+&lt;/div&gt;&lt;!-- /main --&gt;
+&lt;/div&gt;&lt;!-- /container --&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+FOOTER</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>TUAW Preview</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>scope</key>
+	<string>text.html,text.html.markdown,text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>7D647C7F-B5F6-4D44-8375-4909DE243D9E</string>
+</dict>
+</plist>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require 'open-uri'
+require 'net/http' 
+require 'erb'
+
+def entity_escape(text)
+  text.gsub(/&amp;(?!([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)/, '&amp;amp;')
+end
+
+document = STDIN.read
+
+viamatch = document.match(/^\[via\]\:\s([^\s]+)\s/)
+
+baseurl = viamatch[1].match(/(http:\/\/[^\/]+)/)[1]
+
+title = nil
+
+eval 'title = fp.read.match(/&lt;title&gt;([^&lt;&gt;]*)&lt;\/title&gt;/i).to_a[1].strip rescue nil' if fp = open(baseurl) rescue nil
+
+if title =~ /([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]([^\|\-\—\:\–\&gt;,\)]+)/
+title = title.match(/([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]([^\|\-\—\:\–\&gt;,\)]+)/)[1].strip
+end
+print "[via [${1:#{title}}][via]]"</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>document</string>
+	<key>name</key>
+	<string>Via Link</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>via</string>
+	<key>uuid</key>
+	<string>30E730C0-C3F4-4C4F-902C-71034A6134B0</string>
+</dict>
+</plist>

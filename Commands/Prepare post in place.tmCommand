@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
+	bodytext=`cat $STDIN|perl -pe '
+	s/^[^ \[]+\: [^\n]+\n+//g;
+	s/&lt;!--\s?more\s?--&gt;//g;
+	if($img = /(&lt;img[^&gt;]+&gt;)/) {
+		s/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?//g;
+	}'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
+else
+	bodytext=`cat $STDIN|perl -pe '
+	if($img = /(&lt;img[^&gt;]+&gt;)/) {
+		s/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?(\s+)?//g;
+	}'`
+fi
+bodytext=`echo "$bodytext"|sed s/[“”]/\"/g|sed s/[‘’]/\'/g|sed s/…/\ ...\ /g|sed s/–/-/g|sed s/—/\ --\ /g`
+fullHTML=`echo "$bodytext"|grep -i "&lt;body&gt;"`
+if [ $fullHTML ]
+then
+	 bodytext=`echo "$bodytext"|sed -e '1,/&lt;body&gt;/ s/.*//' -e '/&lt;\/body&gt;/,$ s/.*//'| awk 'NF{print $0 ""}'`
+fi
+echo "$bodytext"|perl -pe '
+	if(($tag, $title) = /&lt;(h[1-6])&gt;(.*?)&lt;\/\1&gt;/) {
+		$_ = $title;
+		s/&lt;[^&gt;]+&gt;|&amp;\w+;//g;	# remove tag and entities
+		s/[^-_ \/\w]//g;		# remove all but word and separators
+		s/[-_ \/]+/_/g;		# collapse all separators into _
+		$_ = "&lt;$tag id=\"" . (lc $_) . "\"&gt;$title&lt;/$tag&gt;\n";
+	}'
+</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Prepare post in place</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
+	<key>uuid</key>
+	<string>FC790B59-7414-4447-9561-DCDAA7F08D46</string>
+</dict>
+</plist>
