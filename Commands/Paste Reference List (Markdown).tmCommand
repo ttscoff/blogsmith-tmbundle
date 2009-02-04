@@ -9,7 +9,7 @@
 use strict;
 
 my $input = `pbpaste`;
-my @linklist = split("\n",$input);
+my @linklist = split("[ \n]",$input);
 my $currline = 1;
 for my $line (@linklist) {
 	$line =~ s/^\s+//g;
