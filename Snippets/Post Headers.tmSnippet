@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>doctype: tuawpost
+title: ${1:Post Title}
+link: ${2:http://}
+categories: $3
+tags: $4
+
+$0</string>
+	<key>name</key>
+	<string>Post Headers</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
+	<key>tabTrigger</key>
+	<string>headers</string>
+	<key>uuid</key>
+	<string>469D3F1B-6B02-4A7A-B142-2BBD6EEB7BB2</string>
+</dict>
+</plist>
