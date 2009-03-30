@@ -43,8 +43,8 @@ module TextMate
 			</body>
 			HTML
 
-			# TextMate::UI.tool_tip("#{html}", {:transparent => true, :format => :html})
-			%x{"$DIALOG" tooltip -t --format html #{e_sh(html)}}
+			TextMate::UI.tool_tip("#{html}", {:transparent => true, :format => :html})
+			# %x{"$DIALOG" tooltip -t --format html #{e_sh(html)}}
 			else
 				TextMate.exit_show_tool_tip content
 			end

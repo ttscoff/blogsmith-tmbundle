@@ -17,21 +17,27 @@ $blogid = ENV['BLOG_ID']
 
 $line = ENV['TM_CURRENT_LINE']
 
-
-def get_cats()
-  
-    %x{curl -s -d 'email=#{$blogger_email}' -d 'password=#{$blogger_pass}' -d 'rememberme=1' -d 'signin_button=Sign%20In' -L 'http://blogsmith.aol.com/sign-in/' -c $TMPDIR/blogsmithcookie.txt}
-
-catsource = %x{curl -s 'http://blogsmith.aol.com/?a=ajax-post-get-browse-cats&amp;postblogid=#{$blogid}' --cookie $TMPDIR/blogsmithcookie.txt}
-	
-    return catsource
+def get_cats
+	catfilename = File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.categories.txt")) ? File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.categories.txt") : "#{ENV['TM_BUNDLE_SUPPORT']}/lib/categories.txt"
+	catfile = File.new(catfilename,'r')
+	catsource = catfile.read.split("&lt;--BEGIN CATEGORY PASTE BELOW THIS LINE--&gt;")[1]
+	return catsource
 end
+
+# def get_cats()
+#   
+#     %x{curl -s -d 'email=#{$blogger_email}' -d 'password=#{$blogger_pass}' -d 'rememberme=1' -d 'signin_button=Sign%20In' -L 'http://blogsmith.aol.com/sign-in/' -c $TMPDIR/blogsmithcookie.txt}
+# 
+# catsource = %x{curl -s 'http://blogsmith.aol.com/?a=ajax-post-get-browse-cats&amp;postblogid=#{$blogid}' --cookie $TMPDIR/blogsmithcookie.txt}
+# 	
+#     return catsource
+# end
 
 def process_source(catsource)
 	catsource.gsub!(/^(?:\n+)?getBrowseCatsOK\("(.*)"\)$/m,"\\1")
-	catsource.gsub!(/&lt;h4&gt;([^&gt;]+)&lt;\/h4&gt;/,"****\\1\n")
+	catsource.gsub!(/&lt;h4(?:[^&gt;]+)?&gt;([^&gt;]+)&lt;\/h4&gt;/,"****\\1\n")
 	catsource = catsource.split("****")
-	catsource.shift
+	catsource.shift if catsource[0].empty?
 	catlist = []
 	catsource.each {|section|
 		parent_title = section.match(/^([^\n]+)\n/)[1]
@@ -53,6 +59,7 @@ TextMate.call_with_progress(:title =&gt;'Retrieving Categories',
                         :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
 dialog.parameters = {'summary' =&gt; 'Fetching source','progressValue' =&gt; 25 }
 catsource = get_cats()
+
 dialog.parameters = {'summary' =&gt; 'Parsing','progressValue' =&gt; 50 }
 catlist = process_source(catsource)
 catlist.each {|parent| 
@@ -68,7 +75,7 @@ dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
 end
 plist = { 'tags' =&gt; $catplist }.to_plist
 res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags2`)
-TextMate.exit_discard if res['returnButton'] == "Cancel"
+TextMate.exit_insert_text "categories: " if res['returnButton'] == "Cancel"
 # TextMate.exit_show_tool_tip "nothing returned" unless res.has_key? 'selectedMenuItem'
 returnedcats = res['result']['returnArgument']
 catlist = ''
@@ -80,16 +87,14 @@ print "categories: " unless $line =~ /^[Cc]ategories\:(.*)?/
 print "#{catlist.chomp}"</string>
 	<key>input</key>
 	<string>document</string>
-	<key>keyEquivalent</key>
-	<string>^@w</string>
 	<key>name</key>
 	<string>Choose Categories</string>
 	<key>output</key>
 	<string>afterSelectedText</string>
 	<key>scope</key>
-	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>tabTrigger</key>
-	<string>cat</string>
+	<string>categories: </string>
 	<key>uuid</key>
 	<string>2363D04C-450A-4EB1-9C7B-546932116815</string>
 </dict>

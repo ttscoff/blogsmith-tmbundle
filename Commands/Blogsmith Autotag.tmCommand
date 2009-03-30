@@ -4,10 +4,8 @@
 <dict>
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
-	<key>bundleUUID</key>
-	<string>79741B2E-271D-4CBC-A61A-380C83D36863</string>
 	<key>command</key>
-	<string>#!/usr/bin/env ruby -rjcode -Ku
+	<string>#!/usr/bin/env ruby
 
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
@@ -16,17 +14,44 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require SUPPORT + '/lib/progress'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/calais"
 load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
+require 'date'
+require 'json'
 
 $line = ENV['TM_CURRENT_LINE']
 $text = STDIN.read
 
-$skipwords = %r/^(Im|thats|its|arent|weve|ive|didnt|dont|the|of|to|and|a|in|is|it|you|that|he|was|for|on|are|with|as|I|his|they|be|at|one|have|this|from|or|had|by|hot|but|some|what|there|we|can|out|were|all|your|when|up|use|how|said|an|each|she|which|do|their|if|will|way|many|then|them|would|like|so|these|her|see|him|has|more|could|go|come|did|my|no|get|me|say|too|here|must|such|try|us|own|oh|any|youll|youre|also)$/i
+def readwords(wordfile)
+	if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+	  wordlist = IO.readlines(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+	else
+	  wordlist = IO.readlines("#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{wordfile}")
+	end
+	return wordlist.map {|aword| aword = aword.strip }
+end
 
-$goodtags = ["AirPort","AirTunes","Airport Express","Airport Extreme","Al Gore","App Store","Apple Ceo","Apple Store","Apple Store Down","Best Of The Week","Best Of The Year","Black Berry","BootCamp","Candy Bar","ChaChing","Comic Life","Crash Bandicoot","Credit Card","Delivery Status","Dvd Studio Pro","Fake Steve","File Vault","First Look","Flickr Export","Flickr Find","Free Feed","Google Reader","Google Tech Talks","Guided Tour","I Am Rich","Ipod Classic","Itunes Japan","Itunes Store","MacBook","MacBook Air","MacBook Pro","Mac Mini","Mac Os","Mac Os X","MadTv","MagSafe","Microsoft Office","Mobile Me","Mobile Phones","Mod My iFone","Most Popular","NetNewsWire","Network Location","New Bloggers","OS X","Path Finder","Rapid Weaver","ScreenFlow","Secure Your Mac","Snow Leopard","SoHo","Software Update","SpringBoard","Steve Jobs","SuperDuper","Text Editor","The Hit List","Third Party Applications","Time Capsule","Time Machine","Time Management","Tuaw Tip","VisualHub","Web Mail","Weekend Review","Wolf Quest","ZiPhone"]
+def update_whitelist(tags)
+    lctags = $goodtags.map {|x| x.downcase }
+    keeptags = tags.clone
+    keeptags.delete_if {|x| lctags.include? x.downcase }
+    $goodtags.each {|x| 
+		tags.each_index {|y| tags[y] = x if x.downcase == tags[y].downcase }
+    }
+    newtags = $goodtags + keeptags
+    newtags.sort! do |a,b|
+      a.upcase &lt;=&gt; b.upcase
+    end
+    
+    f = File.new(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.whitelist.txt"),  "w+")
+    f.print newtags.join("\n") 
+    f.close
+    return tags
+end
 
-$alwaystags = ["@not-iphone","@tweet-this"]
+$skipwords = readwords("skipwords.txt")
+$goodtags = readwords("whitelist.txt")
+$alwaystags = readwords("alwaystags.txt")
 
 def e_sh(str)
 	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
@@ -61,32 +86,32 @@ TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
 $text = strip_html($text)
 
 TextMate.call_with_progress(:title =&gt;'Retrieving Tag Suggestions',
-                        :summary =&gt; 'Contacting Yahoo...',
+                        :summary =&gt; 'Contacting Calais...',
                         :indeterminate =&gt; false,
                         :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
-dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 50 }
-	words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
-    words.delete_if{|word| word =~ $skipwords }
-    query = words.join('+')
-
-    yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
-	
-	ysorted = nil
-    unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
-    ysorted = yahoo.parse_analysis.sort do |a,b|
-      a.upcase &lt;=&gt; b.upcase
-    end
-	end
-    dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
+dialog.parameters = {'summary' =&gt; 'Getting Calais Tags','progressValue' =&gt; 50 }
 
 tags = []
 
+begin
+	res = Calais.enlighten(:content =&gt; $text, :content_type =&gt; :text, :license_id =&gt; 'nhe2t2hwjxtsptybu7255tn3',:output_format =&gt; :json)
+	result = JSON.parse(res)
+
+	result.each {|x| 
+		tags.push(x[1]['name']) if x[1].has_key? 'name'
+	}
+rescue
+	nil
+end
     $goodtags.each {|tag|
      	 tags.push(tag)
 		}
+
+    dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
     
     words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
-    words.delete_if{|word| word =~ $skipwords }
+    lc_skipwords = $skipwords.map {|skipword| skipword.downcase }
+    words.delete_if{|word| lc_skipwords.include? word.downcase }
     porterwords = words.map{|word| Text::PorterStemming.stem(word).downcase}
 
     freqs = Hash.new(0)
@@ -106,11 +131,14 @@ tags = []
     }
 	freqs.each {|f| matches.push(f[0]) if f[1] &gt; 3 }
 	$alwaystags.each {|tag| matches.push(tag) }
-    ysorted.each {|tag| matches.push(tag) } unless ysorted.nil?
+
     TextMate.exit_show_tool_tip "No tag matches in text" if matches.nil? || matches.empty?
     sorted = matches.sort do |a,b|
       a.upcase &lt;=&gt; b.upcase
     end
+
+    sorted = sorted.map{|x| x.downcase}.uniq
+
     tarray = []
     sorted.each { |tag|
         tarray &lt;&lt; { 
@@ -120,12 +148,13 @@ tags = []
     }
 dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
     plist = { 'tags' =&gt; tarray }.to_plist
-    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags2`)
+    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags4`)
 
-    TextMate.exit_discard if res['returnButton'] == "Cancel"
+    TextMate.exit_insert_text "tags: " if res['returnButton'] == "Cancel"
     returnedtags = res['result']['returnArgument']
+    tags = update_whitelist(returnedtags)
     tagslist = ''
-    returnedtags.map {|tag| 
+    tags.map {|tag| 
     	tagslist += ";" unless tagslist == ''
     	tagslist += tag }  
     print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
@@ -134,14 +163,12 @@ end</string>
 	<key>input</key>
 	<string>document</string>
 	<key>name</key>
-	<string>Blogsmith Autotag</string>
+	<string>CalaisTag</string>
 	<key>output</key>
 	<string>afterSelectedText</string>
 	<key>scope</key>
-	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
-	<key>tabTrigger</key>
-	<string>auto</string>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>uuid</key>
-	<string>102E56B3-5ABE-4EEB-BAD5-99ECBC28EE19</string>
+	<string>6910C204-B0BB-44A1-9412-9D2D0CC7DEF9</string>
 </dict>
 </plist>

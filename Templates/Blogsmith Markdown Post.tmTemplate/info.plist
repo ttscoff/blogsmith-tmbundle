@@ -11,10 +11,10 @@
 fi</string>
 	<key>extension</key>
 	<string>blogsmith.markdown</string>
+	<key>keyEquivalent</key>
+	<string>~@P</string>
 	<key>name</key>
 	<string>Blogsmith Markdown Post</string>
-	<key>scope</key>
-	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>uuid</key>
 	<string>7D554CE8-6BD2-4D30-A8AC-13D434443102</string>
 </dict>

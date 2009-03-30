@@ -16,11 +16,9 @@ require "#{BUNDLESUPPORT}/lib/cooldialog.rb"
 def e_sh(str)
 	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
 end
-def has_dialog2
-	tm_dialog = e_sh ENV['DIALOG']
-	! tm_dialog.match(/2$/).nil? 
-end
+
 html = STDIN.read
+
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end

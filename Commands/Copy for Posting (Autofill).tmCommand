@@ -6,14 +6,28 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
-require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
 # require "cgi"
 # require "FileUtils"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
 
-# set $web_root to an existing directory where the blogsmith.js file will be stored
-# if you change this, you'll need to modify the bookmarklet accordingly
-$web_root = '~/Sites/autotags'
+# To override the command's web root detection, add a shell variable in TextMate's advanced preferences called WEB_ROOT 
+# Set the value of WEB_ROOT to an existing directory where the blogsmith.js file can be stored
+# if you set/change this, you'll need to modify the bookmarklet accordingly
+web_root_override = ENV['WEB_ROOT'] ? ENV['WEB_ROOT'] : ''
+
+if web_root_override.empty?
+	begin
+		f = File.new("/etc/apache2/httpd.conf",'r')
+		match = f.read.match /^DocumentRoot "([^"]+)"/
+		WEB_ROOT = "#{match[1]}"
+	rescue
+		WEB_ROOT = '/Library/WebServer/Documents'
+	end
+else
+	WEB_ROOT = web_root_override
+end
 
 def e_sh(str)
 	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
@@ -36,18 +50,20 @@ def get_headers(html)
 	html.scan(/^([A-Za-z]+)\: ([^\n]+)/m) { |match|
 		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1] } unless match[0] == 'doctype'
 	}
+	# %x{echo -n "#{html.match(/^[Ll]ink: ([^\n]+)/m)[1]}"|pbcopy}
 	headers
 end
 
 html = STDIN.read
 headers = get_headers(html)
-html.gsub!(/^[A-Za-z]+\: [^\n]+\n+/,"")
+html.gsub!(/^[A-Za-z]+\: ([^\n]+)?\n+/,"")
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
 html.gsub!(/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?/,'')
 
 unless html.to_s.empty?
+begin
 	o = "function doit() {"
 	o += "var link=false;var title=false;var categories=false;var tags=false;var content=false;var continued=false;"
 	headers.each {|h| o += %Q{var #{h['title'].to_s}="#{h['value'].to_s}";} }
@@ -69,15 +85,19 @@ unless html.to_s.empty?
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
 	o += %Q^document.getElementById("postsaveconfirm").disabled=false;^
 	o += "}"
-	jsfile = File.new(File.expand_path("#{$web_root}/blogsmith.js"),'w')
+	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
 	output = "Javascript file saved to: "
-	output += File.expand_path("#{$web_root}/blogsmith.js")
+	output += File.expand_path("#{WEB_ROOT}/blogsmith.js")
 	TextMate::CoolDialog.cool_tool_tip(output)
 	exit
+rescue SystemCallError
+	TextMate::CoolDialog.cool_tool_tip("IO failed: " + $!)
+	raise
+end
 end</string>
 	<key>input</key>
-	<string>selection</string>
+	<string>document</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>

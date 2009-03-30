@@ -19,18 +19,25 @@ end
 
 document = STDIN.read
 
-viamatch = document.match(/^\[via\]\:\s([^\s]+)\s/)
+viamatch = document.match(/^\[(via(?:[^\]]+)?)\]\:\s([^\s]+)\s/)
 
-baseurl = viamatch[1].match(/(http:\/\/[^\/]+)/)[1]
-
+if viamatch
+if viamatch[1] =~ /via .+/
+	title = viamatch[1].match(/via (.+)/)[1].gsub(/\b\w/){$&amp;.upcase}
+else
+baseurl = viamatch[2].match(/(https?:\/\/[^\/ ]+)/)[1]
 title = nil
 
 eval 'title = fp.read.match(/&lt;title&gt;([^&lt;&gt;]*)&lt;\/title&gt;/i).to_a[1].strip rescue nil' if fp = open(baseurl) rescue nil
 
-if title =~ /([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]([^\|\-\—\:\–\&gt;,\)]+)/
-title = title.match(/([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]([^\|\-\—\:\–\&gt;,\)]+)/)[1].strip
+if title =~ /([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]+([^\|\-\—\:\–\&gt;,\)]+)/
+title = title.match(/([^\|\-\—\:\–\&gt;,\(]+)[\|\-\—\:\–\&gt;,\(]+([^\|\-\—\:\–\&gt;,\)]+)/)[1].strip
 end
-print "[via [${1:#{title}}][via]]"</string>
+end
+print "[via [${1:#{title}}][#{viamatch[1]}]]"
+else
+print "[via [${1:Site Name}](${2:Link})]"
+end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>

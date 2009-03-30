@@ -37,7 +37,7 @@ url = make_link %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.str
 input = STDIN.read
 
 if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	print ERB.new(ENV['TM_REF_BLINK_FORMAT']).result
+	puts "[${1:Reference}]: ${2:#{url}}"
 else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end</string>

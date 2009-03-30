@@ -23,6 +23,12 @@
 				<string>[${1:&lt;%= e_sn input %&gt;}]: ${2:&lt;%= e_sn url %&gt;}
 $0</string>
 			</dict>
+			<dict>
+				<key>name</key>
+				<string>TM_MONEY_FORMAT</string>
+				<key>value</key>
+				<string>$&lt;%= num %&gt;US</string>
+			</dict>
 		</array>
 	</dict>
 	<key>uuid</key>

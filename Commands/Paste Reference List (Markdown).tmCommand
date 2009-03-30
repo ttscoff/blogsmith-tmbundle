@@ -5,20 +5,47 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env perl
-use strict;
+	<string>#!/usr/bin/env ruby
 
-my $input = `pbpaste`;
-my @linklist = split("[ \n]",$input);
-my $currline = 1;
-for my $line (@linklist) {
-	$line =~ s/^\s+//g;
-	$line =~ s/(\s+)?\"[^\"]+\"//g;
-	unless ( $line =~ /^http/ ) { $line = "http://" . $line; }
-	printf("[\${%d:%d}]: %s\n",$currline,$currline,$line);
-	$currline++;
+clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+input = STDIN.read
+
+if input.empty? 
+	links = clipboard.scan /(https?:\/\/[^ \n"]+)/m
+else
+	links = input.scan /(https?:\/\/[^ \n"]+)/m
+end
+if links.empty? then
+	TextMate.exit_show_tool_tip "No links found"
+else
+norepeat = []
+output = []
+links.each {|url| 
+	domain = url[0].match(/https?:\/\/([^\/]+)/)
+	parts = domain[1].split('.')
+	name = case parts.length
+		when 1: parts[0]
+		when 2: parts[0]
+		else parts[1]
+	end
+	while norepeat.include? name
+		if name =~ / [0-9]$/
+			name.next!
+		else 
+			name = name + " 2"
+		end
+	end
+	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
+	norepeat.push name
 }
-</string>
+output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
+counter = 0
+output.each { |x| 
+	counter += 1
+	puts "[${#{counter}:#{x['title']}}]: #{x['link']}" 
+}
+
+end</string>
 	<key>fallbackInput</key>
 	<string>none</string>
 	<key>input</key>
@@ -34,6 +61,6 @@ for my $line (@linklist) {
 	<key>tabTrigger</key>
 	<string>refs</string>
 	<key>uuid</key>
-	<string>3C33DA03-210D-4965-A4AB-68FB9476874F</string>
+	<string>CA4A6B09-DF43-46E3-A6B9-28C163178DBD</string>
 </dict>
 </plist>

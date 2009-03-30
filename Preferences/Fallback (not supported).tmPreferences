@@ -14,6 +14,12 @@
 				<key>value</key>
 				<string>(this language is not supported, see … for more info)</string>
 			</dict>
+			<dict>
+				<key>name</key>
+				<string>TM_MONEY_FORMAT</string>
+				<key>value</key>
+				<string>$&lt;%= num %&gt;US</string>
+			</dict>
 		</array>
 	</dict>
 	<key>uuid</key>
