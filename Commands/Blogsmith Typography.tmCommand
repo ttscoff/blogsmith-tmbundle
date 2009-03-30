@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -wKU
+require 'erb'
+
+# CHANGE: 3/27/09 search for $32.25 with no trailing US, accounts for possible space ($32 US)
+# CHANGE: 3/28/09 more robust monetary unit handling, uses ERB (set format in Markdown properties)
+
+def ts( st )
+  st.gsub!(/,/,'')
+  mynum = st.to_s.reverse.scan(/(?:\d*\.)?\d{1,3}-?/).join(',').reverse
+  dec = mynum.split('.')
+  mynum = dec[0].to_s + '.' + dec[1].to_s.ljust(2, '0')[0,2] if dec[1]
+  mynum
+end
+
+def strip_html(string,removals)
+	iterations = string.scan(/&lt;[^&gt;]+&gt;/).length
+	while iterations &gt; 0
+		string.sub!(/(&lt;[^&gt;]+&gt;)/,"%#{removals.length}%")
+		removals += $1.to_a
+		iterations -= 1		
+	end
+	[string,removals]
+end
+
+def strip_markdown(string,removals)
+	iterations = string.scan(/^[A-Za-z][^ \:]+\: .+$/).length
+	while iterations &gt; 0
+		subnum = removals.length
+		subnum = "0" + subnum.to_s if subnum.to_s.length == 1
+		string.sub!(/(^[A-Za-z][^ \:]+\: .+$)/,"%#{subnum}%")
+		removals += $1.to_a
+		iterations -= 1	
+	end
+	iterations = string.scan(/^\[[^\]]+\]\:.+$/).length
+	while iterations &gt; 0
+		subnum = removals.length
+		subnum = "0" + subnum.to_s if subnum.to_s.length == 1
+		string.sub!(/(^\[[^\]]+\]\:.+$)/,"%#{subnum}%")
+		removals += $1.to_a
+		iterations -= 1		
+	end
+	iterations = string.scan(/\[[^\]]+\][\[\(][^\]\)]+[\]\)]/).length
+	while iterations &gt; 0
+		subnum = removals.length
+		subnum = "0" + subnum.to_s if subnum.to_s.length == 1
+		string.sub!(/(\[([^\]]+)\][\[\(][^\]\)]+[\]\)])/,"%#{subnum}\\2%")
+		removals += $1.to_a
+		iterations -= 1		
+	end
+	[string,removals]
+end
+
+def restore_replacements(string,removals)
+	removals.each_with_index {|removal,x|
+		x = "0" + x.to_s if x.to_s.length == 1
+		m = string.match(/%#{x}([^%]+)?%/)
+		if m[1].nil? 
+			string.sub!(/%#{x}%/,removals[x.to_i])
+		else
+			if removals[x.to_i] =~ /\[[^\]]+\]([\[\(][^\]\)]+[\]\)])/
+				string.sub!(/%#{x}([^%]+)?%/,"[\\1]#$1")
+			end
+		end
+	}
+	string
+end
+
+string = STDIN.read
+original = string.clone
+num = ""
+
+removals = []
+string,removals = strip_markdown(string,removals)
+string,removals = strip_html(string,removals)
+
+string.gsub!(/…/,'...')
+string.gsub!(/(\w)(\.{3,})\s?/,"\\1 ... ")
+string.gsub!(/—/,'--')
+string.gsub!(/(\w)(\-\-)\s?(\w)?/,"\\1\s--\s\\3")
+string.gsub!(/[“”]/,'"')
+string.gsub!(/[‘’]/,'\'')
+string.gsub!(/(['"])([,\.])/,"\\2\\1")
+
+count = string.scan(/\$([\d\.\,]+)(\s?US)?/).length
+
+newstring = ""
+
+while count &gt; 0
+	punct = nil
+	res = string.match(/\$([\d\.\,]+)(\s?US)?/)
+	amount = res[1]
+	if amount.match(/\d([^A-Za-z0-9])$/)
+		punct = $1
+	end
+	num = ts(amount.sub(/#{punct}$/,''))
+	output = ERB.new(ENV['TM_MONEY_FORMAT']).result
+	output += punct unless punct.nil?
+	newstring += string[0,res.begin(0)] + output
+	string = string[res.end(0),string.length]
+	count -= 1
+end
+string = newstring + string
+newstring = ""
+
+count = string.scan(/(\d[\d\.\,]+)/).length
+
+while count &gt; 0
+	punct = nil
+	res = string.match(/(\d[\d\.\,]{3,})/)
+	break if res.nil?
+	amount = res[1]
+	if amount.match(/\d([^A-Za-z0-9])$/)
+		punct = $1
+		amount.sub!(/#{punct}$/,'')
+	end
+	output = ts(amount)
+	output += punct unless punct.nil?
+	newstring += string[0,res.begin(0)] + output
+	string = string[res.end(0),string.length]
+	count -= 1
+end
+
+print restore_replacements(newstring + string,removals)</string>
+	<key>fallbackInput</key>
+	<string>document</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>name</key>
+	<string>Blogsmith Typography</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>73D7CF67-C6D6-49EF-968F-5E07A31F83C7</string>
+</dict>
+</plist>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/web_preview.rb"
+
+# To override the command's web root detection, add a shell variable in TextMate's advanced preferences called WEB_ROOT 
+# Set the value of WEB_ROOT to an existing directory where the blogsmith.js file can be stored
+# if you set/change this, you'll need to modify the bookmarklet accordingly
+web_root_override = ENV['WEB_ROOT'] ? ENV['WEB_ROOT'] : ''
+
+if web_root_override.empty?
+	begin
+		f = File.new("/etc/apache2/httpd.conf",'r')
+		match = f.read.match /^DocumentRoot "([^"]+)"/
+		WEB_ROOT = "#{match[1]}"
+	rescue
+		WEB_ROOT = '/Library/WebServer/Documents'
+	end
+else
+	WEB_ROOT = web_root_override
+end
+
+
+html_header("AutoFill Test Results")
+
+puts '&lt;h2&gt;Web root detected at: ' + WEB_ROOT + '&lt;/h2&gt;'
+puts '&lt;small&gt;To override the web root detection, add a shell variable in TextMate\'s advanced preferences called WEB_ROOT. Set the value of WEB_ROOT to the root folder of your local web server.&lt;/small&gt;'
+
+begin
+	testfile = File.new(WEB_ROOT + "/autofilltest.txt",'w+')
+	testfile.puts "BLOGSMITH AUTOFILL TEST FILE"
+	testfile.close
+	print "&lt;p&gt;Test file written to #{WEB_ROOT}/autofilltest.txt"
+
+	response = %x{curl -s http://localhost/autofilltest.txt}
+	if response =~ /BLOGSMITH AUTOFILL TEST FILE/
+		puts " &lt;span style=\"color:green\"&gt;and file successfuly read through localhost&lt;/span&gt;.&lt;/p&gt;"
+	else
+		puts ", &lt;span style=\"color:red;font-weight:bold\"&gt;but we got an error reading it back through localhost&lt;/span&gt;.&lt;/p&gt;"
+	end
+rescue
+	puts "&lt;p style=\"color:red;font-weight:bold\"&gt;Error writing test file&lt;/p&gt;"
+end
+
+puts "&lt;hr /&gt;&lt;h3&gt;Bookmarklets&lt;/h3&gt;"
+puts "&lt;p&gt;Copy the appropriate code to the clipboard, create a new bookmark in your browser, and paste the code as the location for the bookmark.&lt;/p&gt;"
+
+puts %Q{&lt;h4&gt;Firefox 3.0+&lt;/h4&gt;}
+puts %Q{&lt;pre&gt;&lt;code&gt;javascript:(function(){var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js';document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};})();&lt;/code&gt;&lt;/pre&gt;}
+puts %Q{&lt;h4&gt;Safari/Firefox 2&lt;/h4&gt;}
+puts %Q{&lt;pre&gt;&lt;code&gt;javascript:var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js';document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};&lt;/code&gt;&lt;/pre&gt;}
+html_footer</string>
+	<key>input</key>
+	<string>none</string>
+	<key>name</key>
+	<string>AutoFill Setup</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>uuid</key>
+	<string>57A974F2-7D53-4D34-BC56-B52671ED0432</string>
+</dict>
+</plist>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby 
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+
+search_param = TextMate::UI.request_string(:title =&gt; "Search Markdown Files", :prompt =&gt; "Enter a keyword or criteria")       
+projects = []
+
+(`mdfind '#{search_param} AND (filename:md OR kind:markdown OR filename:markdown)'`).each {|x| 
+	title = File.basename(x.chomp,".md") + " (" + File.dirname(x.chomp).split('/').last + ")"
+	projects &lt;&lt; { 'title' =&gt; title, 'tag' =&gt; x.chomp } 
+}
+
+plist = { 'tags' =&gt; projects }.to_plist
+
+res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_project`)
+
+TextMate.exit_discard if res['returnButton'] == "Cancel"
+project = "\"" + res['result']['returnArgument'].join("\" \"") + "\""
+%x{echo "#{project}"|pbcopy}
+`open -a TextMate #{project}` unless project.to_s.empty?</string>
+	<key>input</key>
+	<string>none</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Find Markdown File</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
+	<key>uuid</key>
+	<string>6C8AB5B3-A579-4957-AEC0-F8FAD016D961</string>
+</dict>
+</plist>

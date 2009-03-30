@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+
+input = STDIN.read
+
+links = input.scan /(https?:\/\/[^" \n]+)/m
+# puts links
+links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Open selected links in Safari</string>
+	<key>output</key>
+	<string>afterSelectedText</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
+	<key>uuid</key>
+	<string>F33AAF3A-B233-472C-99D2-6C4239B6D608</string>
+</dict>
+</plist>

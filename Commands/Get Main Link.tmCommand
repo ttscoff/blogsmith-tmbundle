@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+
+document = STDIN.read
+
+linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s([^\s]+)\s/)
+
+linkmatch = document.match(/^\[[^\]]+\]\:\s([^\s]+)\s/) if linkmatch.nil?
+
+unless linkmatch.nil?
+	print "link: " + linkmatch[1]
+else
+	print "link: http://"
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>document</string>
+	<key>name</key>
+	<string>Get Main Link</string>
+	<key>output</key>
+	<string>afterSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>link: </string>
+	<key>uuid</key>
+	<string>82B10BF9-D37E-45B0-9157-D53EC1188FCF</string>
+</dict>
+</plist>

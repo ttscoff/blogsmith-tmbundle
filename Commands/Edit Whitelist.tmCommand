@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>WhiteList="$HOME/Library/Preferences/com.macromates.textmate.blogsmith.whitelist.txt"
+if [[ ! -e "$WhiteList" ]]; then
+   cp "$TM_BUNDLE_SUPPORT/lib/whitelist.txt" "$WhiteList"
+fi
+WhiteList=${WhiteList// /%20} # turn spaces into %20
+open txmt://open?url=file://$WhiteList</string>
+	<key>input</key>
+	<string>none</string>
+	<key>name</key>
+	<string>Edit Whitelist</string>
+	<key>output</key>
+	<string>discard</string>
+	<key>uuid</key>
+	<string>BC58D603-49C9-4990-8002-ABC05153D0FD</string>
+</dict>
+</plist>
