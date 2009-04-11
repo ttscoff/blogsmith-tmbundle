@@ -92,7 +92,7 @@ string,removals = strip_markdown(string,removals)
 string,removals = strip_html(string,removals)
 
 string.gsub!(/…/,'...')
-string.gsub!(/(\w)(\.{3,})\s?/,"\\1&lt;span class=\"correction\"&gt;\s...\s&lt;/span&gt;")
+string.gsub!(/(\w)(\.{3,}) ?/,"\\1&lt;span class=\"correction\"&gt;\s...\s&lt;/span&gt;")
 string.gsub!(/—/,'&lt;span class=\"correction\"&gt;--&lt;/span&gt;')
 string.gsub!(/(\w)(\-\-)\s?(\w)?/,"\\1&lt;span class=\"correction\"&gt;\s--\s&lt;/span&gt;\\3")
 string.gsub!(/[“”]/,'&lt;span class=\"correction\"&gt;"&lt;/span&gt;')
@@ -186,14 +186,12 @@ html_footer
 				<string>document</string>
 				<key>input</key>
 				<string>selection</string>
-				<key>keyEquivalent</key>
-				<string>^@w</string>
 				<key>name</key>
 				<string>Blogsmith Typography Preview</string>
 				<key>output</key>
 				<string>showAsHTML</string>
 				<key>scope</key>
-				<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+				<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 				<key>uuid</key>
 				<string>04F43BDC-92DA-4178-A018-4AFE787F30FC</string>
 			</dict>
@@ -282,7 +280,7 @@ string,removals = strip_markdown(string,removals)
 string,removals = strip_html(string,removals)
 
 string.gsub!(/…/,'...')
-string.gsub!(/(\w)(\.{3,})\s?/,"\\1 ... ")
+string.gsub!(/(\w)(\.{3,}) ?/,"\\1 ... ")
 string.gsub!(/—/,'--')
 string.gsub!(/(\w)(\-\-)\s?(\w)?/,"\\1\s--\s\\3")
 string.gsub!(/[“”]/,'"')
@@ -333,14 +331,12 @@ print restore_replacements(newstring + string,removals)</string>
 				<string>document</string>
 				<key>input</key>
 				<string>selection</string>
-				<key>keyEquivalent</key>
-				<string>^@w</string>
 				<key>name</key>
 				<string>Blogsmith Typography</string>
 				<key>output</key>
 				<string>replaceSelectedText</string>
 				<key>scope</key>
-				<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+				<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 				<key>uuid</key>
 				<string>73D7CF67-C6D6-49EF-968F-5E07A31F83C7</string>
 			</dict>
@@ -351,10 +347,10 @@ print restore_replacements(newstring + string,removals)</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Correct and Preview Typography</string>
+	<string>Correct Typography and Show Changes</string>
 	<key>scope</key>
-	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<string>text.html,text.html.markdown,text.html.markdown.multimarkdown</string>
 	<key>uuid</key>
-	<string>1E8D16F5-4FD0-47D6-9C8B-62EDFE2733CF</string>
+	<string>8BA9BA89-00ED-47C5-A137-35E9C64A205C</string>
 </dict>
 </plist>

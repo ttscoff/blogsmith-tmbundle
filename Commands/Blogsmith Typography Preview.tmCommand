@@ -87,7 +87,7 @@ string,removals = strip_markdown(string,removals)
 string,removals = strip_html(string,removals)
 
 string.gsub!(/…/,'...')
-string.gsub!(/(\w)(\.{3,})\s?/,"\\1&lt;span class=\"correction\"&gt;\s...\s&lt;/span&gt;")
+string.gsub!(/(\w)(\.{3,}) ?/,"\\1&lt;span class=\"correction\"&gt;\s...\s&lt;/span&gt;")
 string.gsub!(/—/,'&lt;span class=\"correction\"&gt;--&lt;/span&gt;')
 string.gsub!(/(\w)(\-\-)\s?(\w)?/,"\\1&lt;span class=\"correction\"&gt;\s--\s&lt;/span&gt;\\3")
 string.gsub!(/[“”]/,'&lt;span class=\"correction\"&gt;"&lt;/span&gt;')
