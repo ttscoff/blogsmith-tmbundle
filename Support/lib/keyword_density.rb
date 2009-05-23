@@ -189,7 +189,7 @@ class KeywordDensity
     unless file_name
       @stop_words ||= DEFAULT_STOP_WORDS
     else
-      @stop_words = IO.read(file_name).collect { |l| l.chomp! }.delete_if{ |w| w.length <= 2 || w =~ /[^[:alpha:]]/}
+      @stop_words = IO.read(file_name).collect { |l| l.chomp! }.delete_if{ |w| w.nil? }.delete_if{ |w| w.length <= 2 || w =~ /[^[:alpha:]]/}
     end
   end
 

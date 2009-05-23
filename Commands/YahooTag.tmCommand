@@ -15,7 +15,7 @@ require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require SUPPORT + '/lib/progress'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/keyword_density"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
 require 'date'
@@ -25,30 +25,30 @@ $line = ENV['TM_CURRENT_LINE']
 $text = STDIN.read
 
 def readwords(wordfile)
-	if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
-	  wordlist = IO.readlines(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
-	else
-	  wordlist = IO.readlines("#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{wordfile}")
-	end
-	return wordlist.map {|aword| aword = aword.strip }
+  if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+    wordlist = IO.readlines(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+  else
+    wordlist = IO.readlines("#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{wordfile}")
+  end
+  return wordlist.map {|aword| aword = aword.strip }
 end
 
 def update_whitelist(tags)
-    lctags = $goodtags.map {|x| x.downcase }
-    keeptags = tags.clone
-    keeptags.delete_if {|x| lctags.include? x.downcase }
-    $goodtags.each {|x| 
-		tags.each_index {|y| tags[y] = x if x.downcase == tags[y].downcase }
-    }
-    newtags = $goodtags + keeptags
-    newtags.sort! do |a,b|
-      a.upcase &lt;=&gt; b.upcase
-    end
-    
-    f = File.new(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.whitelist.txt"),  "w+")
-    f.print newtags.join("\n") 
-    f.close
-    return tags
+  lctags = $goodtags.map {|x| x.downcase }
+  keeptags = tags.clone
+  keeptags.delete_if {|x| lctags.include? x.downcase }
+  $goodtags.each {|x|
+    tags.each_index {|y| tags[y] = x if x.downcase == tags[y].downcase }
+  }
+  newtags = $goodtags + keeptags
+  newtags.sort! do |a,b|
+    a.upcase &lt;=&gt; b.upcase
+  end
+
+  f = File.new(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.whitelist.txt"),  "w+")
+  f.print newtags.join("\n")
+  f.close
+  return tags
 end
 
 $skipwords = readwords("skipwords.txt")
@@ -56,115 +56,102 @@ $goodtags = readwords("whitelist.txt")
 $alwaystags = readwords("alwaystags.txt")
 
 def e_sh(str)
-	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+  str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
 end
 
 def strip_html(str)
-   str.strip!
-   tag_pat = %r,[\[&lt;](?:(?:/?)|(?:\s*)).*?[&gt;\]],m
-   str.gsub(tag_pat, '')
+  str.strip!
+  tag_pat = %r,[\[&lt;](?:(?:/?)|(?:\s*)).*?[&gt;\]],m
+  str.gsub(tag_pat, '')
 end
 
 def strip_headers(str)
-   str.strip!
-   str.gsub!(/&lt;!--\s?more\s?--&gt;/,'')
-   str.gsub(/^[^ ]+\: [^\n]+/, '')
+  str.strip!
+  str.gsub!(/&lt;!--\s?more\s?--&gt;/,'')
+  str.gsub(/^[^ ]+\: [^\n]+/, '')
 end
 
 def url_escape(string)
-	string.gsub(/([^a-zA-Z0-9_.-]+)/n) do
-		'%' + $1.unpack('H2' * $1.size).join('%').upcase
-	end
+  string.gsub(/([^a-zA-Z0-9_.-]+)/n) do
+    '%' + $1.unpack('H2' * $1.size).join('%').upcase
+  end
 end
 
 $text = strip_headers($text)
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
-	$text = %x{echo #{e_sh $text}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
-end
-
-TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
-
-$text = strip_html($text)
-
-TextMate.call_with_progress(:title =&gt;'Retrieving Tag Suggestions',
-                        :summary =&gt; 'Contacting Yahoo...',
-                        :indeterminate =&gt; false,
-                        :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
-dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 50 }
-	words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
-    words.delete_if{|word| word =~ $skipwords }
-    query = words.join('+')
-
-    yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
-	
-	ysorted = nil
-    unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
-    ysorted = yahoo.parse_analysis.sort do |a,b|
-      a.upcase &lt;=&gt; b.upcase
-    end
-	end
-
-tags = []
-
-    $goodtags.each {|tag|
-     	 tags.push(tag)
-		}
-
-    dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
-    
-    words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
-    lc_skipwords = $skipwords.map {|skipword| skipword.downcase }
-    words.delete_if{|word| lc_skipwords.include? word.downcase }
-    porterwords = words.map{|word| Text::PorterStemming.stem(word).downcase}
-
-    freqs = Hash.new(0)
-    words.each { |word| freqs[word] += 1 }
-    freqs = freqs.sort_by {|x,y| y }
-    freqs.reverse!
-	
-    matches = []
-	
-    tags.each{|tag|
-		if tag =~ /.+(\s.+)+/
-			multiword = $text.downcase.match(/#{tag.downcase}/)
-			matches.push(tag) unless multiword.nil?
-		else
-	    		matches.push(tag) if porterwords.include? Text::PorterStemming.stem(tag).downcase
-		end
-    }
-	freqs.each {|f| matches.push(f[0]) if f[1] &gt; 3 }
-	$alwaystags.each {|tag| matches.push(tag) }
-    ysorted.each {|tag| matches.push(tag) } unless ysorted.nil?
-    TextMate.exit_show_tool_tip "No tag matches in text" if matches.nil? || matches.empty?
-    sorted = matches.sort do |a,b|
-      a.upcase &lt;=&gt; b.upcase
+  $text = %x{echo #{e_sh $text}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
     end
 
-    sorted = sorted.map{|x| x.downcase}.uniq
+    TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
 
-    $tarray = []
-    sorted.each { |tag|
-        $tarray &lt;&lt; { 
-    	 	 'title' =&gt; tag, 
-          'tag' =&gt; tag 
+    $text = strip_html($text)
+
+    TextMate.call_with_progress(:title =&gt;'Retrieving Tag Suggestions',
+      :summary =&gt; 'Contacting Yahoo...',
+      :indeterminate =&gt; false,
+    :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
+      dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 50 }
+      words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
+      words.delete_if{|word| word =~ $skipwords }
+      query = words.join('+')
+
+      yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
+
+      ysorted = nil
+      unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
+        ysorted = yahoo.parse_analysis.sort do |a,b|
+          a.upcase &lt;=&gt; b.upcase
+        end
+      end
+
+      tags = []
+
+      $goodtags.each {|tag|
+        tags.push(tag)
+      }
+
+      dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
+      density = KeywordDensity.new($goodtags,File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.skipwords.txt"))
+
+      density.get_keyword_density($text)
+      words = density.words_count
+
+
+      matches = []
+
+      words.each {|phrase,count| matches.push(phrase.join(' ')) if count &gt; 3 || (count &gt; 2 &amp;&amp; phrase.length &gt; 1)}
+      $alwaystags.each {|tag| matches.push(tag) }
+      ysorted.each {|tag| matches.push(tag) } unless ysorted.nil?
+      TextMate.exit_show_tool_tip "No tag matches in text" if matches.nil? || matches.empty?
+      sorted = matches.sort do |a,b|
+        a.upcase &lt;=&gt; b.upcase
+      end
+
+      sorted = sorted.map{|x| x.downcase}.uniq
+
+      $tarray = []
+      sorted.each { |tag|
+        $tarray &lt;&lt; {
+          'title' =&gt; tag,
+          'tag' =&gt; tag
         }
-    }
-dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
-end
+      }
+      dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
+    end
     plist = { 'tags' =&gt; $tarray }.to_plist
     res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags4`)
 
-    TextMate.exit_insert_text "tags: " if res['returnButton'] == "Cancel"
-    returnedtags = res['result']['returnArgument']
-    tags = update_whitelist(returnedtags)
-    tagslist = ''
-    tags.map {|tag| 
-    	tagslist += ";" unless tagslist == ''
-	tagslist += tag.gsub(/\s/,"-") + ";" if tag =~ /\w+\s\w+/
-    	tagslist += tag }  
-    print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
-    print "#{tagslist.chomp}"
+      TextMate.exit_insert_text "tags: " if res['returnButton'] == "Cancel"
+      returnedtags = res['result']['returnArgument']
+      tags = update_whitelist(returnedtags)
+      tagslist = ''
+      tags.map {|tag|
+        tagslist += ";" unless tagslist == ''
+        tagslist += tag.gsub(/\s/,"-") + ";" if tag =~ /\w+\s\w+/
+      tagslist += tag }
+      print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
+      print "#{tagslist.chomp}"
 </string>
 	<key>input</key>
 	<string>document</string>
