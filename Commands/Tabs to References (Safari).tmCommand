@@ -47,7 +47,9 @@ if links.empty? then
 else
 	norepeat = []
 output = []
+
 links.each {|url| 
+	next if url =~ /^file/
 	domain = url.match(/https?:\/\/([^\/]+)/)
 	parts = domain[1].split('.')
 	name = case parts.length
