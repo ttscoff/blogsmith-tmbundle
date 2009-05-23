@@ -79,12 +79,17 @@ TextMate.exit_insert_text "categories: " if res['returnButton'] == "Cancel"
 # TextMate.exit_show_tool_tip "nothing returned" unless res.has_key? 'selectedMenuItem'
 returnedcats = res['result']['returnArgument']
 catlist = ''
+unless $line.empty?
+	existing_cats = $line.split(';')
+	returnedcats.delete_if {|cat| existing_cats.include? cat}
+end
 returnedcats.map {|cat|
 	catlist += ";" unless catlist == ''
 	catlist += cat
 }
 print "categories: " unless $line =~ /^[Cc]ategories\:(.*)?/
-print "#{catlist.chomp}"</string>
+print "#{catlist.chomp}"
+print ";" unless $line.empty?</string>
 	<key>input</key>
 	<string>document</string>
 	<key>name</key>
