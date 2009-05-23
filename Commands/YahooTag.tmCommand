@@ -144,6 +144,10 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 
       TextMate.exit_insert_text "tags: " if res['returnButton'] == "Cancel"
       returnedtags = res['result']['returnArgument']
+	unless $line.empty?
+		existing_tags = $line.split(';')
+		returnedtags.delete_if {|tag| existing_tags.include? tag}
+	end
       tags = update_whitelist(returnedtags)
       tagslist = ''
       tags.map {|tag|
@@ -152,7 +156,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       tagslist += tag }
       print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
       print "#{tagslist.chomp}"
-</string>
+	print ";" unless $line.empty?</string>
 	<key>input</key>
 	<string>document</string>
 	<key>name</key>
