@@ -6,6 +6,9 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby -wKU
+
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/exit_codes'
 require 'erb'
 
 # CHANGE: 3/27/09 search for $32.25 with no trailing US, accounts for possible space ($32 US)
@@ -22,7 +25,9 @@ end
 def strip_html(string,removals)
 	iterations = string.scan(/&lt;[^&gt;]+&gt;/).length
 	while iterations &gt; 0
-		string.sub!(/(&lt;[^&gt;]+&gt;)/,"%#{removals.length}%")
+		subnum = removals.length
+		subnum = "0" + subnum.to_s if subnum.to_s.length == 1
+		string.sub!(/(&lt;[^&gt;]+&gt;)/,"%#{subnum}%")
 		removals += $1.to_a
 		iterations -= 1		
 	end
@@ -61,7 +66,8 @@ def restore_replacements(string,removals)
 	removals.each_with_index {|removal,x|
 		x = "0" + x.to_s if x.to_s.length == 1
 		m = string.match(/%#{x}([^%]+)?%/)
-		if m[1].nil? 
+		next if m.nil?
+		if m[1].nil?
 			string.sub!(/%#{x}%/,removals[x.to_i])
 		else
 			if removals[x.to_i] =~ /\[[^\]]+\]([\[\(][^\]\)]+[\]\)])/
