@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/ui'
+require 'net/http'
+require 'rexml/document'
+require "#{BUNDLESUPPORT}/lib/cooldialog.rb"
+
+input = STDIN.read
+response = TextMate::UI.request_string(:title =&gt; "Enter your query",:prompt =&gt; "Ask a question, any question:",:default =&gt; input)
+TextMate.exit_discard unless response
+phrase = e_url(response)
+
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{phrase}&amp;sources=instantanswer"
+xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+doc = REXML::Document.new(xml_data)
+answer = nil
+doc.elements.each('SearchResponse/ia:InstantAnswer/ia:Results/ia:InstantAnswerResult/ia:InstantAnswerSpecificData/enc:Encarta') do |result|
+	answer = result.elements['enc:Value'].text
+end
+
+TextMate.exit_show_tool_tip "No results" if answer.nil?
+%x{echo -n "#{answer.gsub(/&lt;[^&gt;]+&gt;/,'')}"|pbcopy}
+TextMate::CoolDialog.cool_tool_tip(answer.gsub(/&lt;[^&gt;]+&gt;/,'') + "\nAnswer in clipboard")</string>
+	<key>fallbackInput</key>
+	<string>none</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Bing Instant Answer</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>1A0DFAA3-ECC5-45F0-8D22-1A5B65A53EC4</string>
+</dict>
+</plist>

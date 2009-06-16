@@ -28,6 +28,7 @@
 			<string>F33AAF3A-B233-472C-99D2-6C4239B6D608</string>
 			<string>6C8AB5B3-A579-4957-AEC0-F8FAD016D961</string>
 			<string>ED253253-930E-4D7C-A022-7B8BBEF2BB9A</string>
+			<string>B25F1266-F0BF-433E-B425-CEEAFDFCE7D5</string>
 		</array>
 		<key>submenus</key>
 		<dict>
@@ -57,9 +58,9 @@
 					<string>F3A789D0-EE7D-4E15-8230-C4101B3B4934</string>
 					<string>FABC6A2D-031F-42FC-BAE9-DA994B493687</string>
 					<string>171851C5-3E21-4773-848B-8932EED3BB68</string>
-					<string>8BA9BA89-00ED-47C5-A137-35E9C64A205C</string>
 					<string>04F43BDC-92DA-4178-A018-4AFE787F30FC</string>
 					<string>73D7CF67-C6D6-49EF-968F-5E07A31F83C7</string>
+					<string>24AEA2EE-846A-4246-A326-7F2FC9727E97</string>
 				</array>
 				<key>name</key>
 				<string>Formatting</string>
@@ -76,6 +77,17 @@
 				</array>
 				<key>name</key>
 				<string>Headers</string>
+			</dict>
+			<key>B25F1266-F0BF-433E-B425-CEEAFDFCE7D5</key>
+			<dict>
+				<key>items</key>
+				<array>
+					<string>B14B1917-515B-4B02-9F26-55093F7215C1</string>
+					<string>53D486B1-FB90-48AE-B1D2-97E47EBD6D32</string>
+					<string>1A0DFAA3-ECC5-45F0-8D22-1A5B65A53EC4</string>
+				</array>
+				<key>name</key>
+				<string>Search</string>
 			</dict>
 			<key>DF85171C-065B-4A31-B923-E0CC767B6778</key>
 			<dict>
@@ -111,7 +123,9 @@
 	<string>Blogsmith Blogging</string>
 	<key>ordering</key>
 	<array>
-		<string>8BA9BA89-00ED-47C5-A137-35E9C64A205C</string>
+		<string>B14B1917-515B-4B02-9F26-55093F7215C1</string>
+		<string>53D486B1-FB90-48AE-B1D2-97E47EBD6D32</string>
+		<string>1A0DFAA3-ECC5-45F0-8D22-1A5B65A53EC4</string>
 		<string>24AEA2EE-846A-4246-A326-7F2FC9727E97</string>
 		<string>7D554CE8-6BD2-4D30-A8AC-13D434443102</string>
 		<string>925F2507-B49C-43A6-B521-53315894BD0A</string>

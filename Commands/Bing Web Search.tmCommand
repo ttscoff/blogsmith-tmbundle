@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require 'erb'
+require 'net/http'
+require 'rexml/document'
+
+phrase = STDIN.read
+
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=web"
+xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+doc = REXML::Document.new(xml_data)
+bings = []
+doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+	bings &lt;&lt; {
+		'title' =&gt; result.elements['web:Title'].text.gsub('"','&amp;raquo;'),
+		'url' =&gt; result.elements['web:Url'].text
+	}
+end
+TextMate.exit_show_tool_tip "No matches" if bings.empty?
+plist = { 'menuItems' =&gt; bings }.to_plist
+res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
+url = res['selectedMenuItem']['url']
+input = phrase # res['selectedMenuItem']['title']
+	
+print ERB.new(ENV['TM_BLINK_FORMAT']).result</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Bing Web Search</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>B14B1917-515B-4B02-9F26-55093F7215C1</string>
+</dict>
+</plist>

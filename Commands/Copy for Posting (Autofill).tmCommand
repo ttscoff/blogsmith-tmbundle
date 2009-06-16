@@ -48,7 +48,7 @@ end
 def get_headers(html)
 	headers = []
 	html.scan(/^([A-Za-z]+)\: ([^\n]+)/m) { |match|
-		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1] } unless match[0] == 'doctype'
+		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
 	}
 	# %x{echo -n "#{html.match(/^[Ll]ink: ([^\n]+)/m)[1]}"|pbcopy}
 	headers
