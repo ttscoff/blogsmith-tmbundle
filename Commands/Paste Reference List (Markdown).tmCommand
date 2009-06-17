@@ -6,6 +6,8 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/exit_codes'
 
 clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 input = STDIN.read
