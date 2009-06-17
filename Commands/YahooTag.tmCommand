@@ -154,15 +154,16 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
         tagslist += ";" unless tagslist == ''
         tagslist += tag.gsub(/\s/,"-") + ";" if tag =~ /\w+\s\w+/
       tagslist += tag }
-      print "tags: " unless $line =~ /^[Tt]ags\:(.*)?/
-      print "#{tagslist.chomp}"
-	print ";" unless $line.empty?</string>
+      b = $line =~ /^[Tt]ags\:(.*)?/ ? '' : "tags: "
+      o = "#{tagslist.chomp}"
+	o += ";" unless $line.empty? || o == ''
+	print "#{b}$0${1:#{o}}"</string>
 	<key>input</key>
 	<string>document</string>
 	<key>name</key>
 	<string>YahooTag</string>
 	<key>output</key>
-	<string>afterSelectedText</string>
+	<string>insertAsSnippet</string>
 	<key>scope</key>
 	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>tabTrigger</key>
