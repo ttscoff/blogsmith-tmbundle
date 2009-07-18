@@ -29,6 +29,12 @@ $0</string>
 				<key>value</key>
 				<string>$&lt;%= num %&gt;US</string>
 			</dict>
+			<dict>
+				<key>name</key>
+				<string>TM_ITUNES_FORMAT</string>
+				<key>value</key>
+				<string>[${1:&lt;%= e_sn input %&gt;}](${2:&lt;%= e_sn url %&gt;})$0</string>
+			</dict>
 		</array>
 	</dict>
 	<key>uuid</key>

@@ -17,18 +17,19 @@ require 'erb'
 
 input = STDIN.read
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
+blogsite = "www." + blogsite unless blogsite =~ /^www\./
 linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
 TextMate.exit_discard unless linktext
 
-query = e_url('intitle:"Posts tagged" '+ linktext + " site:#{blogsite}")
+query = e_url(linktext + " site:#{blogsite}/tag")
 
 yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
 
 if yahoo.parse_results.length &gt; 0
 ysuggest = []
     yahoo.parse_results.each {|result|
-		if result['Title'] =~ /^Posts tagged/ &amp;&amp; !(result['Url'] =~ /bloglines|page/)
-			tag_title = result['Title'].match(/^Posts tagged (.+) at/)[1]
+		unless (result['Url'] =~ /bloglines|page/)
+			tag_title = result['Title'].match(/^(.+) -- TUAW/)[1]
         ysuggest &lt;&lt; { 
           'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
           'url' =&gt; result['Url']}
@@ -49,31 +50,7 @@ else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end
 else
-
-query = e_url(linktext + " inurl:tag/ site:#{blogsite}")
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 10, 1, nil, 1)
-
-ysuggest = []
-    yahoo.parse_results.each {|result| 
-        if result['Title'] =~ /^Posts tagged/
-			tag_title = result['Title'].match(/^Posts tagged (.+) at/)[1]
-        ysuggest &lt;&lt; { 
-          'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
-          'url' =&gt; result['Url']}
-		end
-    }
-    plist = { 'menuItems' =&gt; ysuggest }.to_plist
-    
-    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-    TextMate.exit_show_tool_tip "No valid tags found" unless res.has_key? 'selectedMenuItem'
-    url = res['selectedMenuItem']['url']
-    title = res['selectedMenuItem']['title']
-    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	input = "tag" + title.chomp.gsub(/\s+/,"_")
-	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-else
-    print ERB.new(ENV['TM_BLINK_FORMAT']).result
-end
+  TextMate.exit_show_tool_tip "No related tags found in index"
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>

@@ -18,6 +18,7 @@ require 'cgi'
 
 input = STDIN.read
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
+blogsite = "www." + blogsite unless blogsite =~ /^www\./
 input.empty? ? searchstring = "Search string" : searchstring = input
 res = TextMate::UI.request_string(:title =&gt; "TUAW Search Query",:prompt =&gt; "Enter terms to create a search link",:default =&gt; searchstring)
 TextMate.exit_discard unless res
