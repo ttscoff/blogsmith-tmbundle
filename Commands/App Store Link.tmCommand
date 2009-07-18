@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'erb'
+
+input = STDIN.read
+linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create an App Store link",:default =&gt; input)
+TextMate.exit_discard unless linktext
+
+query = e_url(linktext + " site:itunes.apple.com")
+
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
+
+if yahoo.parse_results.length &gt; 0
+	
+ysuggest = []
+    yahoo.parse_results.each {|result|
+
+			url = result['Url']
+			title = result['Title']
+			if url =~ /viewSoftware[%\dF]+id[%&amp;]([^&amp;%]+)/
+				id = $1.gsub(/253D/,'')
+		        ysuggest &lt;&lt; { 
+		          'title' =&gt; title,
+		          'url' =&gt; id
+				}
+			end
+
+    }
+
+    plist = { 'menuItems' =&gt; ysuggest }.to_plist
+    
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+    id = res['selectedMenuItem']['url']
+    url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
+    checkurl = "itms://ax.itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;amp;mt=8&amp;amp;ign-mscache=1"
+    title = res['selectedMenuItem']['title']
+
+    check = TextMate::UI.request_confirmation(:button1 =&gt; "Yes", :button2 =&gt; "Nah", :title =&gt; "Double check…",:prompt =&gt; "Check selected link in iTunes?")
+	`open "#{checkurl}"` if check == true
+    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+	input = "itunes-" + title.chomp
+	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+else
+  TextMate.exit_show_tool_tip "No matching App Store links found in index"
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>App Store Link</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<key>tabTrigger</key>
+	<string>tag</string>
+	<key>uuid</key>
+	<string>165B02E9-40F9-4444-B9EA-1C9561D7980A</string>
+</dict>
+</plist>
