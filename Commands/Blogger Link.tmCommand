@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'erb'
+require 'cgi'
+require 'net/http'
+
+input = STDIN.read
+blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
+blogsite = "www." + blogsite unless blogsite =~ /^www\./
+
+query = e_url(input + " site:#{blogsite}/bloggers -inurl:page")
+
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 1, 1, nil, 1)
+
+TextMate.exit_show_tool_tip "Blogger not found, check your spelling" if yahoo.parse_results.length == 0
+url = yahoo.parse_results[0]['Url']
+res = Net::HTTP.get_response(URI.parse(url)).body
+name_match = res.match(/class="bloggername"&gt;([^&lt;]+)&lt;/)
+name_match = res.match(/class="byline"&gt;by &lt;strong&gt;&lt;a href="[^"]+"&gt;([^&lt;]+)&lt;\/a&gt;/) if name_match.nil?
+url += "/" unless url =~ /\/$/
+
+if name_match.nil?
+	input = input.chomp.gsub(/\b([a-z])/i) {|w| w.capitalize }
+	url = "http://www.tuaw.com/bloggers/#{input.downcase.gsub(/\s+/,'-')}/"
+	if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+		print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+	else
+	    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+	end	
+else
+	input = name_match[1].chomp
+
+	if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+		print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+	else
+	    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+	end
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Blogger Link</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<key>tabTrigger</key>
+	<string>tag</string>
+	<key>uuid</key>
+	<string>DB2BB6A6-B3B4-4AE6-B29A-9EDF8C7D52D7</string>
+</dict>
+</plist>

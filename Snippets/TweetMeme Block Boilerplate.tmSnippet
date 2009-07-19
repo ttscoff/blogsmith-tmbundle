@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>&lt;div style="float: left; margin-right: 10px; margin-bottom: 2px;"&gt;
+&lt;script type="text/javascript"&gt;
+tweetmeme_url = http://POST-URL-Here';
+tweetmeme_source = 'tuaw';
+&lt;/script&gt;
+&lt;script type="text/javascript" src="http://tweetmeme.com/i/scripts/button.js"&gt;&lt;/script&gt;
+&lt;/div&gt;</string>
+	<key>name</key>
+	<string>TweetMeme Block Boilerplate</string>
+	<key>tabTrigger</key>
+	<string>tweet</string>
+	<key>uuid</key>
+	<string>F1B103F5-2D18-4DFB-BF9B-6E4B8200AA2A</string>
+</dict>
+</plist>

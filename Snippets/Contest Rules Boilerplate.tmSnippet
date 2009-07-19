@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>Here are the rules and a link to the legal statement:
+
+* Open to legal US residents of the 50 United States and the District of Columbia who are 18 and older.
+* To enter leave a comment ${1:describing...}.
+* The comment must be left before ${2:Wednesday, July 22, 11:59PM} Eastern Daylight Time.
+* You may enter only once.
+* ${3:Ten winners} will be selected in a random drawing.
+* Prize: ${4:Promo code for...} (US\$${5:1.99} value)
+* Click Here for complete [Official Rules](http://www.weblogsinc.com/official-giveaway-rules).
+
+${6:Good Luck!}
+$0</string>
+	<key>name</key>
+	<string>Contest Rules Boilerplate</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
+	<key>tabTrigger</key>
+	<string>contest</string>
+	<key>uuid</key>
+	<string>FDA18519-51E3-4FC1-83A5-DCEBEC78C5E3</string>
+</dict>
+</plist>
