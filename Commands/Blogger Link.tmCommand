@@ -23,31 +23,45 @@ blogsite = "www." + blogsite unless blogsite =~ /^www\./
 
 query = e_url(input + " site:#{blogsite}/bloggers -inurl:page")
 
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 1, 1, nil, 1)
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
 
 TextMate.exit_show_tool_tip "Blogger not found, check your spelling" if yahoo.parse_results.length == 0
-url = yahoo.parse_results[0]['Url']
-res = Net::HTTP.get_response(URI.parse(url)).body
-name_match = res.match(/class="bloggername"&gt;([^&lt;]+)&lt;/)
-name_match = res.match(/class="byline"&gt;by &lt;strong&gt;&lt;a href="[^"]+"&gt;([^&lt;]+)&lt;\/a&gt;/) if name_match.nil?
-url += "/" unless url =~ /\/$/
 
-if name_match.nil?
-	input = input.chomp.gsub(/\b([a-z])/i) {|w| w.capitalize }
-	url = "http://www.tuaw.com/bloggers/#{input.downcase.gsub(/\s+/,'-')}/"
-	if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-		print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-	else
-	    print ERB.new(ENV['TM_BLINK_FORMAT']).result
-	end	
-else
-	input = name_match[1].chomp
-
-	if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-		print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-	else
-	    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+ysuggest = []
+yahoo.parse_results.each {|result|
+	if result['Url'].gsub(/-/,' ') =~ /#{input}/i &amp;&amp; result['Url'] =~ /^http:\/\/www\.tuaw\.com\/bloggers\/[^\/]+\/?$/
+		blogger_name = result['Url'].match(/\/bloggers\/([^\/]+)\/?/)[1].chomp.gsub(/-/,' ').gsub(/\b([a-z])/i) {|w| w.capitalize } 
+	ysuggest &lt;&lt; { 
+	      'title' =&gt; blogger_name,
+	      'url' =&gt; result['Url']
+		}
 	end
+}
+ysuggest.uniq!
+TextMate.exit_show_tool_tip "No matches found" if ysuggest.empty?
+if ysuggest.length &gt; 1
+plist = { 'menuItems' =&gt; ysuggest }.to_plist
+
+res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+url = res['selectedMenuItem']['url']
+url += "/" unless url =~ /\/$/
+input = res['selectedMenuItem']['title']
+else
+	url = ysuggest[0]['url']
+	url += "/" unless url =~ /\/$/
+	input = ysuggest[0]['title']
+end
+
+# res = Net::HTTP.get_response(URI.parse(url)).body
+# name_match = res.match(/class="bloggername"&gt;([^&lt;]+)&lt;/)
+# name_match = res.match(/class="byline"&gt;by &lt;strong&gt;&lt;a href="[^"]+"&gt;([^&lt;]+)&lt;\/a&gt;/) if name_match.nil?
+# url += "/" unless url =~ /\/$/
+
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
