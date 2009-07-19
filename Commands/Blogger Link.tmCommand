@@ -29,7 +29,7 @@ TextMate.exit_show_tool_tip "Blogger not found, check your spelling" if yahoo.pa
 
 ysuggest = []
 yahoo.parse_results.each {|result|
-	if result['Url'].gsub(/-/,' ') =~ /#{input}/i &amp;&amp; result['Url'] =~ /^http:\/\/www\.tuaw\.com\/bloggers\/[^\/]+\/?$/
+	if result['Url'].gsub(/-/,' ') =~ /#{input}/i &amp;&amp; result['Url'] =~ /^http:\/\/#{blogsite}\/bloggers\/[^\/]+\/?$/
 		blogger_name = result['Url'].match(/\/bloggers\/([^\/]+)\/?/)[1].chomp.gsub(/-/,' ').gsub(/\b([a-z])/i) {|w| w.capitalize } 
 	ysuggest &lt;&lt; { 
 	      'title' =&gt; blogger_name,
