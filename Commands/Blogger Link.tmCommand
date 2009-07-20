@@ -37,10 +37,13 @@ yahoo.parse_results.each {|result|
 		}
 	end
 }
-ysuggest.uniq!
-TextMate.exit_show_tool_tip "No matches found" if ysuggest.empty?
-if ysuggest.length &gt; 1
-plist = { 'menuItems' =&gt; ysuggest }.to_plist
+sorted = ysuggest.sort do |a,b| 
+	a['title'] &lt;=&gt; b['title']
+end
+sorted.uniq!
+TextMate.exit_show_tool_tip "No matches found" if sorted.empty?
+if sorted.length &gt; 1
+plist = { 'menuItems' =&gt; sorted }.to_plist
 
 res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
 TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
@@ -48,9 +51,9 @@ url = res['selectedMenuItem']['url']
 url += "/" unless url =~ /\/$/
 input = res['selectedMenuItem']['title']
 else
-	url = ysuggest[0]['url']
+	url = sorted[0]['url']
 	url += "/" unless url =~ /\/$/
-	input = ysuggest[0]['title']
+	input = sorted[0]['title']
 end
 
 # res = Net::HTTP.get_response(URI.parse(url)).body
