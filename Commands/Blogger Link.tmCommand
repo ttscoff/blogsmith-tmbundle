@@ -78,8 +78,6 @@ end</string>
 	<string>insertAsSnippet</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
-	<key>tabTrigger</key>
-	<string>tag</string>
 	<key>uuid</key>
 	<string>DB2BB6A6-B3B4-4AE6-B29A-9EDF8C7D52D7</string>
 </dict>
