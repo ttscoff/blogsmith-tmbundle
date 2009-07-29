@@ -33,7 +33,7 @@ def readwords(wordfile)
   return wordlist.map {|aword| aword = aword.strip }
 end
 
-def update_whitelist(tags)
+def update_whitelist(tags,write)
   lctags = $goodtags.map {|x| x.downcase }
   keeptags = tags.clone
   keeptags.delete_if {|x| lctags.include? x.downcase }
@@ -44,10 +44,11 @@ def update_whitelist(tags)
   newtags.sort! do |a,b|
     a.upcase &lt;=&gt; b.upcase
   end
-
+if write
   f = File.new(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.whitelist.txt"),  "w+")
   f.print newtags.join("\n")
   f.close
+end
   return tags
 end
 
@@ -68,7 +69,7 @@ end
 def strip_headers(str)
   str.strip!
   str.gsub!(/&lt;!--\s?more\s?--&gt;/,'')
-  str.gsub(/^[^ ]+\: [^\n]+/, '')
+  str.gsub(/^[^ \[]+\: [^\n]+/, '')
 end
 
 def url_escape(string)
@@ -96,7 +97,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       words.delete_if{|word| word =~ $skipwords }
       query = words.join('+')
 
-      yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
+      yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query[0..8000], 'all', 50)
 
       ysorted = nil
       unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
@@ -148,7 +149,8 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 		existing_tags = $line.split(';')
 		returnedtags.delete_if {|tag| existing_tags.include? tag}
 	end
-      tags = update_whitelist(returnedtags)
+	write = res['whitelist'] == 1 ? true : false
+      tags = update_whitelist(returnedtags,write)
       tagslist = ''
       tags.map {|tag|
         tagslist += ";" unless tagslist == ''

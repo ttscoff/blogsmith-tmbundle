@@ -97,7 +97,7 @@ dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 
     words.delete_if{|word| word =~ $skipwords }
     query = words.join('+')
 
-    yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query, 'all', 50)
+    yahoo = TagAnalysis.new('TM_AUTOSUGGEST', query[0..8000], 'all', 50)
 	
 	ysorted = nil
     unless yahoo.parse_analysis.nil? || yahoo.parse_analysis.empty?
