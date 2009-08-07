@@ -29,7 +29,7 @@ if yahoo.parse_results.length &gt; 0
 ysuggest = []
     yahoo.parse_results.each {|result|
 		unless (result['Url'] =~ /bloglines|page/)
-			tag_title = result['Title'].match(/^(.+) -- TUAW/)[1]
+			tag_title = result['Title'].gsub(/ -- TUAW/,'')
         ysuggest &lt;&lt; { 
           'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
           'url' =&gt; result['Url']}
