@@ -9,6 +9,7 @@
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
 require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require 'erb'
@@ -16,8 +17,12 @@ require 'net/http'
 require 'rexml/document'
 
 phrase = STDIN.read
-
-escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=news"
+offset = 0
+if phrase.empty?
+	phrase = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for")
+end
+def do_search(offset,phrase)
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=news&amp;news.offset=#{offset}"
 xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
 doc = REXML::Document.new(xml_data)
 bings = []
@@ -27,18 +32,37 @@ doc.elements.each('SearchResponse/news:News/news:Results/news:NewsResult') do |r
 	newssource = result.elements['news:Source'].text
 	bings &lt;&lt; {
 		'title' =&gt; "#{newsdate}: #{newstitle} (#{newssource})",
-		'url' =&gt; result.elements['news:Url'].text
+		'url' =&gt; result.elements['news:Url'].text,
+		'label' =&gt; "#{phrase} - #{newssource}"
 	}
 end
+bings &lt;&lt; {
+  'title' =&gt; 'More results…',
+  'url' =&gt; ''
+} unless bings.empty?
+
 
 TextMate.exit_show_tool_tip "No matches" if bings.empty?
 plist = { 'menuItems' =&gt; bings }.to_plist
 res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
 TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
+ if res['selectedMenuItem']['title'] == "More results…"
+    offset += 10
+    do_search(offset,phrase)
+  else
+    return res
+  end
+end
+
+res = do_search(offset,phrase)
 url = res['selectedMenuItem']['url']
-input = phrase # res['selectedMenuItem']['title']
+input = res['selectedMenuItem']['label']
 	
-print ERB.new(ENV['TM_BLINK_FORMAT']).result</string>
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase}|)(\s+)?$/
+	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>

@@ -43,7 +43,7 @@ ysuggest = []
     url = res['selectedMenuItem']['url']
     title = res['selectedMenuItem']['title']
 
-    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
 	input = "tag" + title.chomp.gsub(/\s+/,"_")
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
