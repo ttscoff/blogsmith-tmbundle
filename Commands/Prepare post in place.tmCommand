@@ -38,7 +38,7 @@ echo "$bodytext"|perl -pe '
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Prepare post in place</string>
+	<string>Prepare Post in Place</string>
 	<key>output</key>
 	<string>replaceSelectedText</string>
 	<key>scope</key>

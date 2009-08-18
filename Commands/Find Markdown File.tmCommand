@@ -34,7 +34,7 @@ project = "\"" + res['result']['returnArgument'].join("\" \"") + "\""
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Find Markdown File</string>
+	<string>Find Markdown file</string>
 	<key>output</key>
 	<string>showAsTooltip</string>
 	<key>scope</key>

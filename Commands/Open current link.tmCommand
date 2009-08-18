@@ -13,7 +13,7 @@
 	<key>keyEquivalent</key>
 	<string></string>
 	<key>name</key>
-	<string>Open current link</string>
+	<string>Open Current Link</string>
 	<key>output</key>
 	<string>showAsTooltip</string>
 	<key>scope</key>

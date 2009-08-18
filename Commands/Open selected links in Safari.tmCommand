@@ -11,13 +11,14 @@ input = STDIN.read
 
 links = input.scan /(https?:\/\/[^" \n]+)/m
 # puts links
-links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}</string>
+# links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}
+links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Open selected links in Safari</string>
+	<string>Open Links In Selection</string>
 	<key>output</key>
 	<string>afterSelectedText</string>
 	<key>scope</key>
