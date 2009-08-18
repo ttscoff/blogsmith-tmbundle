@@ -5,63 +5,60 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env ruby -rjcode -Ku
+	<string>#!/usr/bin/env ruby
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
-require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'erb'
+require 'net/http'
 
-input = STDIN.read
-linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create an App Store link",:default =&gt; input)
-TextMate.exit_discard unless linktext
+phrase = STDIN.read
 
-query = e_url(linktext + " site:itunes.apple.com")
+escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(phrase.strip)}/"
 
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
+res = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+apps = []
+res.split("\n").each {|app|
+	apps &lt;&lt; {
+			'title' =&gt; app,
+			'url' =&gt; app
+		}
+}
+TextMate.exit_show_tool_tip "No matches" if apps.empty?
+if apps.length == 1
+	sel = apps[0]['url']
+else
+	plist = { 'menuItems' =&gt; apps }.to_plist
+	res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+	TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
+	sel = res['selectedMenuItem']['url']
+end
+id_url = "http://beta.appspace.com/apps/get-id-from-name/#{e_url(sel)}/"
+app_res = Net::HTTP.get_response(URI.parse(id_url)).body
+begin
+	appspace_id = app_res.match(/"app_id"\: (\d+)/)[1]
+rescue
+	TextMate.exit_show_tool_tip "Error retrieving ID"
+end
+view_url = "http://beta.appspace.com/apps/view/#{appspace_id}/"
+scrape = Net::HTTP.get_response(URI.parse(view_url)).body
+id = scrape.match(/viewSoftware%3Fid%3D(\d+)/)[1]
+price = scrape.match(/buy_button"&gt;\$(\d+\.\d\d)/)[1].to_s
 
-if yahoo.parse_results.length &gt; 0
-	
-ysuggest = []
-    yahoo.parse_results.each {|result|
+url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
+input = "#{sel}"
 
-			url = result['Url']
-			title = result['Title']
-			if url =~ /viewSoftware[%\dF]+id[%&amp;]([^&amp;%]+)/
-				id = $1.gsub(/253D/,'')
-		        ysuggest &lt;&lt; { 
-		          'title' =&gt; title,
-		          'url' =&gt; id
-				}
-			end
-
-    }
-
-    plist = { 'menuItems' =&gt; ysuggest }.to_plist
-    
-    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-    id = res['selectedMenuItem']['url']
-    url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
-    checkurl = "itms://ax.itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;amp;mt=8&amp;amp;ign-mscache=1"
-    title = res['selectedMenuItem']['title']
-
-    check = TextMate::UI.request_confirmation(:button1 =&gt; "Yes", :button2 =&gt; "Nah", :title =&gt; "Double check…",:prompt =&gt; "Check selected link in iTunes?")
-	`open "#{checkurl}"` if check == true
-    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	input = "itunes-" + title.chomp
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
-    print ERB.new(ENV['TM_BLINK_FORMAT']).result
+	print ERB.new(ENV['TM_BLINK_FORMAT']).result
+	print " (iTunes link)"
 end
-else
-  TextMate.exit_show_tool_tip "No matching App Store links found in index"
-end</string>
-	<key>fallbackInput</key>
-	<string>word</string>
+
+	
+</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
@@ -71,8 +68,8 @@ end</string>
 	<key>output</key>
 	<string>insertAsSnippet</string>
 	<key>scope</key>
-	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>uuid</key>
-	<string>165B02E9-40F9-4444-B9EA-1C9561D7980A</string>
+	<string>AD95C84B-AAD4-4F3A-B79B-604B08190004</string>
 </dict>
 </plist>
