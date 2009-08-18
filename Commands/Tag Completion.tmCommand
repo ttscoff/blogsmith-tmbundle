@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+require ENV['TM_SUPPORT_PATH'] + '/lib/ui.rb'
+require ENV['TM_SUPPORT_PATH'] + '/lib/exit_codes.rb'
+$line = ENV['TM_CURRENT_LINE']
+def readwords(wordfile)
+  if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+    wordlist = IO.readlines(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+  else
+    wordlist = IO.readlines("#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{wordfile}")
+  end
+  return wordlist.map {|aword| aword = aword.strip }
+end
+
+tags = readwords("whitelist.txt")
+tags += readwords("alwaystags.txt")
+tags.uniq!.sort!
+currentword = (ENV['TM_CURRENT_WORD'] || '')
+
+if currentword =~ /;/
+  currentword = currentword.split(';')[1]
+end
+
+if currentword == '' || currentword.nil?
+  tags_scoped = tags
+else
+  tags_scoped = []
+  tags.each {|word|
+    if word =~ /^#{currentword}/i
+      tags_scoped.push(word)
+    end
+  }
+end
+
+choice = TextMate::UI.menu(tags_scoped)
+if choice then
+  unless $line.empty?
+    existing_tags = $line.split(';')
+    TextMate.exit_show_tool_tip "Tag already used" if existing_tags.include?(tags_scoped[choice])
+  end
+  if currentword == "@"
+    choice = tags_scoped[choice][1..tags_scoped[choice].length]
+  else
+    choice = "#{tags_scoped[choice]}"
+  end
+
+  b = $line =~ /^[Tt]ags\:(.*)?/ ? '' : "tags: "
+  o = "#{choice.chomp}"
+  # o += ";" unless $line.empty? || o == ''
+  print "#{b}${1:#{o}}"
+else
+  TextMate.exit_discard
+end
+</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string></string>
+	<key>name</key>
+	<string>Tag Completion</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>meta.header.multimarkdown</string>
+	<key>uuid</key>
+	<string>8BB6D49F-E99E-40FA-A702-1E088BF1AAF6</string>
+</dict>
+</plist>
