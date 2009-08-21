@@ -9,14 +9,15 @@
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
 require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require 'erb'
 require 'net/http'
 
 phrase = STDIN.read
-
-escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(phrase.strip)}/"
+keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
+escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(keyword.strip)}/"
 
 res = Net::HTTP.get_response(URI.parse(escapedUrl)).body
 apps = []
@@ -48,9 +49,9 @@ id = scrape.match(/viewSoftware%3Fid%3D(\d+)/)[1]
 price = scrape.match(/buy_button"&gt;\$(\d+\.\d\d)/)[1].to_s
 
 url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
-input = "#{sel}"
+input = phrase.empty? ? sel : phrase
 
-if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
 	print ERB.new(ENV['TM_BLINK_FORMAT']).result
@@ -59,6 +60,8 @@ end
 
 	
 </string>
+	<key>fallbackInput</key>
+	<string>word</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
