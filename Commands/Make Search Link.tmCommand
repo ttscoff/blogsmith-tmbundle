@@ -27,16 +27,17 @@ yahoo = WebSearch.new('TM_YAHOO', query, 'all', 10, 1, nil, 1)
 url_count = yahoo.parse_results.length
 title = ""
 if url_count.to_i &gt; 3
-	url = "http://#{blogsite}/search/?q=#{CGI::escape(res)}"
-	if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	input = "search" + res.chomp.gsub(/\s+/,"_")
-	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-else
-	input = searchstring if input.empty?
+  url = "http://#{blogsite}/search/?q=#{CGI::escape(res)}"
+  TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
+  if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+    input = "search" + res.chomp.gsub(/\s+/,"_")
+    print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+  else
+    input = searchstring if input.empty?
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
-end
+  end
 else
-	TextMate.exit_show_tool_tip "Less than 4 links found, try another term"
+  TextMate.exit_show_tool_tip "Less than 4 links found, try another term"
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>

@@ -57,6 +57,8 @@ end
 html = STDIN.read
 headers = get_headers(html)
 html.gsub!(/^[A-Za-z]+\: ([^\n]+)?\n+/,"")
+html = html.gsub("\342\200\230", "'").gsub("\342\200\231", "'").gsub("\342\200\234", '"').gsub("\342\200\235", '"')
+
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
@@ -101,7 +103,7 @@ end</string>
 	<key>name</key>
 	<string>Copy for Posting (Autofill)</string>
 	<key>output</key>
-	<string>showAsTooltip</string>
+	<string>afterSelectedText</string>
 	<key>scope</key>
 	<string>text.html.markdown, text.html.markdown.multimarkdown, text.html</string>
 	<key>uuid</key>

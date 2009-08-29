@@ -16,6 +16,7 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'erb'
 
 input = STDIN.read
+
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
 linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
@@ -43,6 +44,7 @@ ysuggest = []
     url = res['selectedMenuItem']['url']
     title = res['selectedMenuItem']['title']
 
+TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
 if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
 	input = "tag" + title.chomp.gsub(/\s+/,"_")
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
