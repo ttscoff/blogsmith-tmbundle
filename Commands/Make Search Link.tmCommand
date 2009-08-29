@@ -12,22 +12,32 @@ require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'net/http'
+require 'rexml/document'
 require 'erb'
 require 'cgi'
 
 input = STDIN.read
+
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
-input.empty? ? searchstring = "Search string" : searchstring = input
+searchstring = input.empty? ? "Search terms" : input
 res = TextMate::UI.request_string(:title =&gt; "TUAW Search Query",:prompt =&gt; "Enter terms to create a search link",:default =&gt; searchstring)
 TextMate.exit_discard unless res
-query = e_url(res + " site:#{blogsite}")
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 10, 1, nil, 1)
-url_count = yahoo.parse_results.length
+url = "http://#{blogsite}/search/?q=#{CGI::escape(res)}"
+data = Net::HTTP.get_response(URI.parse(url)).body
+TextMate.exit_show_tool_tip "No results returned for search" if data =~ /no results found/
+titles = data.scan(/id\="pt\d+"&gt;([^&lt;]+)&lt;/)
+matches = titles.length
+# matches = data.scan(/class\="post"/).length
 title = ""
-if url_count.to_i &gt; 3
-  url = "http://#{blogsite}/search/?q=#{CGI::escape(res)}"
+if matches &gt; 2
+  matches = "#{matches}+" if matches == 15  
+  output = "#{matches} matches, including:\n"
+  titles.each do |title|
+    output += title[0] + "\n"
+  end
+  TextMate::UI.tool_tip(output)
   TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
   if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
     input = "search" + res.chomp.gsub(/\s+/,"_")
@@ -37,7 +47,7 @@ if url_count.to_i &gt; 3
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
   end
 else
-  TextMate.exit_show_tool_tip "Less than 4 links found, try another term"
+  TextMate.exit_show_tool_tip "Less than 3 links found for #{searchstring}, try another search phrase"
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
@@ -54,6 +64,6 @@ end</string>
 	<key>tabTrigger</key>
 	<string>?</string>
 	<key>uuid</key>
-	<string>BE3F9DEA-9900-4B68-B8EB-35DA096199C0</string>
+	<string>5C7201E6-9DF2-4E32-8D06-1E707C02D789</string>
 </dict>
 </plist>
