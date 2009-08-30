@@ -5,42 +5,19 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env ruby -wKU
-require ENV['TM_SUPPORT_PATH'] + '/lib/escape.rb'
-require 'erb' 
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
+# require 'erb'
 
-def entity_escape(text)
-  text.gsub(/&amp;(?!([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)/, '&amp;amp;')
-end
-
-def make_link(text)
-  case text
-  when %r{\A(mailto:)?(.*?@.*\..*)\z}:
-    "mailto:#{$2.gsub(/./) {sprintf("&amp;#x%02X;", $&amp;.unpack("U")[0])}}"
-  when %r{http://www.(amazon.(?:com|co.uk|co.jp|ca|fr|de))/.+?/([A-Z0-9]{10})/[-a-zA-Z0-9_./%?=&amp;]+}:
-    "http://#{$1}/dp/#{$2}"
-  when %r{\A[a-zA-Z][a-zA-Z0-9.+-]*://.*\z}:
-    entity_escape(text)
-  when %r{\A(www\..*|.*\.(com|uk|net|org|info))\z}:
-    "http://#{entity_escape text}"
-  when %r{\A.*\.(com|uk|net|org|info)\z}:
-    "http://#{entity_escape text}"
-#  when %r{\A\S+\z}:
-#    entity_escape(text)
-  else
-    "http://some-site.com/"
-  end
-end
-
-title = nil
-url = make_link %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 input = STDIN.read
 
+input,url = Linkage.new.link_word(input)
 if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	puts "[${1:Reference}]: ${2:#{url}}"
+  puts "[${1:title}]: ${2:#{url}}"
 else
-    print ERB.new(ENV['TM_BLINK_FORMAT']).result
-end</string>
+  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
