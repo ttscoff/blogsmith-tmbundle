@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -wKU
+DIALOG = ENV['DIALOG']
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/escape"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/osx/plist"
+require 'erb'
+require 'net/http'
+require 'tempfile'
+
+url = TextMate::UI.request_string(:title =&gt; "Post URL",:prompt =&gt; "Please copy and paste the full address of the post:")
+TextMate.exit_discard if url.empty?
+orig = STDIN.read
+
+def strip_html(str)
+   str.strip!
+   tag_pat = %r,[\[&lt;](?:(?:/?)|(?:\s*)).*?[&gt;\]],m
+   str.gsub(tag_pat, '')
+end
+def strip_headers(str)
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
+   str.gsub(/^[^\[ ]+\: [^\n]+/, "")
+end
+def scrape_page(src)
+	if src =~ /&lt;!-- sphereit start --&gt;/
+		src = src.split('&lt;!-- sphereit start --&gt;')
+		src = src[1].split('&lt;!-- sphereit end --&gt;')
+		return strip_html(src[0])
+	else
+		return false
+	end
+end
+
+Dir.tmpdir
+my_text = Tempfile.new('blogsmith-diff-orig.txt')
+tuaw_text = Tempfile.new('blogsmith-diff-tuaw.txt')
+
+my_text &lt;&lt; strip_html(%x{echo #{e_sh strip_headers(orig)}|"/Applications/Scrivener.app/Contents/MacOS/MultiMarkdown/bin/MultiMarkdown.pl"}).strip.gsub(/\n+/,"\n")
+tuaw_text &lt;&lt; strip_html(scrape_page(Net::HTTP.get_response(URI.parse(url)).body)).strip.strip.gsub(/\n+/,"\n")
+my_text.flush
+tuaw_text.flush
+
+output = %x{diff --label "Original Draft" --label "Edited Post" -u "#{my_text.path}" "#{tuaw_text.path}"}
+TextMate.exit_show_tool_tip "No difference" if output.empty?
+puts output
+
+my_text.close
+my_text.unlink
+tuaw_text.close
+tuaw_text.unlink</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Diff Draft</string>
+	<key>output</key>
+	<string>openAsNewDocument</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>56C21F99-7D73-4385-986B-A48DCF194B8A</string>
+</dict>
+</plist>
