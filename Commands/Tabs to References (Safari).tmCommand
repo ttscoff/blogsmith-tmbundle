@@ -15,15 +15,30 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/exit_codes'
 
+input = STDIN.read
 urllist = %x{osascript &lt;&lt;-APPLESCRIPT
-tell application "Safari"	set _tabs to every tab of window 1	set _urls to {}	repeat with _tab in _tabs		set end of _urls to {title:name of _tab, URL:URL of _tab}	end repeat	set output to ""	repeat with _item in _urls		if URL of _item is not "" then			set output to output &amp; (title of _item) &amp; "&gt;&gt;&gt;" &amp; (URL of _item) &amp; "|||"		end if	end repeat	return outputend tellAPPLESCRIPT }.chomp
+             tell application "Safari"
+             set _tabs to every tab of window 1
+             set _urls to {}
+             repeat with _tab in _tabs
+             set end of _urls to {title:name of _tab, URL:URL of _tab}
+             end repeat
+             set output to ""
+             repeat with _item in _urls
+             if URL of _item is not "" then
+               set output to output &amp; (title of _item) &amp; "&gt;&gt;&gt;" &amp; (URL of _item) &amp; "|||"
+             end if
+             end repeat
+             return output
+             end tell
+             APPLESCRIPT }.chomp
 
 TextMate.exit_show_tool_tip "No results" if urllist.empty?
 urls = urllist.split('|||')
 x = []
-urls.each {|url| 
-	url = url.split("&gt;&gt;&gt;")
-	x &lt;&lt; { 'title' =&gt; url[0], 'tag' =&gt; url[1] } 
+urls.each {|url|
+  url = url.split("&gt;&gt;&gt;")
+  x &lt;&lt; { 'title' =&gt; url[0], 'tag' =&gt; url[1] }
 }
 plist = { 'tags' =&gt; x }.to_plist
 res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_evernote`)
@@ -31,40 +46,43 @@ TextMate.exit_discard if res['returnButton'] == "Cancel"
 links = res['result']['returnArgument']
 
 if links.empty? then
-	TextMate.exit_discard
+  TextMate.exit_discard
 else
-	norepeat = []
-output = []
+  norepeat = []
+  output = []
+  links.each {|url|
+    next if url =~ /^file/
+    domain = url.match(/https?:\/\/([^\/]+)/)
+    parts = domain[1].split('.')
+    name = case parts.length
+      when 1: parts[0]
+      when 2: parts[0]
+      else parts[1]
+    end
+    while norepeat.include? name
+      if name =~ / [0-9]$/
+        name.next!
+      else
+        name = name + " 2"
+      end
+    end
+    TextMate.exit_insert_snippet "[${1:#{input}}](${2:#{url}})" if links.length == 1 &amp;&amp; !input.empty?
+    output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
+    norepeat.push name
+  }
+  output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
+  counter = 0
+  output.each { |x|
+    counter += 1
+    puts "[${#{counter}:#{x['title']}}]: #{x['link']}"
+  }
 
-links.each {|url| 
-	next if url =~ /^file/
-	domain = url.match(/https?:\/\/([^\/]+)/)
-	parts = domain[1].split('.')
-	name = case parts.length
-		when 1: parts[0]
-		when 2: parts[0]
-		else parts[1]
-	end
-	while norepeat.include? name
-		if name =~ / [0-9]$/
-			name.next!
-		else 
-			name = name + " 2"
-		end
-	end
-	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
-	norepeat.push name
-}
-output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
-counter = 0
-output.each { |x| 
-	counter += 1
-	puts "[${#{counter}:#{x['title']}}]: #{x['link']}" 
-}
-
-end</string>
-	<key>input</key>
+end
+</string>
+	<key>fallbackInput</key>
 	<string>none</string>
+	<key>input</key>
+	<string>selection</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>

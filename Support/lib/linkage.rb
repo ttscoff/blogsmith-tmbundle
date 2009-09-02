@@ -53,6 +53,8 @@ class Linkage
 	}
 	return links
   end
+
+	## hello
   
   def link_word(input)
 	urls = scan_links(get_clipboard)
