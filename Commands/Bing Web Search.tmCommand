@@ -68,7 +68,7 @@ end
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Bing Web Search</string>
+	<string>Web Search (Bing)</string>
 	<key>output</key>
 	<string>insertAsSnippet</string>
 	<key>scope</key>

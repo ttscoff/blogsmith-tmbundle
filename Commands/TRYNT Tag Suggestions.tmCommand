@@ -58,7 +58,7 @@ TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
 $text = strip_html($text).gsub(/\b\/\b/,' ')
 
 response = TextMate::UI.request_string(:title =&gt; "Enter a query string",:prompt =&gt; "Enter a string to assist the search:",:default =&gt; $title)
-TextMate.exit_discard unless response
+TextMate.exit_discard unless response == true
 
 url = "http://www.trynt.com/term-extraction-api/v1/"
 uri = URI.parse(url)

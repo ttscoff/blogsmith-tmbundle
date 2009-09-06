@@ -70,7 +70,7 @@ end</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Bing News Search</string>
+	<string>News Search (Bing)</string>
 	<key>output</key>
 	<string>insertAsSnippet</string>
 	<key>scope</key>

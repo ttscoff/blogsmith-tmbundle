@@ -14,9 +14,10 @@ require SUPPORT + '/lib/exit_codes'
 document = STDIN.read
 
 linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s([^\s]+)\s/)
-
+linkmatch = document.match(/^\[itunes(?: [^\]]+)?\]\:\s([^\s]+)\s/) if linkmatch.nil?
+linkmatch = document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com[^\s]+)\s/) if linkmatch.nil?
 linkmatch = document.match(/^\[[^\]]+\]\:\s([^\s]+)\s/) if linkmatch.nil?
-
+linkmatch = document.match(/(http:\/\/[^\s\)]+)/) if linkmatch.nil?
 unless linkmatch.nil?
 	print "link: " + linkmatch[1]
 else

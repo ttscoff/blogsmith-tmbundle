@@ -72,7 +72,7 @@ print output
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Bing Instant Answer</string>
+	<string>Instant Answer (Bing)</string>
 	<key>output</key>
 	<string>showAsHTML</string>
 	<key>scope</key>

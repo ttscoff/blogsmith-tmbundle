@@ -14,54 +14,49 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require 'erb'
 require 'net/http'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/json"
 
 phrase = STDIN.read
+offset = 0
 keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
-escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(keyword.strip)}/"
+escapedUrl = "http://beta.appspace.com/search/#{e_url(keyword.strip)}/#{offset}/10/"
 
-res = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+json = JSON.parse(data)
+
 apps = []
-res.split("\n").each {|app|
-	apps &lt;&lt; {
-			'title' =&gt; app,
-			'url' =&gt; app
-		}
+
+json['results'].each {|app|
+  apps &lt;&lt; {
+    'title' =&gt; app['name'].strip,
+    'url' =&gt; app['buy_url'].strip
+  }
 }
 TextMate.exit_show_tool_tip "No matches" if apps.empty?
 if apps.length == 1
-	sel = apps[0]['url']
+  sel = apps[0]['url']
 else
-	plist = { 'menuItems' =&gt; apps }.to_plist
-	res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-	TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
-	sel = res['selectedMenuItem']['url']
+  plist = { 'menuItems' =&gt; apps }.to_plist
+  res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
+  sel = res['selectedMenuItem']['title']
+  url = res['selectedMenuItem']['url']
 end
-id_url = "http://beta.appspace.com/apps/get-id-from-name/#{e_url(sel)}/"
-app_res = Net::HTTP.get_response(URI.parse(id_url)).body
-begin
-	appspace_id = app_res.match(/"app_id"\: (\d+)/)[1]
-rescue
-	TextMate.exit_show_tool_tip "Error retrieving ID"
-end
-view_url = "http://beta.appspace.com/apps/view/#{appspace_id}/"
-scrape = Net::HTTP.get_response(URI.parse(view_url)).body
-id = scrape.match(/viewSoftware%3Fid%3D(\d+)/)[1]
-price = scrape.match(/buy_button"&gt;\$(\d+\.\d\d)/)[1].to_s
-
+id = url.match(/viewSoftware%3Fid%3D(\d+)/)[1]
 url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
 input = phrase.empty? ? sel : phrase
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
-	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
-	print ERB.new(ENV['TM_BLINK_FORMAT']).result
-	print " (iTunes link)"
+  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+  print " (iTunes link)"
 end
 
-	
+
 </string>
 	<key>fallbackInput</key>
-	<string>word</string>
+	<string>none</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
