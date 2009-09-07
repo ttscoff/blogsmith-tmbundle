@@ -15,7 +15,7 @@ require SUPPORT + '/lib/exit_codes'
 require 'erb'
 require 'net/http'
 require 'rexml/document'
-
+TextMate::UI.menu(["one","two"])
 phrase = STDIN.read
 offset = 0
 if phrase.empty?
