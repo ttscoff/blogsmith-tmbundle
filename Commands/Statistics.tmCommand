@@ -16,12 +16,16 @@ require "#{BUNDLESUPPORT}/lib/cooldialog.rb"
 def e_sh(str)
 	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
 end
-
+def strip_headers(str)
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
+   str.gsub(/^[^\[ ]+\: [^\n]+/, "")
+end
 html = STDIN.read
 
-if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
-	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+if !(ENV['TM_SCOPE'].scan(/markdown/i).empty?)
+	html = %x{echo #{e_sh strip_headers(html)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
+
 unless html.to_s.empty?
 	stripped_text = strip_tags(html)
 end

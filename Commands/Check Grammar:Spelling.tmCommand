@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
+require SUPPORT + "/lib/web_preview"
+require SUPPORT + "/lib/exit_codes"
+require SUPPORT + '/lib/ui'
+require 'net/http'
+require 'open-uri'
+require 'rexml/document'
+load BUNDLESUPPORT + "/lib/utilities.rb"
+
+input = STDIN.read
+
+def e_url(str)
+  str.gsub(/([^a-zA-Z0-9\/_.-]+)/n) do
+    '%' + $1.unpack('H2' * $1.size).join('%').upcase
+  end
+end
+
+def strip_headers(str)
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
+   str.gsub(/^[^\[ ]+\: [^\n]+/, "")
+end
+
+def check_doc(phrase)
+	escapedUrl = "http://service.afterthedeadline.com/checkDocument?key=5fd63e67639747af6a6f48537f752400&amp;data=#{e_url(phrase)}"
+	xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+	doc = REXML::Document.new(xml_data)
+	errors = []
+	doc.elements.each('results/error') do |result|
+		string = result.elements['string'].text
+		context = ''
+		context = result.elements['precontext'].text unless result.elements['precontext'].text.nil?
+		context = context + " " + string unless string.empty?
+		type = result.elements['type'].text
+		url = result.elements['url'].text unless result.elements['url'].nil?
+		suggestions = []
+		unless result.elements['suggestions'].nil?
+			result.elements.each('suggestions/option') do |suggestion|
+				suggestions.push(suggestion.text)
+			end
+		end
+		errors &lt;&lt; {
+			'string' =&gt; string,
+			'context' =&gt; context,
+			'type' =&gt; type,
+			'url' =&gt; url,
+			'suggestions' =&gt; suggestions
+		}
+	end
+	if errors.empty?
+		return false
+	else
+		return errors
+	end
+end
+
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
+	text = %x{echo #{e_sh strip_headers(input)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+end
+
+unless text.to_s.empty?
+	text = strip_tags(text)
+end
+
+
+res = check_doc(text)
+
+TextMate.exit_show_tool_tip "No errors found" if res === false
+
+html_header("Spelling/Grammar Check")
+puts "&lt;ul&gt;"
+res.each {|error|
+	puts "&lt;li&gt;#{error['type']}: \"#{error['context']}\"&lt;/li&gt;"
+}
+puts "&lt;/ul&gt;"
+html_footer</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Check Grammar/Spelling</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>scope</key>
+	<string>text.html.markdown,text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>9FD9C1B5-995A-4D16-B869-AFA7077400CD</string>
+</dict>
+</plist>
