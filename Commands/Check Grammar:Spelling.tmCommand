@@ -30,21 +30,37 @@ def strip_headers(str)
 end
 
 def check_doc(phrase)
-	escapedUrl = "http://service.afterthedeadline.com/checkDocument?key=5fd63e67639747af6a6f48537f752400&amp;data=#{e_url(phrase)}"
-	xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+	# escapedUrl = "http://service.afterthedeadline.com/checkDocument"
+	xml_data = Net::HTTP.post_form(URI.parse('http://service.afterthedeadline.com/checkDocument'),
+                              {'key'=&gt;'5fd63e67639747af6a6f48537f752400', 'data'=&gt;phrase}).body
+	# xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+
 	doc = REXML::Document.new(xml_data)
 	errors = []
 	doc.elements.each('results/error') do |result|
 		string = result.elements['string'].text
 		description = result.elements['description'].text
 		context = ''
-		context = result.elements['precontext'].text unless result.elements['precontext'].text.nil?
+		context = result.elements['precontext'].text + " " unless result.elements['precontext'].text.nil?
 		type = result.elements['type'].text
-		url = result.elements['url'].text unless result.elements['url'].nil?
+		title = "No further info"
 		suggestions = []
 		unless result.elements['suggestions'].nil?
 			result.elements.each('suggestions/option') do |suggestion|
 				suggestions.push(suggestion.text)
+			end
+		end
+		unless result.elements['url'].nil?
+			url = result.elements['url'].text
+			info = Net::HTTP.get_response(URI.parse(url)).body
+			title = %Q{#{info}&lt;p&gt;Type: #{type} (#{description})&lt;/p&gt;}
+		else
+			if suggestions.length &gt; 0
+				title = "&lt;h3&gt;#{description}&lt;/h3&gt;\n&lt;ul&gt;"
+				suggestions.each {|sugg| title += "&lt;li&gt;#{sugg}&lt;/li&gt;\n" }
+				title += "&lt;/ul&gt;\n"
+			else
+				title = "&lt;h3&gt;#{description}, no suggestions&lt;/h3&gt;\n"
 			end
 		end
 		errors &lt;&lt; {
@@ -53,7 +69,8 @@ def check_doc(phrase)
 			'type' =&gt; type,
 			'url' =&gt; url,
 			'description' =&gt; description,
-			'suggestions' =&gt; suggestions
+			'suggestions' =&gt; suggestions,
+			'title' =&gt; title
 		}
 	end
 	if errors.empty?
@@ -65,34 +82,57 @@ end
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	text = %x{echo #{e_sh strip_headers(input)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+	text = strip_tags(text) unless text.to_s.empty?
+else
+	text = strip_tags(input)
 end
-
-unless text.to_s.empty?
-	text = strip_tags(text)
-end
-
 
 res = check_doc(text)
-
 TextMate.exit_show_tool_tip "No errors found" if res === false
-
-html_header("Spelling/Grammar Check")
-
+counter = 0
+html = ""
+script = ""
 res.each {|error|
-	puts "&lt;div&gt;&lt;h3&gt;Type: #{error['type']}&lt;/h3&gt;"
-	puts "&lt;p&gt;&lt;strong&gt;Description:&lt;/strong&gt; #{error['description']} (&lt;a href=\"#{error['url']}\"&gt;more info&lt;/a&gt;)&lt;/p&gt;"
-	puts "&lt;p&gt;&lt;strong&gt;Context:&lt;/strong&gt; #{error['context']} &lt;em&gt;#{error['string']}&lt;/em&gt;&lt;/p&gt;"
-	if error['suggestions'].length &gt; 0
-		puts "&lt;h4&gt;Suggestions&lt;/h4&gt;"
-		puts "&lt;/ul&gt;"
-		error['suggestions'].each {|sugg|
-			puts "&lt;li&gt;#{sugg}&lt;/li&gt;"
-		}
-		puts "&lt;/ul&gt;"
-	end
-	puts "&lt;/div&gt;&lt;br /&gt;&lt;hr /&gt;"
+	counter += 1
+	url = %Q{&lt;a href=\"javascript:void()\" id=\"error#{counter}\" title='#{error['title']}'&gt;#{error['string']}&lt;/a&gt;}
+	script += %Q{$("#error#{counter}").tooltip({ track: true, delay: 0, showURL: false, opacity: 0.95, fade: 250 });\n}
+	text.sub!(/#{error['context']}#{error['string']}/,"#{error['context']}#{url}")
 }
 
+html_header("Spelling/Grammar Check")
+puts &lt;&lt;-HTML
+  &lt;script src="file://#{ENV['TM_BUNDLE_SUPPORT']}/lib/jquery.js" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+  &lt;script src="file://#{ENV['TM_BUNDLE_SUPPORT']}/lib/jqueryui.js" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+  &lt;script src="file://#{ENV['TM_BUNDLE_SUPPORT']}/lib/jquery.tooltip.min.js" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+	&lt;style&gt;
+	body { font-size: 1em; font-weight:normal;line-height:1.2em}
+	a:link,a:visited { color:red; font-weight:bold; text-decoration:none; }
+	#tooltip {
+	font-size: .8em;
+	font-weight: normal;
+	position: absolute;
+	z-index: 3000;
+	border: 1px solid #111;
+	background-color: #efefef;
+	padding: 15px;
+	opacity: 0.95;
+     width:300px;	
+	-webkit-border-radius: 15px;
+	}
+	#tooltip h3, #tooltip div { margin: 0; }
+	&lt;/style&gt;
+HTML
+print %x{echo #{e_sh text}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+puts &lt;&lt;-HTML
+&lt;script type="text/javascript" charset="utf-8"&gt;
+$(document).ready(function() {
+	$('a').click(function () {
+		return false;
+	});
+	#{script}
+});
+&lt;/script&gt;
+HTML
 html_footer</string>
 	<key>input</key>
 	<string>document</string>
@@ -103,7 +143,7 @@ html_footer</string>
 	<key>output</key>
 	<string>showAsHTML</string>
 	<key>scope</key>
-	<string>text.html.markdown,text.html.markdown.multimarkdown</string>
+	<string>text.html.markdown,text.html.markdown.multimarkdown,text.html</string>
 	<key>uuid</key>
 	<string>9FD9C1B5-995A-4D16-B869-AFA7077400CD</string>
 </dict>
