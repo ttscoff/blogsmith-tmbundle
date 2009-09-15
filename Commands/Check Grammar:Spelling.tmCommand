@@ -36,9 +36,9 @@ def check_doc(phrase)
 	errors = []
 	doc.elements.each('results/error') do |result|
 		string = result.elements['string'].text
+		description = result.elements['description'].text
 		context = ''
 		context = result.elements['precontext'].text unless result.elements['precontext'].text.nil?
-		context = context + " " + string unless string.empty?
 		type = result.elements['type'].text
 		url = result.elements['url'].text unless result.elements['url'].nil?
 		suggestions = []
@@ -52,6 +52,7 @@ def check_doc(phrase)
 			'context' =&gt; context,
 			'type' =&gt; type,
 			'url' =&gt; url,
+			'description' =&gt; description,
 			'suggestions' =&gt; suggestions
 		}
 	end
@@ -76,11 +77,22 @@ res = check_doc(text)
 TextMate.exit_show_tool_tip "No errors found" if res === false
 
 html_header("Spelling/Grammar Check")
-puts "&lt;ul&gt;"
+
 res.each {|error|
-	puts "&lt;li&gt;#{error['type']}: \"#{error['context']}\"&lt;/li&gt;"
+	puts "&lt;div&gt;&lt;h3&gt;Type: #{error['type']}&lt;/h3&gt;"
+	puts "&lt;p&gt;&lt;strong&gt;Description:&lt;/strong&gt; #{error['description']} (&lt;a href=\"#{error['url']}\"&gt;more info&lt;/a&gt;)&lt;/p&gt;"
+	puts "&lt;p&gt;&lt;strong&gt;Context:&lt;/strong&gt; #{error['context']} &lt;em&gt;#{error['string']}&lt;/em&gt;&lt;/p&gt;"
+	if error['suggestions'].length &gt; 0
+		puts "&lt;h4&gt;Suggestions&lt;/h4&gt;"
+		puts "&lt;/ul&gt;"
+		error['suggestions'].each {|sugg|
+			puts "&lt;li&gt;#{sugg}&lt;/li&gt;"
+		}
+		puts "&lt;/ul&gt;"
+	end
+	puts "&lt;/div&gt;&lt;br /&gt;&lt;hr /&gt;"
 }
-puts "&lt;/ul&gt;"
+
 html_footer</string>
 	<key>input</key>
 	<string>document</string>
