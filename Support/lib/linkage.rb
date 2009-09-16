@@ -87,11 +87,7 @@ class Linkage
       urls.each{|url|
 		urlmatch = url[0].strip.downcase.to_s
 		itunesmatch = itmatch[0].strip.downcase.to_s
-		if urlmatch === itunesmatch
-        	devurl = url[1].strip
-		elsif urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
-			devurl = url[1].strip
-		end
+		devurl = url[1].strip if urlmatch === itunesmatch || urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
       }
 	if devurl.nil?
       errormessage += "Couldn't find a match for iTunes url #{itmatch[0].strip.downcase}" 
@@ -118,6 +114,10 @@ class Linkage
 	      url = res['selectedMenuItem']['dev']
 	  end
     end
-    return [url,iturl,errormessage]
+	if itunes[0]['url'] !~ /itunes.apple.com/
+		return [nil,nil,"Selected iTunes link is not an App Store link"]
+	else
+    	return [url,iturl,errormessage]
+	end
   end
 end
