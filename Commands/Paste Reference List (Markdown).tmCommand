@@ -13,9 +13,9 @@ clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 input = STDIN.read
 
 if input.empty? 
-	links = clipboard.scan /(https?:\/\/[^ \n"]+)/m
+	links = clipboard.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 else
-	links = input.scan /(https?:\/\/[^ \n"]+)/m
+	links = input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 end
 if links.empty? then
 	TextMate.exit_show_tool_tip "No links found"
@@ -23,21 +23,25 @@ else
 norepeat = []
 output = []
 links.each {|url| 
-	domain = url[0].match(/https?:\/\/([^\/]+)/)
-	parts = domain[1].split('.')
-	name = case parts.length
-		when 1: parts[0]
-		when 2: parts[0]
-		else parts[1]
+	if url[0].nil?
+		domain = url[1].match(/https?:\/\/([^\/]+)/)
+		parts = domain[1].split('.')
+		name = case parts.length
+			when 1: parts[0]
+			when 2: parts[0]
+			else parts[1]
+		end
+	else
+		name = url[0]
 	end
 	while norepeat.include? name
-		if name =~ / [0-9]$/
+		if name =~ / ?[0-9]$/
 			name.next!
 		else 
 			name = name + " 2"
 		end
 	end
-	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
+	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url[1] }
 	norepeat.push name
 }
 output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
