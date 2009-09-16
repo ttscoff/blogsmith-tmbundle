@@ -77,15 +77,20 @@ class Linkage
     errormessage = ""
     itunes = []
     iturls = document.scan(/^\[itunes( ?[^\]]+)?\]\:\s([^\s]+)\s/)
-    errormessage = "Couldn't locate any iTunes urls.\n" if iturls.nil?
+    errormessage += "Couldn't locate any iTunes urls. (e.g. [itunes linktitle]: http://...)\n" if iturls.empty?
     urls = document.scan(/^\[dev( ?[^\]]+)?\]\:\s([^\s]+)\s/)
-    errormessage += "Couldn't locate any Developer urls.\n" if urls.nil?
+    errormessage += "Couldn't locate any Developer urls. (e.g. [dev linktitle]: http://...)\n" if urls.empty?
+	return [nil,nil,errormessage] unless errormessage == ""
     itunesurl = ""
     devurl = ""
     iturls.each {|itmatch|
       urls.each{|url|
-		if url[0].strip.downcase.to_s === itmatch[0].strip.downcase.to_s
+		urlmatch = url[0].strip.downcase.to_s
+		itunesmatch = itmatch[0].strip.downcase.to_s
+		if urlmatch === itunesmatch
         	devurl = url[1].strip
+		elsif urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
+			devurl = url[1].strip
 		end
       }
 	if devurl.nil?
@@ -95,21 +100,24 @@ class Linkage
 	end
     }
 	if itunes.length == 0
-		errormessage += "No sets of dev/itunes links found"
+	  url = nil
+	  iturl = nil
+	  errormessage += "No sets of dev/itunes links found"
     elsif itunes.length === 1
-      return [itunes[0]['dev'],itunes[0]['url']]
+      url = itunes[0]['dev']
+	  iturl = itunes[0]['url']
     else
       plist = { 'menuItems' => itunes }.to_plist
       res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-      TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
-      iturl = res['selectedMenuItem']['url']
-      url = res['selectedMenuItem']['dev']
+	  unless res.has_key? 'selectedMenuItem'
+	      iturl = nil
+		  url = nil
+		  errormessage = [nil,nil,"Cancelled"] 
+	  else
+	      iturl = res['selectedMenuItem']['url']
+	      url = res['selectedMenuItem']['dev']
+	  end
     end
-    if errormessage.nil?
-      return [url,iturl]
-    else
-#	  TextMate::UI.show_tool_tip "Error:\n" + errormessage
-	  return [url,iturl]
-    end
+    return [url,iturl,errormessage]
   end
 end

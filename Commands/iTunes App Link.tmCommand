@@ -14,10 +14,16 @@ require SUPPORT + '/lib/ui'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
 document = STDIN.read
-input = ENV['TM_SELECTED_TEXT']
-url,iturl = Linkage.new.create_app_store_link(document)
-TextMate.exit_show_tool_tip "You need both an iTunes and dev link specified in references, see help" if url.empty? || iturl.empty?
+input = ENV['TM_SELECTED_TEXT'] # ? ENV['TM_SELECTED_TEXT'] : ENV['TM_CURRENT_WORD']
+url,iturl,errormessage = Linkage.new.create_app_store_link(document)
+unless errormessage == ""
+	TextMate.exit_show_tool_tip errormessage if url.nil? || iturl.nil?
+else
+	TextMate.exit_show_tool_tip "iTunes and Dev links need to be specified, see help" if url.nil? || iturl.nil?
+end
 print ERB.new(ENV['TM_ITUNES_FORMAT']).result</string>
+	<key>fallbackInput</key>
+	<string>word</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
