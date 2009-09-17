@@ -47,7 +47,7 @@ end
 
 def get_headers(html)
 	headers = []
-	html.scan(/^([A-Za-z]+)\: ([^\n]+)/m) { |match|
+	html.scan(/^(doctype|title|link|categories|tags)\: ([^\n]+)/im) { |match|
 		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
 	}
 	# %x{echo -n "#{html.match(/^[Ll]ink: ([^\n]+)/m)[1]}"|pbcopy}
@@ -79,11 +79,11 @@ begin
 	o += %Q^if(categories){cats=unescape(categories).split(";");^
 	o += %Q^for(i=0;i&lt;cats.length;i++){addCat(document.getElementById(cats[i]));}}^
 	o += %Q^if(title)blogsmith.setTitle(unescape(title));^
-	o += %Q^if(tags)blogsmith.setTags(unescape(tags));^
+	o += %Q^if(tags){var tagarray=unescape(tags).split(';');for(i=0;i&lt;tagarray.length;i++){blogsmith.setTags(tagarray[i]);}};^
 	o += %Q^if(link)blogsmith.setLinks(unescape(link));^
 	o += %Q^var oEditor1=FCKeditorAPI.GetInstance("postcontent");oEditor1.SetHTML(unescape(content));^
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
-	o += %Q^document.getElementById("postsaveconfirm").disabled=false;^
+	o += %Q^var savebutton=document.getElementById('postsaveconfirm');savebutton.disabled="";savebutton.style.backgroundImage="url(http://beta.blogsmith.aol.com/bmedia/button_submit_pulse.gif)";savebutton.className = "pri_action";^
 	o += "}"
 	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
