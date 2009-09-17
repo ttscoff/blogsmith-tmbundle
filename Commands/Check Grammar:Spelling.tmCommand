@@ -23,7 +23,6 @@ def e_url(str)
     '%' + $1.unpack('H2' * $1.size).join('%').upcase
   end
 end
-
 def strip_headers(str)
    str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
    str.gsub(/^(doctype|categories|link|title|tags)\:( [^\n]+)?/i, "")
@@ -94,7 +93,7 @@ html = ""
 script = ""
 res.each {|error|
 	counter += 1
-	url = %Q{&lt;a href=\"javascript:void()\" id=\"error#{counter}\" title='#{error['title']}'&gt;#{error['string']}&lt;/a&gt;}
+	url = %Q{&lt;a href=\"javascript:void()\" id=\"error#{counter}\" title='#{error['title'].gsub(/'/,"&amp;lsquo;")}'&gt;#{error['string']}&lt;/a&gt;}
 	script += %Q{$("#error#{counter}").tooltip({ track: true, delay: 0, showURL: false, opacity: 0.95, fade: 250 });\n}
 	text.sub!(/#{error['context']}#{error['string']}/,"#{error['context']}#{url}")
 }
