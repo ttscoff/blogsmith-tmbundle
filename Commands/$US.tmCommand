@@ -19,10 +19,13 @@ def ts( st )
   mynum = dec[0].to_s + '.' + dec[1].to_s.ljust(2, '0')[0,2] if dec[1]
   mynum
 end
-
+def shift_dec(int)
+	mynum = int.to_f * 0.01
+	mynum
+end
 
 if input.match(/^[\%\$\d\*\/\+\-,\. \(\)]+$/)
-	num = ts(eval(input.gsub(/[\$\,]/,'')).to_s)
+	num = ts(eval(input.gsub(/[\$\,]/,'').gsub(/(^|[^\d])(\.\d+)/,'\10\2').gsub(/([\d\.]+)(?:\s+?)?([+-])(?:\s+?)?([\d\.]+)%([^\d]|$)/,'\1\2(\1*(\3.to_f * 0.01))\4')).to_s)
 	print ERB.new(ENV['TM_MONEY_FORMAT']).result
 else
 	if input =~ /\$?[\d\,\.]{2,}/
@@ -35,8 +38,12 @@ else
 			end
 		}
 		print input
+	elsif input =~ /\$(\d)\s/
+		num = $1
+		input = input.sub(/\$\d/,ERB.new(ENV['TM_MONEY_FORMAT']).result)
+		TextMate.exit_replace_text input
 	else
-		TextMate.exit_show_tool_tip "Not numeric"
+		TextMate.exit_show_tool_tip "I'm sorry Dave, I'm not finding anything to work with"
 	end
 end</string>
 	<key>fallbackInput</key>
