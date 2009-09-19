@@ -21,7 +21,7 @@ unless errormessage == ""
 else
 	TextMate.exit_show_tool_tip "iTunes and Dev links need to be specified, see help" if url.nil? || iturl.nil?
 end
-print ERB.new(ENV['TM_ITUNES_FORMAT']).result</string>
+print ERB.new(ENV['TM_ITUNES_REF_FORMAT']).result</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>

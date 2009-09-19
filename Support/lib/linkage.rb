@@ -76,23 +76,22 @@ class Linkage
   def create_app_store_link(document)
     errormessage = ""
     itunes = []
-    iturls = document.scan(/^\[itunes( ?[^\]]+)?\]\:\s([^\s]+)\s/)
+    iturls = document.scan(/^\[(itunes( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
     errormessage += "Couldn't locate any iTunes urls. (e.g. [itunes linktitle]: http://...)\n" if iturls.empty?
-    urls = document.scan(/^\[dev( ?[^\]]+)?\]\:\s([^\s]+)\s/)
+    urls = document.scan(/^\[(dev( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
     errormessage += "Couldn't locate any Developer urls. (e.g. [dev linktitle]: http://...)\n" if urls.empty?
 	return [nil,nil,errormessage] unless errormessage == ""
-    itunesurl = ""
-    devurl = ""
+    itunesurl,devurl,itunesmatch = ""
     iturls.each {|itmatch|
       urls.each{|url|
-		urlmatch = url[0].strip.downcase.to_s
-		itunesmatch = itmatch[0].strip.downcase.to_s
-		devurl = url[1].strip if urlmatch === itunesmatch || urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
+		urlmatch = url[1] ? url[1].strip.downcase.to_s : "blank"
+		itunesmatch = itmatch[1] ? itmatch[1].strip.downcase.to_s : "blank"
+		devurl = url[0].strip if urlmatch === itunesmatch || urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
       }
 	if devurl.nil?
-      errormessage += "Couldn't find a match for iTunes url #{itmatch[0].strip.downcase}" 
+      errormessage += "Couldn't find a match for iTunes url #{itmatch[1].strip.downcase}" 
     else
-  	  itunes << { 'title' => itmatch[0].strip.downcase, 'url' => itmatch[1].strip, 'dev' => devurl }
+  	  itunes << { 'title' => itunesmatch, 'url' => itmatch[2].strip, 'ref' => itmatch[0], 'dev' => devurl }
 	end
     }
 	if itunes.length == 0
@@ -101,7 +100,7 @@ class Linkage
 	  errormessage += "No sets of dev/itunes links found"
     elsif itunes.length === 1
       url = itunes[0]['dev']
-	  iturl = itunes[0]['url']
+	  iturl = itunes[0]['ref']
     else
       plist = { 'menuItems' => itunes }.to_plist
       res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
@@ -110,11 +109,11 @@ class Linkage
 		  url = nil
 		  errormessage = [nil,nil,"Cancelled"] 
 	  else
-	      iturl = res['selectedMenuItem']['url']
+	      iturl = res['selectedMenuItem']['ref']
 	      url = res['selectedMenuItem']['dev']
 	  end
     end
-	if itunes[0]['url'] !~ /itunes.apple.com/
+	if itunes[0]['url'] !~ /(itunes|phobos).apple.com/
 		return [nil,nil,"Selected iTunes link is not an App Store link"]
 	else
     	return [url,iturl,errormessage]
