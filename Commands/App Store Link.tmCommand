@@ -34,7 +34,8 @@ json['results'].each {|app|
 }
 TextMate.exit_show_tool_tip "No matches" if apps.empty?
 if apps.length == 1
-  sel = apps[0]['url']
+  sel = apps[0]['title']
+  url = apps[0]['url']
 else
   plist = { 'menuItems' =&gt; apps }.to_plist
   res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
@@ -49,14 +50,14 @@ input = phrase.empty? ? sel : phrase
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
+  print input
+  input = "iTunes link"
+  print " ["
   print ERB.new(ENV['TM_BLINK_FORMAT']).result
-  print " (iTunes link)"
-end
-
-
-</string>
+  print "]"
+end</string>
 	<key>fallbackInput</key>
-	<string>none</string>
+	<string>word</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
