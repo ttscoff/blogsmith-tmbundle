@@ -42,16 +42,19 @@ else
   plist = { 'apps' =&gt; apps }.to_plist
   res = OSX::PropertyList.load(`#{e_sh DIALOG} -mp #{e_sh plist} select_app`)
   TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'result'
-# TextMate.exit_insert_text res.inspect
+  # TextMate.exit_insert_text res.inspect
   # sel = res['result']['title']
   url = res['result']['returnArgument'][0]
 end
 id = url.match(/viewSoftware(?:%3Fid%3D|\?id=)(\d+)/)[1]
 url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
-input = phrase.empty? ? sel : phrase
+input = phrase.empty? ? keyword : phrase
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
+  devlink = "dev " + input
+  input = "itunes " + input
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+  puts "${3:[#{devlink}]: }"
 else
   print input
   input = "iTunes link"
