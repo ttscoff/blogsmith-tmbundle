@@ -15,12 +15,24 @@ require SUPPORT + '/lib/exit_codes'
 require 'erb'
 require 'net/http'
 require 'rexml/document'
-TextMate::UI.menu(["one","two"])
-phrase = STDIN.read
+
+string = STDIN.read
 offset = 0
-if phrase.empty?
-	phrase = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for")
+if string.empty?
+	if ENV['TM_CURRENT_LINE'] =~ /\[([^\]]+)/
+		phrase = $1
+	else
+		phrase = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for")
+	end
+else
+	if ENV['TM_CURRENT_LINE'] =~ /^\[([^\]]+)/
+		phrase = $1
+		phrase = phrase.sub(/dev /,'') + " iphone" if ENV['TM_CURRENT_LINE'] =~ /^\[dev /
+	else
+		phrase = string
+	end
 end
+
 def do_search(offset,phrase)
   escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=web&amp;web.offset=#{offset}"
 
@@ -55,8 +67,10 @@ res = do_search(offset,phrase)
 url = res['selectedMenuItem']['url']
 input = phrase # res['selectedMenuItem']['title']
 
-if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{phrase}(\s+)?$/
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+elsif ENV['TM_CURRENT_LINE'] =~ /\[(dev )?#{phrase.sub(/ iphone/,'')}/
+  print "${1:#{string}}]: #{url}$0"
 else
   print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end
@@ -73,6 +87,8 @@ end
 	<string>insertAsSnippet</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>]: </string>
 	<key>uuid</key>
 	<string>B14B1917-515B-4B02-9F26-55093F7215C1</string>
 </dict>
