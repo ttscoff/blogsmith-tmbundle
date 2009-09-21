@@ -27,7 +27,7 @@ linklist = refs.collect { |e| { 'title' =&gt; e.to_s } }
 
 right_char = %x{echo ${TM_CURRENT_LINE:TM_LINE_INDEX}}
 if right_char =~ /^\]/
-	TextMate.exit_insert_text "][" + res['selectedMenuItem']['title']
+	print "][" + res['selectedMenuItem']['title']
 else
 	print "[#{input}][#{res['selectedMenuItem']['title']}]"
 end</string>
