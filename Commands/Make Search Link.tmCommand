@@ -39,7 +39,7 @@ if matches &gt; 2
   end
   TextMate::UI.tool_tip(output)
   TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
-  if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+  if (input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/) || ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/
     input = "search" + res.chomp.gsub(/\s+/,"_")
     print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
   else

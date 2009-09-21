@@ -17,7 +17,8 @@ require 'erb'
 require 'cgi'
 require 'net/http'
 
-input = STDIN.read
+blogger = STDIN.read
+input = blogger
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
 
@@ -61,7 +62,7 @@ end
 # name_match = res.match(/class="byline"&gt;by &lt;strong&gt;&lt;a href="[^"]+"&gt;([^&lt;]+)&lt;\/a&gt;/) if name_match.nil?
 # url += "/" unless url =~ /\/$/
 
-if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+if (!(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/) || ENV['TM_CURRENT_LINE'] =~ /^(#{blogger})?(\s+)?$/
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
