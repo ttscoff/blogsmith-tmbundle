@@ -18,36 +18,56 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/json"
 
 phrase = STDIN.read
 offset = 0
-keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
-escapedUrl = "http://beta.appspace.com/search/#{e_url(keyword.strip)}/#{offset}/16/"
 
-data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
-json = JSON.parse(data)
+def do_search(keyword,offset)
+  escapedUrl = "http://beta.appspace.com/search/#{e_url(keyword.strip)}/#{offset}/15/"
+  data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  json = JSON.parse(data)
 
-apps = []
+  apps = []
 
-json['results'].each {|app|
-  apps &lt;&lt; {
-    'title' =&gt; app['name'].strip,
-    'url' =&gt; app['buy_url'].strip,
-	'thumb' =&gt; app['icon'],
-	'description' =&gt; app['description']
+  json['results'].each {|app|
+    apps &lt;&lt; {
+      'title' =&gt; app['name'].strip,
+      'url' =&gt; app['buy_url'].strip,
+      'thumb' =&gt; app['icon'],
+      'description' =&gt; app['description'],
+      'price' =&gt; app['price']
+    }
   }
-}
-TextMate.exit_show_tool_tip "No matches" if apps.empty?
-if apps.length == 1
-  sel = apps[0]['title']
-  url = apps[0]['url']
-else
-  plist = { 'apps' =&gt; apps }.to_plist
-  res = OSX::PropertyList.load(`#{e_sh DIALOG} -mp #{e_sh plist} select_app`)
-  TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'result'
-  # TextMate.exit_insert_text res.inspect
-  # sel = res['result']['title']
-  url = res['result']['returnArgument'][0]
+  apps &lt;&lt; {
+  'title' =&gt; 'More results…',
+  'url' =&gt; '',
+  'thumb' =&gt; '',
+  'description' =&gt; '',
+  'price' =&gt; ''
+  } if apps.length == 15
+
+  TextMate.exit_show_tool_tip "No matches" if apps.empty?
+  if apps.length == 1
+    sel = apps[0]['title']
+    url = apps[0]['url']
+    price = apps[0]['price']
+  else
+    plist = { 'apps' =&gt; apps }.to_plist
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -mp #{e_sh plist} select_app`)
+    TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'result'
+    # TextMate.exit_insert_text res.inspect
+    # sel = res['result']['title']
+    url = res['result']['returnArgument'][0]
+  end
+  if url == ""
+    offset += 15
+    do_search(keyword,offset)
+  else
+    id = url.match(/viewSoftware(?:%3Fid%3D|\?id=)(\d+)/)[1]
+    url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8" 
+    return url
+  end
 end
-id = url.match(/viewSoftware(?:%3Fid%3D|\?id=)(\d+)/)[1]
-url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8"
+
+keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
+url = do_search(keyword,offset)
 input = phrase.empty? ? keyword : phrase
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
@@ -61,7 +81,8 @@ else
   print " ["
   print ERB.new(ENV['TM_BLINK_FORMAT']).result
   print "]"
-end</string>
+end
+</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
