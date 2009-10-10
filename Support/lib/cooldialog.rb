@@ -3,6 +3,19 @@ module TextMate
   module CoolDialog
 	
 	class << self
+		def notification_hud(options)
+	        raise if options.empty?
+
+	        support = ENV['TM_BUNDLE_SUPPORT']
+	        nib     = support + '/nibs/notification_hud.nib'
+
+	        plist = Hash.new
+	        plist['title']    = options[:title]   || ''
+	        plist['summary']  = options[:summary] || ''
+	        plist['log']      = options[:log]     || ''
+
+	        `#{TM_DIALOG} -cqp #{e_sh plist.to_plist} #{e_sh nib} &> /dev/null &`
+      	end
 		def has_dialog2
 			tm_dialog = e_sh ENV['DIALOG']
 			! tm_dialog.match(/2$/).nil? 
