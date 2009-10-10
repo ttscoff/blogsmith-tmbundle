@@ -32,8 +32,7 @@ urllist = %x{osascript &lt;&lt;-APPLESCRIPT
              return output
              end tell
              APPLESCRIPT }.chomp
-
-TextMate.exit_show_tool_tip "No results" if urllist.empty?
+TextMate.exit_show_tool_tip "No tabs returned by Safari. Is it open?" if urllist.empty?
 urls = urllist.split('|||')
 x = []
 urls.each {|url|
@@ -41,7 +40,10 @@ urls.each {|url|
   x &lt;&lt; { 'title' =&gt; url[0], 'tag' =&gt; url[1] }
 }
 plist = { 'tags' =&gt; x }.to_plist
-res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_evernote`)
+
+nib = input.empty? &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+
+res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
 TextMate.exit_discard if res['returnButton'] == "Cancel"
 links = res['result']['returnArgument']
 
@@ -66,7 +68,14 @@ else
         name = name + " 2"
       end
     end
-    TextMate.exit_insert_snippet "[${1:#{input}}](${2:#{url}})" if links.length == 1 &amp;&amp; !input.empty?
+	if links.length == 1
+		input = "title" if input.empty?
+		if ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/
+			TextMate.exit_insert_snippet "[${1:#{input}}]: ${2:#{url}}"
+		else
+	    	TextMate.exit_insert_snippet "[${1:#{input}}](${2:#{url}})"
+		end
+	end
     output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
     norepeat.push name
   }

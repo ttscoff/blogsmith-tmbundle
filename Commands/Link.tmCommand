@@ -14,6 +14,8 @@ input = STDIN.read
 input,url = Linkage.new.link_word(input)
 if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
   puts "[${1:title}]: ${2:#{url}}"
+elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
+  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
   print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end

@@ -56,7 +56,7 @@ class Linkage
 
   def link_word(input)
     urls = scan_links(get_clipboard)
-    TextMate.exit_show_tool_tip "No links" unless urls.length > 0
+    return [input,''] unless urls.length > 0
     if urls.length == 1
       url = urls[0]
     else
