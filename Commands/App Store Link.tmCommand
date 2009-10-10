@@ -20,7 +20,7 @@ phrase = STDIN.read
 offset = 0
 
 def do_search(keyword,offset)
-  escapedUrl = "http://beta.appspace.com/search/#{e_url(keyword.strip)}/#{offset}/15/"
+  escapedUrl = "http://brettterpstra.com/appproxy/index.php?query=#{e_url(keyword.strip)}&amp;offset=#{offset}"
   data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
   json = JSON.parse(data)
 
@@ -60,8 +60,6 @@ def do_search(keyword,offset)
     offset += 15
     do_search(keyword,offset)
   else
-    id = url.match(/viewSoftware(?:%3Fid%3D|\?id=)(\d+)/)[1]
-    url = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=#{id}&amp;mt=8" 
     return url
   end
 end
