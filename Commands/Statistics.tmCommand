@@ -21,6 +21,7 @@ def strip_headers(str)
    str.gsub(/^[^\[ ]+\: [^\n]+/, "")
 end
 html = STDIN.read
+title = html =~ /^[Tt]itle: (.+)/ ? $1 : ""
 
 if !(ENV['TM_SCOPE'].scan(/markdown/i).empty?)
 	html = %x{echo #{e_sh strip_headers(html)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
@@ -36,7 +37,8 @@ character_count = %x{echo "#{stripped_text}"|wc -c}
 newoutput = %^Word Count:#{word_count}\n^
 newoutput += %^Char Count:#{character_count}^
 
-TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
+TextMate::CoolDialog.notification_hud(:title =&gt; "Statistics",:summary =&gt; title,:log =&gt; newoutput )
+# TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
