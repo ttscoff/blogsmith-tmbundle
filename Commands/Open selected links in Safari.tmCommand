@@ -6,13 +6,17 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
 
 input = STDIN.read
-
+TextMate.exit_show_tool_tip "Please select some text with links" if input.empty?
 links = input.scan /(https?:\/\/[^" \n]+)/m
+TextMate.exit_show_tool_tip "Please select some text with links" if links.empty?
 # puts links
 # links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}
 links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
+	<key>fallbackInput</key>
+	<string>none</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>

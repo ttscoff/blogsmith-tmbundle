@@ -17,8 +17,7 @@
 	<key>output</key>
 	<string>showAsTooltip</string>
 	<key>scope</key>
-	<string>markup.underline.link.markdown
-</string>
+	<string>markup.underline.link.markdown</string>
 	<key>uuid</key>
 	<string>649B51A1-0D31-4F08-BCF6-96DAAE298DBA</string>
 </dict>
