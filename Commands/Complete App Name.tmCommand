@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require 'erb'
+require 'net/http'
+
+phrase = STDIN.read
+
+def do_search(keyword)
+  escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(keyword.strip)}/"
+  data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  res = data.split("\n")
+  res
+end
+
+keyword = phrase.empty? ? TextMate.exit_discard : phrase
+res = do_search(keyword)
+completions = []
+res.each { |var|
+	completions &lt;&lt; { 
+		'display' =&gt; var
+	}
+}
+
+options = {:case_insensitive =&gt; false}
+TextMate::UI.complete(completions, options)</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^</string>
+	<key>name</key>
+	<string>Complete App Name</string>
+	<key>output</key>
+	<string>afterSelectedText</string>
+	<key>uuid</key>
+	<string>B9EF458E-6832-4DB1-98CA-87FA186E1EE8</string>
+</dict>
+</plist>
