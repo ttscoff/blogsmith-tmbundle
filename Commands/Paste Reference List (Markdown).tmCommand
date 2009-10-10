@@ -8,6 +8,7 @@
 	<string>#!/usr/bin/env ruby
 SUPPORT = ENV['TM_SUPPORT_PATH']
 require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
 clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 input = STDIN.read
@@ -17,8 +18,24 @@ if input.empty?
 else
 	links = input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 end
-if links.empty? then
+
+if links.empty? &amp;&amp; input.empty? then
 	TextMate.exit_show_tool_tip "No links found"
+elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'].empty?
+	TextMate.exit_show_tool_tip "I wouldn't do that in the middle of a paragraph…"
+elsif links.empty?
+	if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+		input,url = Linkage.new.link_word(input)
+		if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+		  puts "[${1:title}]: ${2:#{url}}"
+		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
+		  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+		else
+		  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+		end
+	else
+		TextMate.exit_show_tool_tip "No links found" if links.empty?
+	end
 else
 norepeat = []
 output = []
