@@ -36,8 +36,7 @@ character_count = %x{echo "#{stripped_text}"|wc -c}
 newoutput = %^Word Count:#{word_count}\n^
 newoutput += %^Char Count:#{character_count}^
 
-TextMate::CoolDialog.notification_hud(:title =&gt; "Statistics",:log =&gt; newoutput )
-# TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
+TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
