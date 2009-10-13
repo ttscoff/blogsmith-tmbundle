@@ -140,9 +140,9 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       }
       dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
     end
-    plist = { 'tags' =&gt; $tarray }.to_plist
-    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags4b`)
 
+    plist = { 'tags' =&gt; $tarray,'title' =&gt; 'Choose tags…' }.to_plist
+    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_tags4b`)
       TextMate.exit_insert_text "tags: " if res['returnButton'] == "Cancel"
       returnedtags = res['result']['returnArgument']
 	unless $line.empty?
