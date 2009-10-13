@@ -65,6 +65,7 @@ def do_search(keyword,offset)
 end
 
 keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
+TextMate.exit_discard if keyword.nil? || keyword.empty?
 url = do_search(keyword,offset)
 input = phrase.empty? ? keyword : phrase
 

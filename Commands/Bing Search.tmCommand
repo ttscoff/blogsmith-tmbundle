@@ -39,6 +39,7 @@ def do_search(offset,phrase)
       'url' =&gt; result.elements['web:Url'].text
     }
   end
+
   doc.elements.each('SearchResponse/news:News/news:Results/news:NewsResult') do |result|
     newsdate = result.elements['news:Date'].text.match(/(\d{4})-(\d{2})-(\d{2})/)[0].to_s
     newstitle = result.elements['news:Title'].text.gsub('"','&amp;raquo;')
