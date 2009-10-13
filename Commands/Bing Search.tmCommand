@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BSUPPORT = ENV['TM_BUNDLE_SUPPORT']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require BSUPPORT + '/lib/cooldialog'
+require 'erb'
+require 'net/http'
+require 'rexml/document'
+
+string = STDIN.read
+offset = 0
+$searchphrase = ""
+
+def elegant_exit(message)
+	TextMate::CoolDialog.cool_tool_tip(message)
+	TextMate.exit_insert_text "]" if ENV['TM_CURRENT_LINE'] =~ /\[(#{$searchphrase}|#{ENV['TM_CURRENT_WORD']})$/
+	TextMate.exit_discard
+end
+
+def do_search(offset,phrase) 
+  escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=web+news&amp;news.offset=#{offset}&amp;web.offset=#{offset}"
+  xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  doc = REXML::Document.new(xml_data)
+  bings = []
+  doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+    bings &lt;&lt; {
+      'title' =&gt; result.elements['web:Title'].text.gsub('"','&amp;raquo;'),
+      'url' =&gt; result.elements['web:Url'].text
+    }
+  end
+  doc.elements.each('SearchResponse/news:News/news:Results/news:NewsResult') do |result|
+    newsdate = result.elements['news:Date'].text.match(/(\d{4})-(\d{2})-(\d{2})/)[0].to_s
+    newstitle = result.elements['news:Title'].text.gsub('"','&amp;raquo;')
+    newssource = result.elements['news:Source'].text
+    bings &lt;&lt; {
+      'title' =&gt; "NEWS: #{newsdate} — #{newstitle} (#{newssource})",
+      'url' =&gt; result.elements['news:Url'].text,
+      'label' =&gt; "#{phrase} - #{newssource}"
+    }
+  end
+  if bings.empty?
+	  elegant_exit("No matches")
+  else
+  bings &lt;&lt; {
+    'title' =&gt; 'More results…',
+    'url' =&gt; ''
+  }
+  end
+  plist = { 'menuItems' =&gt; bings }.to_plist
+  res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  elegant_exit("Cancelled") unless res.has_key? 'selectedMenuItem'  
+  if res['selectedMenuItem']['title'] == "More results…"
+    offset += 10
+    do_search(offset,phrase)
+  else
+    return res
+  end
+end
+
+if string.empty?
+	if ENV['TM_CURRENT_LINE'] =~ /\[([^\]]+)/
+		$searchphrase = $1
+		query = ENV['TM_CURRENT_LINE'] =~ /^\[dev / ? $searchphrase.sub(/dev /,'') + " iphone" : $searchphrase
+		phrase = TextMate::UI.request_string({:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for",:default =&gt; query})
+	else
+		phrase = TextMate::UI.request_string({:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for"})
+	end
+else
+	if ENV['TM_CURRENT_LINE'] =~ /\[(([^\]]+)?#{string})/
+		$searchphrase = $1
+		query = ENV['TM_CURRENT_LINE'] =~ /^\[dev / ? $searchphrase.sub(/dev /,'') + " iphone" : $searchphrase
+		phrase = TextMate::UI.request_string({:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for",:default =&gt; query})
+	else
+		phrase = TextMate::UI.request_string({:title =&gt; "Search Query",:prompt =&gt; "Enter terms to search for",:default =&gt; string})
+	end
+end
+
+elegant_exit("Cancelled") if phrase.nil?
+
+res = do_search(offset,phrase)
+
+elegant_exit("Cancelled") unless res.has_key? 'selectedMenuItem'
+
+url = res['selectedMenuItem']['url']
+
+input = phrase # res['selectedMenuItem']['label']
+
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
+  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+elsif ENV['TM_CURRENT_LINE'] =~ /^\[(dev )?#{$searchphrase.sub(/ iphone/,'')}/
+  print "${1:#{string}}]: #{url}$0"
+else
+  if ENV['TM_CURRENT_LINE'] =~ /\[(([^\]]+)?#{string})/
+	print "#{string}](#{url})"
+  else
+	print ERB.new(ENV['TM_BLINK_FORMAT']).result
+  end
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Bing Search</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>]</string>
+	<key>uuid</key>
+	<string>E12BF4D4-ECFF-41E6-A688-9A0E3FC659EE</string>
+</dict>
+</plist>

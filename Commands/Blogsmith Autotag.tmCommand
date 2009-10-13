@@ -14,13 +14,24 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require SUPPORT + '/lib/progress'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/calais"
+require 'rubygems'
+require 'rubygems/command_manager'
 load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
 require 'date'
 require 'json'
 
 $line = ENV['TM_CURRENT_LINE']
 $text = STDIN.read
+
+def check_for_gem(gem_name)
+	if !Gem.available?(gem_name)
+	  cmd = Gem::CommandManager.instance
+	  cmd.run(["install", gem_name, "--no-rdoc", "--no-ri"])
+	  TextMate.exit_show_tool_tip	
+	end
+end
+
+check_for_gem('calais')
 
 def readwords(wordfile)
 	if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
