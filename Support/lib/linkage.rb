@@ -4,6 +4,7 @@ require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
 require "#{ENV['TM_SUPPORT_PATH']}/lib/escape"
 require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
 require "#{ENV['TM_SUPPORT_PATH']}/lib/osx/plist"
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
 require 'erb'
 
 $KCODE = 'u'
@@ -67,7 +68,7 @@ class Linkage
       plist = { 'menuItems' => linklist }.to_plist
 
       res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-      TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'selectedMenuItem'
+      TextMate::CoolDialog.cool_tool_tip("Cancelled",true) unless res.has_key? 'selectedMenuItem'
       url = res['selectedMenuItem']['url']
     end
     [input,url]

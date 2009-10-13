@@ -20,9 +20,9 @@ else
 end
 
 if links.empty? &amp;&amp; input.empty? then
-	TextMate.exit_show_tool_tip "No links found"
+	TextMate::CoolDialog.cool_tool_tip('No links found',true)
 elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'].empty?
-	TextMate.exit_show_tool_tip "I wouldn't do that in the middle of a paragraph…"
+	TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
 elsif links.empty?
 	if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 		input,url = Linkage.new.link_word(input)
@@ -34,7 +34,9 @@ elsif links.empty?
 		  print ERB.new(ENV['TM_BLINK_FORMAT']).result
 		end
 	else
-		TextMate.exit_show_tool_tip "No links found" if links.empty?
+		if links.empty?
+			TextMate::CoolDialog.cool_tool_tip("No links found",true) 
+		end
 	end
 else
 norepeat = []
@@ -70,7 +72,7 @@ output.each { |x|
 
 end</string>
 	<key>fallbackInput</key>
-	<string>none</string>
+	<string>word</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>

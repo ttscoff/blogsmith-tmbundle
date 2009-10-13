@@ -20,7 +20,7 @@ module TextMate
 			tm_dialog = e_sh ENV['DIALOG']
 			! tm_dialog.match(/2$/).nil? 
 		end
-		def cool_tool_tip(content)
+		def cool_tool_tip(content,exit = false)
 			if has_dialog2
 			output = %^<div style="background: #666;">^
 			output += content.gsub(/([^\n+]+)\n/m,"<p>\\1</p>")
@@ -40,8 +40,8 @@ module TextMate
 				text-shadow: 1px 1px 2px #000;
 				-webkit-box-shadow: 0.2em 0.3em 1em #000;
 				-webkit-border-radius: 1em;
-				line-height: 2.5em;
-				padding: 0 1em;
+				line-height: 1.5em;
+				padding: 1em;
 				float: left;
 				-webkit-box-shadow: -4px 4px 1px #fff;
 			}
@@ -57,6 +57,7 @@ module TextMate
 			HTML
 
 			TextMate::UI.tool_tip("#{html}", {:transparent => true, :format => :html})
+			exit 206 if exit === true
 			# %x{"$DIALOG" tooltip -t --format html #{e_sh(html)}}
 			else
 				TextMate.exit_show_tool_tip content
