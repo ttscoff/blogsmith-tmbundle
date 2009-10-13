@@ -22,6 +22,8 @@ def strip_headers(str)
 end
 html = STDIN.read
 title = html =~ /^[Tt]itle: (.+)/ ? $1 : ""
+links = html.scan(/(http:\/\/[^ \)\n]+)/)
+unique_links = links.uniq.length
 if !(ENV['TM_SCOPE'].scan(/markdown/i).empty?)
 	html = %x{echo #{e_sh strip_headers(html)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
@@ -33,9 +35,9 @@ end
 word_count = %x{echo "#{stripped_text}"|wc -w}
 character_count = %x{echo "#{stripped_text}"|wc -c}
 
-newoutput = %^Word Count:#{word_count}\n^
-newoutput += %^Char Count:#{character_count}^
-
+newoutput = %^Word Count:\t#{word_count.strip}\n^
+newoutput += %^Char Count:\t#{character_count.strip}\n^
+newoutput += "Unique Links:\t#{unique_links}"
 TextMate::CoolDialog.notification_hud(:title =&gt; "Statistics",:summary =&gt; title,:log =&gt; newoutput )
 # TextMate::CoolDialog.cool_tool_tip(newoutput)</string>
 	<key>input</key>
