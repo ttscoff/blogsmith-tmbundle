@@ -12,15 +12,21 @@ require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require ENV['TM_BUNDLE_SUPPORT'] + '/lib/yahoo'
+require ENV['TM_BUNDLE_SUPPORT'] + '/lib/cooldialog'
 require 'erb'
 
 input = STDIN.read
 
+def elegant_exit(message)
+	TextMate::CoolDialog.cool_tool_tip(message)
+	TextMate.exit_discard
+end
+
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
 linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
-TextMate.exit_discard unless linktext
+elegant_exit("Cancelled") unless linktext
 
 query = e_url(linktext + " site:#{blogsite}/tag")
 
@@ -40,7 +46,7 @@ ysuggest = []
     plist = { 'menuItems' =&gt; ysuggest }.to_plist
     
     res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+    elegant_exit('cancelled') unless res.has_key? 'selectedMenuItem'
     url = res['selectedMenuItem']['url']
     title = res['selectedMenuItem']['title']
 
@@ -52,7 +58,7 @@ else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end
 else
-  TextMate.exit_show_tool_tip "No related tags found in index"
+  elegant_exit("No related tags found in index")
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
