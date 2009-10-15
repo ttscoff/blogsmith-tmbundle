@@ -14,12 +14,23 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require 'erb'
 require 'net/http'
+require 'open-uri'
 
 phrase = STDIN.read
 
+
 def do_search(keyword)
-  escapedUrl = "http://beta.appspace.com/apps/find/#{e_url(keyword.strip)}/"
-  data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  useragent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.0.1) Gecko/20060111 Firefox/1.5.0.1'
+  http = Net::HTTP.new('beta.appspace.com')
+  path = "/apps/find/#{e_url(keyword.strip)}/"
+  headers = {
+    'Referer' =&gt; 'http://beta.appspace.com/',
+    'Content-Type' =&gt; 'application/x-www-form-urlencoded',
+    'User-Agent' =&gt; useragent
+  }
+
+  resp, data = http.post(path, data, headers)
+#  data = Net::HTTP.get_response(URI.parse(escapedUrl)).body  
   res = data.split("\n")
   res
 end
@@ -45,6 +56,8 @@ TextMate::UI.complete(completions, options)</string>
 	<string>Complete App Name</string>
 	<key>output</key>
 	<string>afterSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
 	<key>uuid</key>
 	<string>B9EF458E-6832-4DB1-98CA-87FA186E1EE8</string>
 </dict>
