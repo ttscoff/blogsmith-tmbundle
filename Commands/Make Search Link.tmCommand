@@ -30,7 +30,7 @@ blogsite = "www." + blogsite unless blogsite =~ /^www\./
 searchstring = input.empty? ? "Search terms" : input
 res = TextMate::UI.request_string(:title =&gt; "TUAW Search Query",:prompt =&gt; "Enter terms to create a search link",:default =&gt; searchstring)
 elegant_exit('Cancelled') unless res
-url = "http://#{blogsite}/search/?q=#{CGI::escape(res)}"
+url = "http://#{blogsite}/supersearch/?q=#{CGI::escape(res)}"
 data = Net::HTTP.get_response(URI.parse(url)).body
 elegant_exit("No results returned for search") if data =~ /no results found/
 titles = data.scan(/id\="pt\d+"&gt;([^&lt;]+)&lt;/)
@@ -39,7 +39,7 @@ matches = titles.length
 title = ""
 if matches &gt; 2
   matches = "#{matches}+" if matches == 15  
-  output = "&lt;h5&gt;#{matches.strip} matches, including:&lt;/h5&gt;\n&lt;ul&gt;"
+  output = "&lt;h5&gt;#{matches} matches, including:&lt;/h5&gt;\n&lt;ul&gt;"
   titles.each do |title|
     output += ("&lt;li&gt;" + title[0] + "&lt;/li&gt;\n")
   end
