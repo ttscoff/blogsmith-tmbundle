@@ -21,10 +21,10 @@ phrase = STDIN.read
 
 def do_search(keyword)
   useragent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.0.1) Gecko/20060111 Firefox/1.5.0.1'
-  http = Net::HTTP.new('beta.appspace.com')
+  http = Net::HTTP.new('appspace.com')
   path = "/apps/find/#{e_url(keyword.strip)}/"
   headers = {
-    'Referer' =&gt; 'http://beta.appspace.com/',
+    'Referer' =&gt; 'http://appspace.com/',
     'Content-Type' =&gt; 'application/x-www-form-urlencoded',
     'User-Agent' =&gt; useragent
   }
