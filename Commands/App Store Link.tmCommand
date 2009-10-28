@@ -73,7 +73,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] 
   devlink = "dev " + input
   input = "itunes " + input
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-  puts "${3:[#{devlink}]: }"
+  puts "${3:[#{devlink}]: }$0"
 else
   print input
   input = "iTunes link"
@@ -94,6 +94,8 @@ end
 	<string>insertAsSnippet</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>app</string>
 	<key>uuid</key>
 	<string>AD95C84B-AAD4-4F3A-B79B-604B08190004</string>
 </dict>

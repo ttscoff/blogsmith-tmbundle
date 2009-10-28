@@ -21,7 +21,7 @@
 				<string>TM_REF_LINK_FORMAT</string>
 				<key>value</key>
 				<string>[${1:&lt;%= e_sn input %&gt;}]: ${2:&lt;%= e_sn url %&gt;}
-$0</string>
+</string>
 			</dict>
 			<dict>
 				<key>name</key>
