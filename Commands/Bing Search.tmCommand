@@ -24,7 +24,7 @@ $searchphrase = ""
 
 def elegant_exit(message)
 	TextMate::CoolDialog.cool_tool_tip(message)
-	TextMate.exit_insert_text "]" if ENV['TM_CURRENT_LINE'] =~ /\[(#{$searchphrase}|#{ENV['TM_CURRENT_WORD']})$/
+	TextMate.exit_insert_text "]" if $searchphrase.empty? || ENV['TM_CURRENT_LINE'] =~ /\[(#{$searchphrase}|#{ENV['TM_CURRENT_WORD']})/
 	TextMate.exit_discard
 end
 
@@ -68,7 +68,7 @@ def do_search(offset,phrase)
     return res
   end
 end
-
+phrase = ""
 if string.empty?
 	if ENV['TM_CURRENT_LINE'] =~ /\[([^\]]+)/
 		$searchphrase = $1
@@ -100,6 +100,7 @@ input = phrase # res['selectedMenuItem']['label']
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 elsif ENV['TM_CURRENT_LINE'] =~ /^\[(dev )?#{string}/
+  string = phrase if string.empty?
   print "${1:#{string}}]: #{url}$0"
 else
   if ENV['TM_CURRENT_LINE'] =~ /\[(([^\]]+)?#{string})/
