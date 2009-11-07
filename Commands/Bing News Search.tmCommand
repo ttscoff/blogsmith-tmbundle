@@ -77,7 +77,8 @@ input = phrase # res['selectedMenuItem']['label']
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
-elsif ENV['TM_CURRENT_LINE'] =~ /\[(dev )?#{phrase.sub(/ iphone/,'')}/
+elsif ENV['TM_CURRENT_LINE'] =~ /\[(dev )?#{phrase.sub(/ iphone/,'')}/ || ENV['TM_CURRENT_LINE'] =~ /\[#{string}/
+  string = phrase if string.empty?
   print "${1:#{string}}]: #{url}$0"
 else
   print ERB.new(ENV['TM_BLINK_FORMAT']).result
