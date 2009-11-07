@@ -24,7 +24,8 @@ $searchphrase = ""
 
 def elegant_exit(message)
 	TextMate::CoolDialog.cool_tool_tip(message)
-	TextMate.exit_insert_text "]" if $searchphrase.empty? || ENV['TM_CURRENT_LINE'] =~ /\[(#{$searchphrase}|#{ENV['TM_CURRENT_WORD']})/
+	TextMate.exit_discard if ENV['TM_CURRENT_LINE'].empty?
+	TextMate.exit_insert_text "]" if ENV['TM_CURRENT_LINE'] =~ /\[(#{$searchphrase})/ &amp;&amp; !$searchphrase.empty?
 	TextMate.exit_discard
 end
 
