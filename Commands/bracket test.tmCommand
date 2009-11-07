@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/exit_codes'
+
+
+if ENV['TM_CURRENT_LINE'] =~ /^[^\]]/
+	lefttext = ENV['TM_CURRENT_LINE'][0,ENV['TM_LINE_INDEX'].to_i]
+	righttext = ENV['TM_CURRENT_LINE'][ENV['TM_LINE_INDEX'].to_i,ENV['TM_CURRENT_LINE'].length]
+	newline = lefttext + "[" + righttext + "$0"
+	TextMate.exit_insert_snippet newline
+else
+	print "[]$0"
+end</string>
+	<key>fallbackInput</key>
+	<string>line</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>name</key>
+	<string>Bracket Tab</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>[</string>
+	<key>uuid</key>
+	<string>3A0D6DA6-0C63-4DB1-84F4-259123064279</string>
+</dict>
+</plist>
