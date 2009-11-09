@@ -84,6 +84,8 @@ end</string>
 	<string>insertAsSnippet</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>&lt;&gt;</string>
 	<key>uuid</key>
 	<string>D2E2EB99-5513-4134-AE0D-C24E732F70CB</string>
 </dict>
