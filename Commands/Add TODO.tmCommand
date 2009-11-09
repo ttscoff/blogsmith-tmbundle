@@ -21,7 +21,12 @@ line.scan(/&lt;\d+&gt;/).each {|w|
 	if idx &gt; cursor
 		d = idx - cursor
 	else
-		d = cursor - idx
+		right = idx + w.length
+		if right &gt; cursor
+			d = 0
+		else 
+			d = cursor - right
+		end
 	end
 	ds &lt;&lt; { 'marker' =&gt; w, 'distance' =&gt; d }
 }
@@ -29,9 +34,6 @@ return false if ds.empty?
 return ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
 end
 
-res = closest_marker(curline,cursor)
-marker = res['marker']
-dist = res['distance']
 if curline =~ /^&lt;\d+&gt;/	
 	lines = text.split("\n")
 	row = ENV['TM_LINE_NUMBER'].to_i
@@ -48,8 +50,11 @@ else
 	row = ENV['TM_LINE_NUMBER'].to_i
 	col = ENV['TM_LINE_INDEX'].to_i
 	currentLine = lines[row-1]
-	res = closest_marker(curline,cursor)
-	found = res['marker'] if res['distance'] &lt; 5
+	if res = closest_marker(curline,cursor)
+		found = res['marker'] if res['distance'] &lt; 1
+	else
+		found = false
+	end
 	if found then
 	# No need to change the file at all in this case. Just locate the proper 
 	# line and use the txmt scheme to take us there.
