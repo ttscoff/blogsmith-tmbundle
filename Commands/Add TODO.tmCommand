@@ -69,9 +69,11 @@ else
 	  m = text.scan(/&lt;(\d+)&gt;/).map{|i| i[0].to_i}.max || 0
 	  before = []
 	  (row-1).times do before &lt;&lt; lines.shift end
-	  before &lt;&lt; lines[0][0..cursor-1]
+	  lastline = cursor &gt; 0 ? lines[0][0..cursor-1] : " "
+	  before &lt;&lt; lastline
 	  line_end = lines.shift[cursor..-1]
-	  print e_sn(before.join("\n") + "&lt;#{m+1}&gt;#{line_end}\n" + lines.join("\n")) + "\n&lt;#{m+1}&gt; $0"
+	  endgap = m &gt; 0 ? "\n" : "\n\n"
+	  print e_sn(before.join("\n") + "&lt;#{m+1}&gt;#{line_end}\n" + lines.join("\n")) + "#{endgap}&lt;#{m+1}&gt; $0"
 	end
 end</string>
 	<key>input</key>
