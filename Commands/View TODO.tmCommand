@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+# Inspired by - and built upon - the GTDAlt bundle by Charilaos Skiadas
+# http://skiadas.dcostanet.net/afterthought/2006/06/20/yet-another-gtd-bundle/
+require ENV['TM_SUPPORT_PATH'] + "/lib/exit_codes.rb"
+
+lines = STDIN.readlines
+curline = ENV['TM_CURRENT_LINE']
+cursor = ENV['TM_LINE_INDEX'].to_i
+
+def closest_marker(line,cursor)
+ds = []
+line.scan(/&lt;\d+&gt;/).each {|w|
+	idx = line.index(w).to_i
+	if idx &gt; cursor
+		d = idx - cursor
+	else
+		d = cursor - idx
+	end
+	ds &lt;&lt; { 'marker' =&gt; w, 'distance' =&gt; d }
+}
+return false if ds.empty?
+return ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]['marker']
+end
+
+row = ENV['TM_LINE_NUMBER'].to_i
+currentLine = lines[row-1]
+
+found = closest_marker(curline,cursor)
+
+if found then
+  note = lines.find{ |line| line[/^&lt;\d+&gt;/] == found }
+  note.slice!(/^&lt;\d+&gt;\s+/)
+  words = note.split(/\s/)
+  char_count = 0
+  line = []
+  words.each {|word|
+	print word.to_s + " "
+	char_count += word.to_s.length
+	
+	if char_count &gt; 50
+		puts
+		char_count = 0
+	end
+	} 
+else
+  print "This paragraph does not have a note."
+end</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^~{</string>
+	<key>name</key>
+	<string>Preview TODO</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>C5C14986-D767-4E67-8589-106110ADEB7E</string>
+</dict>
+</plist>

@@ -10,11 +10,12 @@ require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
 
 input = STDIN.read
 TextMate.exit_show_tool_tip "Please select some text with links" if input.empty?
-links = input.scan /(https?:\/\/[^" \n]+)/m
+# links = input.scan /(https?:\/\/[^" \n]+)/m
+links = input.scan /(https?:\/\/([^\s",;]+)\..{2,4}(\/[^\s",;!]+))/mi
 TextMate.exit_show_tool_tip "Please select some text with links" if links.empty?
-# puts links
-# links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}
-links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
+# links.each {|link| puts link[0]}
+links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}
+# links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
 	<key>fallbackInput</key>
 	<string>none</string>
 	<key>input</key>
@@ -24,7 +25,7 @@ links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
 	<key>name</key>
 	<string>Open Links In Selection</string>
 	<key>output</key>
-	<string>afterSelectedText</string>
+	<string>discard</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
 	<key>uuid</key>

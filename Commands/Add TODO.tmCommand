@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+# Inspired by - and built upon - the GTDAlt bundle by Charilaos Skiadas
+# http://skiadas.dcostanet.net/afterthought/2006/06/20/yet-another-gtd-bundle/
+require ENV['TM_SUPPORT_PATH'] + "/lib/exit_codes.rb"
+require ENV['TM_SUPPORT_PATH'] + "/lib/escape.rb"
+
+curline = ENV['TM_CURRENT_LINE']
+cursor = ENV['TM_LINE_INDEX'].to_i
+text = STDIN.read
+def closest_marker(line,cursor)
+ds = []
+line.scan(/&lt;\d+&gt;/).each {|w|
+	idx = line.index(w).to_i
+	if idx &gt; cursor
+		d = idx - cursor
+	else
+		d = cursor - idx
+	end
+	ds &lt;&lt; { 'marker' =&gt; w, 'distance' =&gt; d }
+}
+return false if ds.empty?
+return ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
+end
+
+res = closest_marker(curline,cursor)
+marker = res['marker']
+dist = res['distance']
+if curline =~ /^&lt;\d+&gt;/	
+	lines = text.split("\n")
+	row = ENV['TM_LINE_NUMBER'].to_i
+	m = lines[row-1].scan(/^&lt;\d+&gt;/)[0]
+	txt = text.slice(0..text.index(m) + m.length)
+	lines = txt.split("\n")
+	line = lines.length
+	last_line = lines.last
+	column = last_line.scan(/.*?#{m}/)[0].to_s.length + 1
+	`open "txmt://open?line=#{line}&amp;column=#{column}"`
+	TextMate.exit_discard
+else
+	lines = text.split("\n")
+	row = ENV['TM_LINE_NUMBER'].to_i
+	col = ENV['TM_LINE_INDEX'].to_i
+	currentLine = lines[row-1]
+	res = closest_marker(curline,cursor)
+	found = res['marker'] if res['distance'] &lt; 5
+	if found then
+	# No need to change the file at all in this case. Just locate the proper 
+	# line and use the txmt scheme to take us there.
+	  txt = text.slice(0..text.rindex(found)+found.length)
+	  lines = txt.split("\n")
+	  line = lines.length
+	  column = lines.last.length + 1
+	  `open "txmt://open?line=#{line}&amp;column=#{column}"`
+	  TextMate.exit_discard 
+	  # print text.insert(text.rindex(found)+found.length + 1,"$0")
+	else
+	  m = text.scan(/&lt;(\d+)&gt;/).map{|i| i[0].to_i}.max || 0
+	  before = []
+	  (row-1).times do before &lt;&lt; lines.shift end
+	  before &lt;&lt; lines[0][0..cursor-1]
+	  line_end = lines.shift[cursor..-1]
+	  print e_sn(before.join("\n") + "&lt;#{m+1}&gt;#{line_end}\n" + lines.join("\n")) + "\n&lt;#{m+1}&gt; $0"
+	end
+end</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^{</string>
+	<key>name</key>
+	<string>New/Jump to TODO</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>D2E2EB99-5513-4134-AE0D-C24E732F70CB</string>
+</dict>
+</plist>
