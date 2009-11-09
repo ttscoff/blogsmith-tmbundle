@@ -9,6 +9,8 @@
 	bodytext=`cat $STDIN|perl -pe '
 	s/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;
 	s/&lt;!--\s?more\s?--&gt;//g;
+	s/^&lt;\d+&gt; .*$//g;
+	s/&lt;\d+&gt;//g;
 	if($img = /(&lt;img[^&gt;]+&gt;)/) {
 		s/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?//g;
 	}'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`

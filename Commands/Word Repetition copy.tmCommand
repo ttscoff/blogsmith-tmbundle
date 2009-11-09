@@ -17,7 +17,11 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
 load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
 require SUPPORT + "/lib/web_preview.rb"
 
-input = STDIN.read
+def strip_comments(str)
+	str.gsub(/^&lt;\d+&gt; .*$/,'').gsub(/&lt;\d+&gt;/,'')
+end
+
+input = strip_comments(STDIN.read)
 
 def readwords(wordfile)
 	if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))

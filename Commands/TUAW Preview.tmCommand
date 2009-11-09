@@ -7,7 +7,7 @@
 	<key>command</key>
 	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
 	
-	bodytext=`cat $STDIN|perl -pe 's/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;'|perl -pe 's/&lt;!--\s?more\s?--&gt;//g;'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
+	bodytext=`cat $STDIN|perl -pe 's/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;'|perl -pe 's/&lt;!--\s?more\s?--&gt;//g;'|perl -pe 's/^&lt;\d+&gt; .*$//g;'|perl -pe 's/&lt;\d+&gt;//g;'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
 else
 	bodytext=`cat $STDIN`
 fi

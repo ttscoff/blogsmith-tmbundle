@@ -58,7 +58,7 @@ html = STDIN.read
 headers = get_headers(html)
 html.gsub!(/^[A-Za-z]+\: ([^\n]+)?\n+/,"")
 html = html.gsub("\342\200\230", "'").gsub("\342\200\231", "'").gsub("\342\200\234", '"').gsub("\342\200\235", '"')
-
+html = html.gsub(/^&lt;\d+&gt; .*$/,'').gsub(/&lt;\d+&gt;/,'')
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
