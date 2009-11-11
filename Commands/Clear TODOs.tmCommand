@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+
+doc = STDIN.read
+
+puts doc.gsub(/^&lt;\d+&gt;\s.*?$/,'').gsub(/&lt;\d+&gt;/,'')</string>
+	<key>input</key>
+	<string>document</string>
+	<key>name</key>
+	<string>Clear TODOs</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>uuid</key>
+	<string>C02F06D8-FB9D-416E-BAB8-6FB2413F01A3</string>
+</dict>
+</plist>

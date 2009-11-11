@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+
+Dir.chdir(ENV['TM_BUNDLE_PATH'])
+
+puts &lt;&lt;-EOF
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;Update Blogsmith Bundle&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+EOF
+
+puts "&lt;h2&gt;Updating Blogsmith bundle&lt;/h2&gt;"
+
+puts "  &lt;pre&gt;"
+# puts g.with_path(ENV['TM_BUNDLE_PATH']).command("pull")
+is_git = %x{git status &amp;&gt;/dev/null;echo $?}.to_i == 128 ? false : true
+if is_git
+	puts %x{git pull}
+else
+	puts "Failed to update, was this installed with Git?"
+end
+puts &lt;&lt;-EOF
+  &lt;/pre&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+EOF
+
+%x{osascript -e 'tell app "TextMate" to reload bundles'}</string>
+	<key>input</key>
+	<string>none</string>
+	<key>name</key>
+	<string>Update Blogsmith Bundle</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>uuid</key>
+	<string>7243BB01-57E4-423B-8DDA-A01A58D55210</string>
+</dict>
+</plist>
