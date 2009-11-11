@@ -8,7 +8,7 @@
 	<string>#!/usr/bin/env ruby
 
 Dir.chdir(ENV['TM_BUNDLE_PATH'])
-
+is_git = %x{/usr/local/git/bin/git status &amp;&gt;/dev/null;echo $?}.to_i == 128 ? false : true
 puts &lt;&lt;-EOF
 &lt;html&gt;
 &lt;head&gt;
@@ -20,11 +20,11 @@ EOF
 puts "&lt;h2&gt;Updating Blogsmith bundle&lt;/h2&gt;"
 
 puts "  &lt;pre&gt;"
-is_git = %x{/usr/local/git/bin/git status &amp;&gt;/dev/null;echo $?}.to_i == 128 ? false : true
+
 if is_git
 	puts %x{/usr/local/git/bin/git pull}
 else
-	puts "Failed to update, was this installed with Git?"
+	puts "This command only works if you've installed the Blogsmith bundle using Git. See the documentation for more information."
 end
 puts &lt;&lt;-EOF
   &lt;/pre&gt;
