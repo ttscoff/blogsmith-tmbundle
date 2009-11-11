@@ -19,15 +19,14 @@ EOF
 
 puts "&lt;h2&gt;Updating Blogsmith bundle&lt;/h2&gt;"
 
-puts "  &lt;pre&gt;"
-
 if is_git
+puts "  &lt;pre&gt;"
 	puts %x{/usr/local/git/bin/git pull}
+puts "  &lt;/pre&gt;"
 else
-	puts "This command only works if you've installed the Blogsmith bundle using Git. See the documentation for more information."
+	puts "&lt;p&gt;This command only works if you've installed the Blogsmith bundle using Git. See the documentation for more information.&lt;p&gt;"
 end
 puts &lt;&lt;-EOF
-  &lt;/pre&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 EOF
