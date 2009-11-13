@@ -25,7 +25,8 @@ def e_url(str)
 end
 def strip_headers(str)
    str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
-   str.gsub!(/^&lt;\d+&gt; .*$/,'').gsub!(/&lt;\d+&gt;/,'')
+   str.gsub!(/^&lt;\d+&gt; .*$/,'')
+   str.gsub!(/&lt;\d+&gt;/,'')
    str.gsub(/^(doctype|categories|link|title|tags)\:( [^\n]+)?/i, "")
 end
 
