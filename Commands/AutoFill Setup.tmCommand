@@ -52,9 +52,9 @@ puts "&lt;hr /&gt;&lt;h3&gt;Bookmarklets&lt;/h3&gt;"
 puts "&lt;p&gt;Copy the appropriate code to the clipboard, create a new bookmark in your browser, and paste the code as the location for the bookmark.&lt;/p&gt;"
 
 puts %Q{&lt;h4&gt;Firefox 3.0+&lt;/h4&gt;}
-puts %Q{&lt;pre&gt;&lt;code&gt;javascript:(function(){var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js';document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};})();&lt;/code&gt;&lt;/pre&gt;}
+puts %Q{&lt;pre&gt;&lt;code&gt;javascript:(function(){var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js?ver='+(Math.random());document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};})();&lt;/code&gt;&lt;/pre&gt;}
 puts %Q{&lt;h4&gt;Safari/Firefox 2&lt;/h4&gt;}
-puts %Q{&lt;pre&gt;&lt;code&gt;javascript:var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js';document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};&lt;/code&gt;&lt;/pre&gt;}
+puts %Q{&lt;pre&gt;&lt;code&gt;javascript:var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src='http://localhost/blogsmith.js?ver='+(Math.random());document.getElementsByTagName('head')[0].appendChild(x);x.onload=function(){doit();};&lt;/code&gt;&lt;/pre&gt;}
 html_footer</string>
 	<key>input</key>
 	<string>none</string>
