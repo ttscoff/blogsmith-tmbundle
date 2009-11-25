@@ -89,7 +89,7 @@ begin
 	o += %Q^if(link)blogsmith.setLinks(unescape(link));^
 	o += %Q^var oEditor1=FCKeditorAPI.GetInstance("postcontent");oEditor1.SetHTML(unescape(content));^
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
-	o += %Q^var savebutton=document.getElementById('postsaveconfirm');savebutton.disabled="";savebutton.style.backgroundImage="url(http://beta.blogsmith.aol.com/bmedia/button_submit_pulse.gif)";savebutton.className = "pri_action";^
+	o += %Q^buildSlug();pageUpdated();^
 	o += "}"
 	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
