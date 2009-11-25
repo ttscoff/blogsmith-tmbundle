@@ -154,8 +154,8 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       tagslist = ''
       tags.map {|tag|
         tagslist += ";" unless tagslist == ''
-        tagslist += tag.gsub(/\s/,"-") + ";" if tag =~ /\w+\s\w+/
-      tagslist += tag }
+        # tagslist += tag.gsub(/\s/,"-") + ";" if tag =~ /\w+\s\w+/
+        tagslist += tag }
       b = $line =~ /^[Tt]ags\:(.*)?/ ? '' : "tags: "
       o = "#{tagslist.chomp}"
 	o += ";" unless $line.empty? || o == ''
