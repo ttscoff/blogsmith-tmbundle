@@ -8,6 +8,7 @@
 	<string>#!/usr/bin/env ruby
 SUPPORT = ENV['TM_SUPPORT_PATH']
 require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/escape'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog"
 
@@ -29,7 +30,7 @@ lines = input.split("\n")
 
 lineno = find_headers(lines)
 top = lines[0..lineno].join("\n")
-bottom = lines[lineno+1..lines.length].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
+bottom = lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
 
 norepeat = []
 norepeatlinks = []
@@ -75,7 +76,7 @@ o = []
 
 output.each_with_index { |x,i| 
 	o.push("[#{x['title']}]: #{x['link']}")
-	bottom = bottom.gsub(/\((#{x['orig']}|#{x['link']})\)/,"[#{x['title']}]").gsub(/\[#{x['orig']}\]/,"[#{x['title']}]")
+	bottom = bottom.gsub(/\((#{e_sn x['orig']}|#{e_sn x['link']})\)/,"[#{e_sn x['title']}]").gsub(/\[#{e_sn x['orig']}\]/,"[#{e_sn x['title']}]")
 }
 puts top + "\n#{o.join("\n")}\n\n" + bottom</string>
 	<key>fallbackInput</key>

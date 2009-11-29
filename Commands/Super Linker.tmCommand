@@ -44,8 +44,8 @@ def is_linked(word)
 	line = lines[row-1]
 	cursor = ENV['TM_LINE_INDEX'].to_i
 	ds = []
-	if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sh word}(?:[^\]]+)?)\])/
-		line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sh word}(?:[^\]]+)?)\])/).each {|w|
+	if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/
+		line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/).each {|w|
 			idx = line.index(w[0]).to_i
 			if idx &gt; cursor
 				d = idx - cursor
@@ -61,8 +61,8 @@ def is_linked(word)
 		}
 		ret = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
 		return [ret['fullmatch'], ret['matchstring'],"link"]
-	elsif line =~ /(\[((?:\w+)?#{e_sh word}(?:\w+)?)\]\[([^\]]+)\])/
-		line.scan(/(\[((?:\w+)?#{e_sh word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
+	elsif line =~ /(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/
+		line.scan(/(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
 			idx = line.index(w[0]).to_i
 			if idx &gt; cursor
 				d = idx - cursor
@@ -87,7 +87,7 @@ def replace_whole_ref(string,replacement)
 	row = ENV['TM_LINE_NUMBER'].to_i
 	before = lines[0..row-2].join("\n")
 	after = lines[row..-1].join("\n")
-	line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
+	line = lines[row-1].gsub(/#{e_sn string}/,"#{replacement}")
 	puts before + "\n" + line + "\n" + after
 end
 
@@ -101,7 +101,7 @@ def replace_if_needed(text)
 		curwordlen = ENV['TM_CURRENT_WORD'].length.to_i
 		counter = cursor
 		testword = currentLine[counter..counter+curwordlen]
-		until testword =~ /#{e_sh(curword)}/	
+		until testword =~ /#{e_sn(curword)}/	
 			counter -= 1	
 			testword = currentLine[counter..counter+curwordlen]
 		end
@@ -178,7 +178,7 @@ elsif links.empty?
 				else parts[1]
 			end
 		  	replace_if_needed("[#{name}]: #{url}\n")
-		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sh(input)})?$/
+		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
 			skip = false
 			refs.each { |ref|
 				if ref.has_value?(url)
