@@ -15,7 +15,7 @@ clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 # when pasting, avoid duplicates in both urls and ref names
 # when listing links, include existing refs in addition to clipboard
 # when linking text, check url against refs, use ref format if exists
-# 
+#
 # input = ENV['TM_SELECTED_TEXT'] ? ENV['TM_SELECTED_TEXT'] : ENV['TM_CURRENT_WORD']
 # document = STDIN.read
 # refs = document.scan(/\[([^\]]+)\]\:\s/)
@@ -23,267 +23,303 @@ clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 $document = STDIN.read
 
 if ENV['TM_SELECTED_TEXT'].nil?
-	input = ENV['TM_CURRENT_WORD'].nil? || ENV['TM_CURRENT_WORD'] =~ /^\s+$/ ? '' : ENV['TM_CURRENT_WORD']
+  input = ENV['TM_CURRENT_WORD'].nil? || ENV['TM_CURRENT_WORD'] =~ /^\s+$/ ? '' : ENV['TM_CURRENT_WORD']
 else
-	input = ENV['TM_SELECTED_TEXT']
+  input = ENV['TM_SELECTED_TEXT']
 end
 refs = []
 $document.scan(/\[([^\]]+)\]\:\s(.+)/).each { |res|
-	refs &lt;&lt; {'title' =&gt; res[0], 'link' =&gt; res[1] }
+  refs &lt;&lt; {'title' =&gt; res[0], 'link' =&gt; res[1] }
 }
 
-if input.empty? 
-	links = clipboard.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+if input.empty?
+  links = clipboard.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 else
 	links = input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 end
 
+def find_main_link
+	clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+	linkmatch = nil
+	tunelinks = $document.scan(/^\[itunes ([^\]]+)\]\:\s(\S+)\s/)
+  unless tunelinks.empty?
+    if tunelinks.length == 1
+      linkmatch = tunelinks[0]
+    else
+      linklist = tunelinks.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
+      plist = { 'menuItems' =&gt; linklist }.to_plist
+      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+      TextMate.exit_insert_text res['selectedMenuItem']['url']
+    end
+  else
+    linkmatch = $document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)\s/) if linkmatch.nil?
+    linkmatch = $document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)\s/) if linkmatch.nil?
+    if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m &amp;&amp; linkmatch.nil?
+      TextMate.exit_insert_text $2
+    elsif linkmatch.nil?
+      refs = $document.scan(/\[([^\]]+)\]\:\s(\S+)/)
+      refs.sort!
+      linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
+      plist = { 'menuItems' =&gt; linklist }.to_plist
+      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+      TextMate.exit_insert_text res['selectedMenuItem']['url']
+	else
+	  TextMate.exit_insert_text linkmatch[1]
+    end
+  end
+  TextMate.exit_discard
+end
+
 def is_linked(word)
-	lines = $document.split("\n")
-	row = ENV['TM_LINE_NUMBER'].to_i
-	line = lines[row-1]
-	cursor = ENV['TM_LINE_INDEX'].to_i
-	ds = []
-	if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/
-		line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/).each {|w|
-			idx = line.index(w[0]).to_i
-			if idx &gt; cursor
-				d = idx - cursor
-			else
-				right = idx + w[0].length
-				if right &gt; cursor
-					d = 0
-				else 
-					d = cursor - right
-				end
-			end
-			ds &lt;&lt; { 'matchstring' =&gt; w[1], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }	
-		}
-		ret = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
-		return [ret['fullmatch'], ret['matchstring'],"link"]
-	elsif line =~ /(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/
-		line.scan(/(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
-			idx = line.index(w[0]).to_i
-			if idx &gt; cursor
-				d = idx - cursor
-			else
-				right = idx + w[0].length
-				if right &gt; cursor
-					d = 0
-				else 
-					d = cursor - right
-				end
-			end
-			ds &lt;&lt; { 'matchstring' =&gt; w[2], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }	
-		}
-		matchstring = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]['matchstring']
-		return [ret['fullmatch'], ret['matchstring'],"title"] unless ret.nil?
-	end
-	return [nil,false,nil]
+  lines = $document.split("\n")
+  row = ENV['TM_LINE_NUMBER'].to_i
+  line = lines[row-1]
+  cursor = ENV['TM_LINE_INDEX'].to_i
+  ds = []
+  if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/
+    line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/).each {|w|
+      idx = line.index(w[0]).to_i
+      if idx &gt; cursor
+        d = idx - cursor
+      else
+        right = idx + w[0].length
+        if right &gt; cursor
+          d = 0
+        else
+          d = cursor - right
+        end
+      end
+      ds &lt;&lt; { 'matchstring' =&gt; w[1], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }
+    }
+    ret = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
+    return [ret['fullmatch'], ret['matchstring'],"link"]
+  elsif line =~ /(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/
+    line.scan(/(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
+      idx = line.index(w[0]).to_i
+      if idx &gt; cursor
+        d = idx - cursor
+      else
+        right = idx + w[0].length
+        if right &gt; cursor
+          d = 0
+        else
+          d = cursor - right
+        end
+      end
+      ds &lt;&lt; { 'matchstring' =&gt; w[2], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }
+    }
+    matchstring = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]['matchstring']
+    return [ret['fullmatch'], ret['matchstring'],"title"] unless ret.nil?
+  end
+  return [nil,false,nil]
 end
 
 def replace_whole_ref(string,replacement)
-	lines = $document.split("\n")
-	row = ENV['TM_LINE_NUMBER'].to_i
-	before = lines[0..row-2].join("\n")
-	after = lines[row..-1].join("\n")
-	line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
-	puts before + "\n" + line + "\n" + after
+  lines = $document.split("\n")
+  row = ENV['TM_LINE_NUMBER'].to_i
+  before = lines[0..row-2].join("\n")
+  after = lines[row..-1].join("\n")
+  line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
+  puts before + "\n" + line + "\n" + after
 end
 
 def replace_if_needed(text)
-	if ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ! ENV['TM_CURRENT_WORD'].nil?
-		lines = $document.split("\n")
-		row = ENV['TM_LINE_NUMBER'].to_i
-		currentLine = lines[row-1]
-		cursor = ENV['TM_LINE_INDEX'].to_i
-		curword = ENV['TM_CURRENT_WORD']
-		curwordlen = ENV['TM_CURRENT_WORD'].length.to_i
-		counter = cursor
-		testword = currentLine[counter..counter+curwordlen]
-		until testword =~ /#{e_sn(curword)}/	
-			counter -= 1	
-			testword = currentLine[counter..counter+curwordlen]
-		end
-		before = []
-		(row-1).times do before &lt;&lt; lines.shift end
-		lastline = counter &gt; 0 ? lines[0][0..counter-1] : ""
-		before &lt;&lt; lastline
-		line_end = lines.shift[counter+curwordlen..-1]
-		print before.join("\n") + text + line_end + "\n" + lines.join("\n")
-	elsif ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-		lines = $document.split("\n")
-		row = ENV['TM_LINE_NUMBER'].to_i
-		before = row &gt; 1 ? lines[0..row-1].join("\n") : ""
-		after = lines.length &gt; row ? lines[row..-1].join("\n") : ""
-		print before + text + "\n" + after
-	else
-		print text
-	end
-end
+  if ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ! ENV['TM_CURRENT_WORD'].nil?
+    lines = $document.split("\n")
+    row = ENV['TM_LINE_NUMBER'].to_i
+    currentLine = lines[row-1]
+    cursor = ENV['TM_LINE_INDEX'].to_i
+    curword = ENV['TM_CURRENT_WORD']
+    curwordlen = ENV['TM_CURRENT_WORD'].length.to_i
+    counter = cursor
+    testword = currentLine[counter..counter+curwordlen]
+    until testword =~ /#{e_sn(curword)}/
+      counter -= 1
+      testword = currentLine[counter..counter+curwordlen]
+    end
+    before = []
+    (row-1).times do before &lt;&lt; lines.shift end
+      lastline = counter &gt; 0 ? lines[0][0..counter-1] : ""
+      before &lt;&lt; lastline
+      line_end = lines.shift[counter+curwordlen..-1]
+      print before.join("\n") + text + line_end + "\n" + lines.join("\n")
+      elsif ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+        lines = $document.split("\n")
+        row = ENV['TM_LINE_NUMBER'].to_i
+        before = row &gt; 1 ? lines[0..row-1].join("\n") : ""
+        after = lines.length &gt; row ? lines[row..-1].join("\n") : ""
+        print before + text + "\n" + after
+      else
+        print text
+      end
+    end
 
-def find_headers(lines)
-    in_headers = false
-    lines.each_with_index {|line, i|
+    def find_headers(lines)
+      in_headers = false
+      lines.each_with_index {|line, i|
         if line =~ /^\S[^\:]+\: .*$/
-            in_headers = true
+          in_headers = true
         elsif in_headers === true
-            return i
+          return i
         end
-    }
-end
+      }
+    end
 
-# Let's get on with it
+    # Let's get on with it
+    TextMate.exit_discard if ENV['TM_CURRENT_LINE'] =~ /^(doctype|title|categories|tags): /i
+    find_main_link if ENV['TM_CURRENT_LINE'] =~ /^[Ll]ink: /i
+    fullmatch,linkword,word_is = is_linked(input) unless input.nil?
 
-fullmatch,linkword,word_is = is_linked(input) unless input.nil?
+    if linkword
+      if word_is == "title"
+        TextMate::CoolDialog.cool_tool_tip("Run the linker in the link portion of the reference - #{linkword}",true)
+      elsif word_is == "link"
+        references = refs.clone.delete_if {|x| x['title'] == linkword }
+        linklist = references.collect { |e| { 'title' =&gt; e['title'].to_s } }
+        plist = { 'menuItems' =&gt; linklist }.to_plist
+        res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+        TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+        newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{res['selectedMenuItem']['title']}]"
+        replace_whole_ref(fullmatch,newlink)
+        exit
+        # refs.each_with_index {|ref,i|
+        # 	if ref['title'] == linkword
+        # 		out = i &lt; refs.length-1 ? refs[i+1]['title'] : refs[0]['title']
+        # 		newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{out}]"
+        # 		replace_whole_ref(fullmatch,newlink)
+        # 		exit
+        # 	end
+        # }
+      else
+        TextMate::CoolDialog.cool_tool_tip("Not linked",true)
+      end
+    end
+    if links.empty? &amp;&amp; input.empty? then
+      TextMate::CoolDialog.cool_tool_tip('No links found',true)
+    elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+      TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
+    elsif links.empty?
+      if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+        input,url = Linkage.new.link_word(input,refs)
+        is_ref = url =~ /^\[.*?\]$/ ? true : false
+        if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+          domain = url.match(/https?:\/\/([^\/]+)/)
+          parts = domain[1].split('.')
+          name = case parts.length
+            when 1: parts[0]
+            when 2: parts[0]
+            else parts[1]
+          end
+          replace_if_needed("[#{name}]: #{url}\n")
+        elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
+          skip = false
+          refs.each { |ref|
+            if ref.has_value?(url)
+              TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}\nRepeat of reference: [#{ref['title']}]",false)
+              skip = true
+            end
+          }
+          if skip == true || is_ref
+            TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
+            TextMate.exit_discard
+          else
+            replace_if_needed("[#{input}]: #{url}")
+          end
+        else
+          refs.each {|ref|
+            if ref.has_value?(url)
+              replace_if_needed("[#{input}][#{ref['title']}]")
+              exit
+            end
+          }
+          if is_ref
+            out = "[#{input}]#{url}"
+          else
+            out = "[#{input}](#{url})"
+            # TODO: if the link isn't already a reference, insert a new ref link at the top or under existing refs, incrementing title as necessary
+            # TODO: replace current word with ref link
+          end
+          replace_if_needed(out)
+        end
+      else
+        if links.empty?
+          if clipboard =~ /\[?([^\]]+)\]?(?:.*?)?/
+            linkword = $1
+            refs.each {|ref|
+              if ref['title'] == $1
+                replace_if_needed("[#{input}][#{ref['title']}]")
+                exit
+              end
+            }
+          end
+          TextMate::CoolDialog.cool_tool_tip("No links found",true)
+        end
+      end
+    else
+      #lines = $document.split("\n")
+      #lineno = find_headers(lines)
+      #top = lines[0..lineno].join("\n")
+      #bottom = lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
 
-if linkword
-	if word_is == "title"
-		TextMate::CoolDialog.cool_tool_tip("Run the linker in the link portion of the reference - #{linkword}",true)
-	elsif word_is == "link"
-		references = refs.clone.delete_if {|x| x['title'] == linkword }
-		linklist = references.collect { |e| { 'title' =&gt; e['title'].to_s } }
-		plist = { 'menuItems' =&gt; linklist }.to_plist
-		res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-		TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-		newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{res['selectedMenuItem']['title']}]"
-		replace_whole_ref(fullmatch,newlink)
-		exit
-		# refs.each_with_index {|ref,i|
-		# 	if ref['title'] == linkword
-		# 		out = i &lt; refs.length-1 ? refs[i+1]['title'] : refs[0]['title']
-		# 		newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{out}]"
-		# 		replace_whole_ref(fullmatch,newlink)
-		# 		exit
-		# 	end
-		# }
-	else
-		TextMate::CoolDialog.cool_tool_tip("Not linked",true)
-	end
-end
-if links.empty? &amp;&amp; input.empty? then
-	TextMate::CoolDialog.cool_tool_tip('No links found',true)
-elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
-elsif links.empty?
-	if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
-		input,url = Linkage.new.link_word(input,refs)
-		is_ref = url =~ /^\[.*?\]$/ ? true : false
-		if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-			domain = url.match(/https?:\/\/([^\/]+)/)
-			parts = domain[1].split('.')
-			name = case parts.length
-				when 1: parts[0]
-				when 2: parts[0]
-				else parts[1]
-			end
-		  	replace_if_needed("[#{name}]: #{url}\n")
-		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
-			skip = false
-			refs.each { |ref|
-				if ref.has_value?(url)
-					TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}\nRepeat of reference: [#{ref['title']}]",false)
-					skip = true
-				end
-			}
-			if skip == true || is_ref
-				TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
-				TextMate.exit_discard
-			else
-				replace_if_needed("[#{input}]: #{url}")
-			end
-		else
-		  refs.each {|ref|
-			if ref.has_value?(url)
-				replace_if_needed("[#{input}][#{ref['title']}]")
-				exit
-			end
-		  }
-		  if is_ref 
-			out = "[#{input}]#{url}"
-		  else
-			out = "[#{input}](#{url})"
-# TODO: if the link isn't already a reference, insert a new ref link at the top or under existing refs, incrementing title as necessary
-# TODO: replace current word with ref link
-		  end
-		  replace_if_needed(out)
-		end
-	else
-		if links.empty?
-			if clipboard =~ /\[?([^\]]+)\]?(?:.*?)?/
-			linkword = $1
-			refs.each {|ref|
-				if ref['title'] == $1
-					replace_if_needed("[#{input}][#{ref['title']}]")
-					exit
-				end
-			}
-			end
-			TextMate::CoolDialog.cool_tool_tip("No links found",true) 
-		end
-	end
-else
-#lines = $document.split("\n")
-#lineno = find_headers(lines)
-#top = lines[0..lineno].join("\n")
-#bottom = lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
+      lines = $document.split("\n")
+      row = ENV['TM_LINE_NUMBER'].to_i
+      prevline = lines[row-2]
 
-lines = $document.split("\n")
-row = ENV['TM_LINE_NUMBER'].to_i
-prevline = lines[row-2]
-
-norepeat = []
-unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
-	refs.each {|ref|
-		norepeat.push(ref['title'])
-	}
-end
-output = []
-skipped = []
-links.each {|url| 
-	skip = false
-	refs.each { |ref|
-	if ENV['TM_SELECTED_TEXT'].nil? || ! ENV['TM_SELECTED_TEXT'] =~ /\[#{ref['title']}\]:\s#{ref['link']}/
-		if ref.has_value?(url[1])
-			skipped.push(url[1])
-			skip = true
-		end
-	end
-	}
-	next if skip == true
-	if url[0].nil?
-		domain = url[1].match(/https?:\/\/([^\/]+)/)
-		parts = domain[1].split('.')
-		name = case parts.length
-			when 1: parts[0]
-			when 2: parts[0]
-			else parts[1]
-		end
-	else
-		name = url[0]
-	end
-	while norepeat.include? name
-		if name =~ / ?[0-9]$/
-			name.next!
-		else 
-			name = name + " 2"
-		end
-	end
-	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url[1] }
-	norepeat.push name
-}
-output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
-counter = 0
-o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
-o += "\n" if row &gt;= lines.length
-output.each { |x| 
-	counter += 1
-	o += "[#{x['title']}]: #{x['link']}\n" 
-}
-TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length &gt; 0
-replace_if_needed(o)
-# print top + o + bottom
-end</string>
+      norepeat = []
+      unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
+        refs.each {|ref|
+          norepeat.push(ref['title'])
+        }
+      end
+      output = []
+      skipped = []
+      links.each {|url|
+        skip = false
+        refs.each { |ref|
+          if ENV['TM_SELECTED_TEXT'].nil? || ! ENV['TM_SELECTED_TEXT'] =~ /\[#{ref['title']}\]:\s#{ref['link']}/
+            if ref.has_value?(url[1])
+              skipped.push(url[1])
+              skip = true
+            end
+          end
+        }
+        next if skip == true
+        if url[0].nil?
+          domain = url[1].match(/https?:\/\/([^\/]+)/)
+          parts = domain[1].split('.')
+          name = case parts.length
+            when 1: parts[0]
+            when 2: parts[0]
+            else parts[1]
+          end
+        else
+          name = url[0]
+        end
+        while norepeat.include? name
+          if name =~ / ?[0-9]$/
+            name.next!
+          else
+            name = name + " 2"
+          end
+        end
+        output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url[1] }
+        norepeat.push name
+      }
+      output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
+      counter = 0
+      o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
+      o += "\n" if row &gt;= lines.length
+      output.each { |x|
+        counter += 1
+        o += "[#{x['title']}]: #{x['link']}\n"
+      }
+      TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length &gt; 0
+      replace_if_needed(o)
+      # print top + o + bottom
+    end
+</string>
 	<key>fallbackInput</key>
 	<string>document</string>
 	<key>input</key>
