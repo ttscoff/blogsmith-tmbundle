@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
+
+clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+# working on incorporating existing refs:
+# when pasting, avoid duplicates in both urls and ref names
+# when listing links, include existing refs in addition to clipboard
+# when linking text, check url against refs, use ref format if exists
+# 
+# input = ENV['TM_SELECTED_TEXT'] ? ENV['TM_SELECTED_TEXT'] : ENV['TM_CURRENT_WORD']
+# document = STDIN.read
+# refs = document.scan(/\[([^\]]+)\]\:\s/)
+# refs.sort!
+$document = STDIN.read
+
+if ENV['TM_SELECTED_TEXT'].nil?
+	input = ENV['TM_CURRENT_WORD'].nil? ? '' : ENV['TM_CURRENT_WORD']
+else
+	input = ENV['TM_SELECTED_TEXT']
+end
+refs = []
+$document.scan(/\[([^\]]+)\]\:\s(.+)/).each { |res|
+	refs &lt;&lt; {'title' =&gt; res[0], 'link' =&gt; res[1] }
+}
+
+if input.empty? 
+	links = clipboard.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+else
+	links = input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+end
+
+def replace_if_needed(text)
+	if ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ! ENV['TM_CURRENT_WORD'].nil?
+		lines = $document.split("\n")
+		row = ENV['TM_LINE_NUMBER'].to_i
+		currentLine = lines[row-1]
+		cursor = ENV['TM_LINE_INDEX'].to_i
+		curword = ENV['TM_CURRENT_WORD']
+		curwordlen = ENV['TM_CURRENT_WORD'].length.to_i
+		counter = cursor
+		testword = currentLine[counter..counter+curwordlen]
+		until testword =~ /#{curword}/	
+			counter -= 1	
+			testword = currentLine[counter..counter+curwordlen]
+		end
+		before = []
+		(row-1).times do before &lt;&lt; lines.shift end
+		lastline = counter &gt; 0 ? lines[0][0..counter-1] : ""
+		before &lt;&lt; lastline
+		line_end = lines.shift[counter+curwordlen..-1]
+		print before.join("\n") + text + line_end + "\n" + lines.join("\n")
+	elsif ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+		lines = $document.split("\n")
+		row = ENV['TM_LINE_NUMBER'].to_i
+		before = lines[0..row-1].join("\n")
+		after = lines[row..-1].join("\n")
+		print before + text + "\n" + after
+	else
+		print text
+	end
+end
+
+if links.empty? &amp;&amp; input.empty? then
+	TextMate::CoolDialog.cool_tool_tip('No links found',true)
+elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'].empty?
+	TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
+elsif links.empty?
+	if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+		input,url = Linkage.new.link_word(input)
+		if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+		  replace_if_needed("[${1:title}]: ${2:#{url}}\n")
+		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
+			skip = false
+			refs.each { |ref|
+				if ref.has_value?(url)
+					TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}\nRepeat of reference: [#{ref['title']}]",false)
+					skip = true
+				end
+			}
+			if skip == true
+				TextMate.exit_discard
+			else
+				replace_if_needed(ERB.new(ENV['TM_REF_LINK_FORMAT']).result)
+			end
+		else
+		  refs.each {|ref|
+			if ref.has_value?(url)
+				replace_if_needed("[#{input}][#{ref['title']}]$0")
+				exit
+			end
+		  }
+		  replace_if_needed(ERB.new(ENV['TM_BLINK_FORMAT']).result)
+		end
+	else
+		if links.empty?
+			TextMate::CoolDialog.cool_tool_tip("No links found",true) 
+		end
+	end
+else
+norepeat = []
+refs.each {|ref|
+	norepeat.push(ref['title'])
+}
+output = []
+skipped = []
+links.each {|url| 
+	skip = false
+	refs.each { |ref|
+	if ENV['TM_SELECTED_TEXT'].nil? || ! ENV['TM_SELECTED_TEXT'] =~ /\[#{ref['title']}\]:\s#{ref['link']}/
+		if ref.has_value?(url[1])
+			skipped.push(url[1])
+			skip = true
+		end
+	end
+	}
+	next if skip == true
+	if url[0].nil?
+		domain = url[1].match(/https?:\/\/([^\/]+)/)
+		parts = domain[1].split('.')
+		name = case parts.length
+			when 1: parts[0]
+			when 2: parts[0]
+			else parts[1]
+		end
+	else
+		name = url[0]
+	end
+	while norepeat.include? name
+		if name =~ / ?[0-9]$/
+			name.next!
+		else 
+			name = name + " 2"
+		end
+	end
+	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url[1] }
+	norepeat.push name
+}
+output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
+counter = 0
+o = ""
+output.each { |x| 
+	counter += 1
+	o += "[${#{counter}:#{x['title']}}]: #{x['link']}\n" 
+}
+TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length &gt; 0
+replace_if_needed(o+"$0")
+end</string>
+	<key>fallbackInput</key>
+	<string>document</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Super Linker</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
+	<key>tabTrigger</key>
+	<string>refs</string>
+	<key>uuid</key>
+	<string>6E088D62-39AB-47DD-AB76-8D767BEE125C</string>
+</dict>
+</plist>
