@@ -11,6 +11,15 @@ require SUPPORT + '/lib/exit_codes'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
 clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+# working on incorporating existing refs:
+# when pasting, avoid duplicates in both urls and ref names
+# when listing links, include existing refs in addition to clipboard
+# when linking text, check url against refs, use ref format if exists
+# 
+# input = ENV['TM_SELECTED_TEXT'] ? ENV['TM_SELECTED_TEXT'] : ENV['TM_CURRENT_WORD']
+# document = STDIN.read
+# refs = document.scan(/\[([^\]]+)\]\:\s/)
+# refs.sort!
 input = STDIN.read
 
 if input.empty? 
