@@ -87,7 +87,7 @@ def replace_whole_ref(string,replacement)
 	row = ENV['TM_LINE_NUMBER'].to_i
 	before = lines[0..row-2].join("\n")
 	after = lines[row..-1].join("\n")
-	line = lines[row-1].gsub(/#{e_sn string}/,"#{replacement}")
+	line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
 	puts before + "\n" + line + "\n" + after
 end
 
@@ -223,6 +223,15 @@ elsif links.empty?
 		end
 	end
 else
+#lines = $document.split("\n")
+#lineno = find_headers(lines)
+#top = lines[0..lineno].join("\n")
+#bottom = lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
+
+lines = $document.split("\n")
+row = ENV['TM_LINE_NUMBER'].to_i
+prevline = lines[row-2]
+
 norepeat = []
 unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
 	refs.each {|ref|
@@ -265,13 +274,15 @@ links.each {|url|
 }
 output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
 counter = 0
-o = ""
+o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
+o += "\n" if row &gt;= lines.length
 output.each { |x| 
 	counter += 1
 	o += "[#{x['title']}]: #{x['link']}\n" 
 }
 TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length &gt; 0
 replace_if_needed(o)
+# print top + o + bottom
 end</string>
 	<key>fallbackInput</key>
 	<string>document</string>

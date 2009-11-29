@@ -30,7 +30,8 @@ lines = input.split("\n")
 
 lineno = find_headers(lines)
 top = lines[0..lineno].join("\n")
-bottom = lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n/,'')
+bottom = lines[lineno+1].gsub(/^\[([^\]]+)\]: (\S+)\n?/,'') =~ /^([\n\s\t]+)?$/ ? "" : "\n"
+bottom += lines[lineno+1..-1].join("\n").gsub(/^\[([^\]]+)\]: (\S+)\n?/,'')
 
 norepeat = []
 norepeatlinks = []
@@ -78,7 +79,7 @@ output.each_with_index { |x,i|
 	o.push("[#{x['title']}]: #{x['link']}")
 	bottom = bottom.gsub(/\((#{e_sn x['orig']}|#{e_sn x['link']})\)/,"[#{e_sn x['title']}]").gsub(/\[#{e_sn x['orig']}\]/,"[#{e_sn x['title']}]")
 }
-puts top + "\n#{o.join("\n")}\n\n" + bottom</string>
+puts top + "\n#{o.join("\n")}\n" + bottom</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
