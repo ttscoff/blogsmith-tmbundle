@@ -38,6 +38,59 @@ else
 	links = input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
 end
 
+def is_linked(word)
+	lines = $document.split("\n")
+	row = ENV['TM_LINE_NUMBER'].to_i
+	line = lines[row-1]
+	cursor = ENV['TM_LINE_INDEX'].to_i
+	ds = []
+	if line =~ /(\[[^\]]+\]\[(#{word}(?:[^\]]+)?)\])/
+		line.scan(/(\[[^\]]+\]\[(#{word}(?:[^\]]+)?)\])/).each {|w|
+			idx = line.index(w[0]).to_i
+			if idx &gt; cursor
+				d = idx - cursor
+			else
+				right = idx + w[0].length
+				if right &gt; cursor
+					d = 0
+				else 
+					d = cursor - right
+				end
+			end
+			ds &lt;&lt; { 'matchstring' =&gt; w[1], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }	
+		}
+		ret = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
+		return [ret['fullmatch'], ret['matchstring'],"link"]
+	elsif line =~ /(\[((?:\w+)?#{word}(?:\w+)?)\]\[([^\]]+)\])/
+		line.scan(/(\[((?:.+)?#{word}(?:.+)?)\]\[([^\]]+)\])/).each {|w|
+			idx = line.index(w[0]).to_i
+			if idx &gt; cursor
+				d = idx - cursor
+			else
+				right = idx + w[0].length
+				if right &gt; cursor
+					d = 0
+				else 
+					d = cursor - right
+				end
+			end
+			ds &lt;&lt; { 'matchstring' =&gt; w[2], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }	
+		}
+		matchstring = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]['matchstring']
+		return [ret['fullmatch'], ret['matchstring'],"title"]
+	end
+	return [nil,false,nil]
+end
+
+def replace_whole_ref(string,replacement)
+	lines = $document.split("\n")
+	row = ENV['TM_LINE_NUMBER'].to_i
+	before = lines[0..row-2].join("\n")
+	after = lines[row..-1].join("\n")
+	line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
+	puts before + "\n" + line + "\n" + after
+end
+
 def replace_if_needed(text)
 	if ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ! ENV['TM_CURRENT_WORD'].nil?
 		lines = $document.split("\n")
@@ -48,7 +101,7 @@ def replace_if_needed(text)
 		curwordlen = ENV['TM_CURRENT_WORD'].length.to_i
 		counter = cursor
 		testword = currentLine[counter..counter+curwordlen]
-		until testword =~ /#{curword}/	
+		until testword =~ /#{e_sh(curword)}/	
 			counter -= 1	
 			testword = currentLine[counter..counter+curwordlen]
 		end
@@ -69,16 +122,55 @@ def replace_if_needed(text)
 	end
 end
 
+def find_headers(lines)
+    in_headers = false
+    lines.each_with_index {|line, i|
+        if line =~ /^\S[^\:]+\: .*$/
+            in_headers = true
+        elsif in_headers === true
+            return i
+        end
+    }
+end
+
+# Let's get on with it
+
+fullmatch,linkword,word_is = is_linked(input) unless input.nil?
+
+if linkword
+	if word_is == "title"
+		TextMate::CoolDialog.cool_tool_tip("Run the linker in the link portion of the reference - #{linkword}",true)
+	elsif word_is == "link"
+		refs.each_with_index {|ref,i|
+			if ref['title'] == linkword
+				out = i &lt; refs.length-1 ? refs[i+1]['title'] : refs[0]['title']
+				newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{out}]"
+				replace_whole_ref(fullmatch,newlink)
+				exit
+			end
+		}
+	else
+		TextMate::CoolDialog.cool_tool_tip("Not linked",true)
+	end
+end
 if links.empty? &amp;&amp; input.empty? then
 	TextMate::CoolDialog.cool_tool_tip('No links found',true)
 elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'].empty?
 	TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
 elsif links.empty?
 	if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
-		input,url = Linkage.new.link_word(input)
+		input,url = Linkage.new.link_word(input,refs)
+		is_ref = url =~ /^\[.*?\]$/ ? true : false
 		if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-		  replace_if_needed("[${1:title}]: ${2:#{url}}\n")
-		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
+			domain = url.match(/https?:\/\/([^\/]+)/)
+			parts = domain[1].split('.')
+			name = case parts.length
+				when 1: parts[0]
+				when 2: parts[0]
+				else parts[1]
+			end
+		  	replace_if_needed("[#{name}]: #{url}\n")
+		elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sh(input)})?$/
 			skip = false
 			refs.each { |ref|
 				if ref.has_value?(url)
@@ -86,30 +178,46 @@ elsif links.empty?
 					skip = true
 				end
 			}
-			if skip == true
+			if skip == true || is_ref
+				TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
 				TextMate.exit_discard
 			else
-				replace_if_needed(ERB.new(ENV['TM_REF_LINK_FORMAT']).result)
+				replace_if_needed("[#{input}]: #{url}")
 			end
 		else
 		  refs.each {|ref|
 			if ref.has_value?(url)
-				replace_if_needed("[#{input}][#{ref['title']}]$0")
+				replace_if_needed("[#{input}][#{ref['title']}]")
 				exit
 			end
 		  }
-		  replace_if_needed(ERB.new(ENV['TM_BLINK_FORMAT']).result)
+		  if is_ref 
+			out = "[#{input}]#{url}"
+		  else
+			out = "[#{input}](#{url})"
+# TODO: if the link isn't already a reference, insert a new ref link at the top or under existing refs, incrementing title as necessary
+# TODO: replace current word with ref link
+		  end
+		  replace_if_needed(out)
 		end
 	else
 		if links.empty?
+			refs.each {|ref|
+				if clipboard =~ /#{ref['title']}/
+					replace_if_needed("[#{input}][#{ref['title']}]")
+					exit
+				end
+			}
 			TextMate::CoolDialog.cool_tool_tip("No links found",true) 
 		end
 	end
 else
 norepeat = []
-refs.each {|ref|
-	norepeat.push(ref['title'])
-}
+unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
+	refs.each {|ref|
+		norepeat.push(ref['title'])
+	}
+end
 output = []
 skipped = []
 links.each {|url| 
@@ -149,21 +257,21 @@ counter = 0
 o = ""
 output.each { |x| 
 	counter += 1
-	o += "[${#{counter}:#{x['title']}}]: #{x['link']}\n" 
+	o += "[#{x['title']}]: #{x['link']}\n" 
 }
 TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length &gt; 0
-replace_if_needed(o+"$0")
+replace_if_needed(o)
 end</string>
 	<key>fallbackInput</key>
 	<string>document</string>
 	<key>input</key>
-	<string>selection</string>
+	<string>document</string>
 	<key>keyEquivalent</key>
-	<string>^@w</string>
+	<string>~l</string>
 	<key>name</key>
 	<string>Super Linker</string>
 	<key>output</key>
-	<string>insertAsSnippet</string>
+	<string>replaceSelectedText</string>
 	<key>scope</key>
 	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
 	<key>tabTrigger</key>

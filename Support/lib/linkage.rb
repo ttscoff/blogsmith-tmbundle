@@ -55,13 +55,23 @@ class Linkage
     return links
   end
 
-  def link_word(input)
+  def link_word(input,refs = [])
     urls = scan_links(get_clipboard)
+	unless refs.empty?
+		urls.map! {|url|
+			link = url.clone
+			refs.each {|ref|
+				link = "["+ref['title']+"]" if url == ref['link']
+			}
+			link
+		}
+	end
     return [input,''] unless urls.length > 0
     if urls.length == 1
       url = urls[0]
     else
       linklist = []
+
       urls.each {|link|
         linklist << {'title' => link, 'url' => link }
       }

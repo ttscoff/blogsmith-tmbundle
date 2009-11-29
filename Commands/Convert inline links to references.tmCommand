@@ -77,7 +77,7 @@ output.each_with_index { |x,i|
 	o.push("[#{x['title']}]: #{x['link']}")
 	bottom = bottom.gsub(/\((#{x['orig']}|#{x['link']})\)/,"[#{x['title']}]").gsub(/\[#{x['orig']}\]/,"[#{x['title']}]")
 }
-puts top + "\n#{o.join("\n")}\n" + bottom</string>
+puts top + "\n#{o.join("\n")}\n\n" + bottom</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
