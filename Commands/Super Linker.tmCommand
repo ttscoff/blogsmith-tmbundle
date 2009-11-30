@@ -55,16 +55,23 @@ def find_main_link
   else
     linkmatch = $document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)\s/) if linkmatch.nil?
     linkmatch = $document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)\s/) if linkmatch.nil?
-    if clipboard =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m &amp;&amp; linkmatch.nil?
-      TextMate.exit_insert_text $2
-    elsif linkmatch.nil?
+    clipboardlinks = clipboard.scan(/(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m)
+    if linkmatch.nil?
       refs = $document.scan(/\[([^\]]+)\]\:\s(\S+)/)
-      refs.sort!
-      linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
-      plist = { 'menuItems' =&gt; linklist }.to_plist
-      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-      TextMate.exit_insert_text res['selectedMenuItem']['url']
+	  unless refs.empty? &amp;&amp; clipboardlinks.empty?
+	      refs.sort! unless refs.empty?
+		  clipboardlinks.each {|link| 
+			title = link[0].nil? ? link[1] : link[0]
+			skip = false
+			refs.each {|ref| skip = true if ref.include?(link[1]) }
+			refs.push([title,link[1]]) unless refs.include?(link[1]) unless skip
+		  } unless clipboardlinks.empty?
+	      linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
+	      plist = { 'menuItems' =&gt; linklist }.to_plist
+	      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+	      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	      TextMate.exit_insert_text res['selectedMenuItem']['url']
+	  end
 	else
 	  TextMate.exit_insert_text linkmatch[1]
     end

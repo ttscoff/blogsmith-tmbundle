@@ -53,7 +53,7 @@ if choice then
   b = $line =~ /^[Tt]ags\:(.*)?/ ? '' : "tags: "
   o = "#{choice.chomp}"
   # o += ";" unless $line.empty? || o == ''
-  print "#{b}${1:#{o}}"
+  print "#{b}${1:#{o}}$0"
 else
   TextMate.exit_discard
 end
