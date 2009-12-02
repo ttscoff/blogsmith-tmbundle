@@ -19,7 +19,7 @@ searchterms = TextMate::UI.request_string(:title =&gt; "Search Evernote Notes", 
 
 urllist = %x{osascript &lt;&lt;-APPLESCRIPT
 tell application "Evernote"
-	set _notes to find notes "any: #{searchterms} source:web.clip"
+	set _notes to find notes "#{searchterms} source:web.clip"
 	set _urls to {}
 	repeat with _note in _notes
 		if source URL of _note is not missing value then

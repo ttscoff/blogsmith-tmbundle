@@ -279,4 +279,129 @@ class Linkage
 	end
   end
 
+  def tabs_to_references(sel_or_word)
+	input = sel_or_word
+	urllist = %x{osascript <<-APPLESCRIPT
+	             tell application "Safari"
+	             set _tabs to every tab of window 1
+	             set _urls to {}
+	             repeat with _tab in _tabs
+	             set end of _urls to {title:name of _tab, URL:URL of _tab}
+	             end repeat
+	             set output to ""
+	             repeat with _item in _urls
+	             if URL of _item is not "" then
+	               set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
+	             end if
+	             end repeat
+	             return output
+	             end tell
+	             APPLESCRIPT }.chomp
+	TextMate::CoolDialog.cool_tool_tip("No tabs returned by Safari. Is it open?",true) if urllist.empty?
+	urls = urllist.split('|||')
+	x = []
+	urls.each {|url|
+	  url = url.split(">>>")
+	  x << { 'title' => url[0], 'tag' => url[1] }
+	}
+	plist = { 'tags' => x }.to_plist
+
+	nib = input.empty? && ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+
+	res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
+	TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
+	links = res['result']['returnArgument']
+
+	TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if links.empty?
+	return links
+  end
+  
+  def search_evernote(sel_or_word)
+	input = sel_or_word
+  	searchterms = TextMate::UI.request_string(:title => "Search Evernote Notes", :prompt => "Enter search terms")
+
+	urllist = %x{osascript <<-APPLESCRIPT
+	tell application "Evernote"
+		set _notes to find notes "#{searchterms} source:web.clip"
+		set _urls to {}
+		repeat with _note in _notes
+			if source URL of _note is not missing value then
+				set end of _urls to {title:title of _note, URL:source URL of _note}
+			end if
+		end repeat
+		set output to ""
+		repeat with _item in _urls
+			set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
+		end repeat
+		return output
+	end tell
+	APPLESCRIPT }.chomp
+	TextMate.exit_show_tool_tip "No results" if urllist.empty?
+	urls = urllist.split('|||')
+	x = []
+	urls.each {|url| 
+		url = url.split(">>>")
+		x << { 'title' => url[0], 'tag' => url[1] } 
+	}
+	plist = { 'tags' => x }.to_plist
+	nib = input.empty? && ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+	res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
+	TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
+	return res['result']['returnArgument']
+  end
+
+  def make_ref_list(links,refs,prevline)
+	  norepeat = []
+      unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
+        refs.each {|ref|
+          norepeat.push(ref['title'])
+        }
+      end
+      output = []
+      skipped = []
+      links.each {|url|
+        skip = false
+        refs.each { |ref|
+          if ENV['TM_SELECTED_TEXT'].nil? || ! ENV['TM_SELECTED_TEXT'] =~ /\[#{ref['title']}\]:\s#{ref['link']}/
+            if ref.has_value?(url[1])
+              skipped.push(url[1])
+              skip = true
+            end
+          end
+        }
+        next if skip == true
+        if url[0].nil?
+          domain = url[1].match(/https?:\/\/([^\/]+)/)
+          parts = domain[1].split('.')
+          name = case parts.length
+            when 1: parts[0].to_s
+            when 2: parts[0].to_s
+            else parts[1].to_s
+          end
+        else
+          name = url[0].to_s
+        end
+        while norepeat.include? name
+          if name =~ / ?[0-9]$/
+            name.next!
+          else
+            name = name + " 2"
+          end
+        end
+        output << {'title' => name, 'link' => url[1] }
+        norepeat.push name
+      }
+      output = output.sort {|a,b| a['title'] <=> b['title']}
+      counter = 0
+      o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
+      # o += "\n" if row >= lines.length
+      output.each { |x|
+        counter += 1
+        o += "[#{x['title']}]: #{x['link']}\n"
+      }
+      TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
+      replace_if_needed(o)
+  	
+  end
+
 end

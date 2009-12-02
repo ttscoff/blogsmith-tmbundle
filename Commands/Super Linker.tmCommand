@@ -152,12 +152,14 @@ def replace_if_needed(text)
       before &lt;&lt; lastline
       line_end = lines.shift[counter+curwordlen..-1]
       print before.join("\n") + text + line_end + "\n" + lines.join("\n")
+	 # `open "txmt://open?line=#{row}&amp;column=#{counter+(text.length+1)}"`
       elsif ENV['TM_SELECTED_TEXT'].nil? &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
         lines = $document.split("\n")
         row = ENV['TM_LINE_NUMBER'].to_i
         before = row &gt; 1 ? lines[0..row-1].join("\n") : ""
         after = lines.length &gt; row ? lines[row..-1].join("\n") : ""
         print before + text + "\n" + after
+		`open "txmt://open?line=#{row+1}&amp;column=0"`
       else
         print text
       end
@@ -230,9 +232,47 @@ end
       end
     end
     if links.empty? &amp;&amp; input.empty? then
-      TextMate::CoolDialog.cool_tool_tip('No links found',true)
+      # TextMate::CoolDialog.cool_tool_tip('No links found',true)
 	  #TODO: Offer a DIALOG popup of search link, tag link, web search, etc.
 	  #TODO: Evernote/Safari tab options
+	  options = [	{'title' =&gt; "Get Safari Tabs", 'name' =&gt; "safari"},
+					{'title' =&gt; "Get Evernote Urls", 'name' =&gt; "evernote"},
+					{'title' =&gt; "Web Search", 'name' =&gt; "websearch"},
+					{'title' =&gt; "Tag Link", 'name' =&gt; "taglink"},
+					{'title' =&gt; "Blog Link", 'name' =&gt; "bloglink"},
+					{'title' =&gt; "Search Link", 'name' =&gt; "searchlink"}
+	  ]
+      plist = { 'menuItems' =&gt; options }.to_plist
+      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	  choice = res['selectedMenuItem']['name']
+	  lines = $document.split("\n")
+      row = ENV['TM_LINE_NUMBER'].to_i
+      prevline = lines[row-2]
+	  if choice == "safari"
+		links = Linkage.new.tabs_to_references("")
+		links = links.map {|url| [nil,url] }
+	  elsif choice == "evernote"
+		links = Linkage.new.search_evernote("")
+		links = links.map {|url| [nil,url] }
+	  elsif choice == "websearch"
+		title,link = Linkage.new.web_search("")
+		links = [[title,link]]
+	  elsif choice == "taglink"
+		title,link = Linkage.new.make_tag_link("")
+		links = [[title,link]]
+	  elsif choice == "bloglink"
+		title,link = Linkage.new.make_blog_link("")
+		links = [[title,link]]
+	  elsif choice == "searchlink"
+		title,link = Linkage.new.make_search_link("")
+		links = [[title,link]]
+	  else
+		TextMate::CoolDialog.cool_tool_tip("Cancelled",true)
+	  end
+	  
+	  Linkage.new.make_ref_list(links,refs,prevline)
+	  exit
     elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
       TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
     elsif links.empty?
