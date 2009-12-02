@@ -24,10 +24,11 @@ def e_url(str)
   end
 end
 def strip_headers(str)
-   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
-   str.gsub!(/^&lt;\d+&gt; .*$/,'')
-   str.gsub!(/&lt;\d+&gt;/,'')
-   str.gsub(/^(doctype|categories|link|title|tags)\:( [^\n]+)?/i, "")
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"") unless str.nil?
+   str.gsub!(/^&lt;\d+&gt; .*$/,'') unless str.nil?
+   str.gsub!(/&lt;\d+&gt;/,'') unless str.nil?
+   str.gsub!(/^(doctype|categories|link|title|tags)\:( [^\n]+)?/i, "") unless str.nil?
+   return str
 end
 
 def check_doc(phrase)

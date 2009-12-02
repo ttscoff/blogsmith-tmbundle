@@ -174,6 +174,7 @@ def replace_if_needed(text)
       }
     end
 
+if ENV['TM_SELECTED_TEXT'].nil?
 left_edge = ENV['TM_LINE_INDEX'].to_i-2 &lt; 1 ? 0 : ENV['TM_LINE_INDEX'].to_i-2
 left_char = ENV['TM_CURRENT_LINE'].slice(left_edge..ENV['TM_LINE_INDEX'].to_i)
 # TextMate::CoolDialog.cool_tool_tip("Left: #{left_edge}, Line length: #{ENV['TM_CURRENT_LINE'].length} Left chars: #{left_char}",true)
@@ -197,7 +198,7 @@ if left_char =~ /\s?\b([stbwn])\b/
 	end
 	exit
 end
-
+end
 
     # Let's get on with it
     TextMate.exit_discard if ENV['TM_CURRENT_LINE'] =~ /^(doctype|title|categories|tags): /i
@@ -230,6 +231,8 @@ end
     end
     if links.empty? &amp;&amp; input.empty? then
       TextMate::CoolDialog.cool_tool_tip('No links found',true)
+	  #TODO: Offer a DIALOG popup of search link, tag link, web search, etc.
+	  #TODO: Evernote/Safari tab options
     elsif input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
       TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
     elsif links.empty?

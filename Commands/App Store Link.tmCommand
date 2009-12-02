@@ -26,6 +26,7 @@ def do_search(keyword,offset)
 
   apps = []
 
+  TextMate.exit_show_tool_tip "No results" if json['results'].nil?
   json['results'].each {|app|
     apps &lt;&lt; {
       'title' =&gt; app['name'].strip,
