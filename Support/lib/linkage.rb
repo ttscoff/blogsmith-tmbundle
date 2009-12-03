@@ -22,10 +22,25 @@ $KCODE = 'u'
 
 class Linkage
 
-  attr_reader :references
+  attr_reader :references, :input, :links
 
   def initialize
-	@references = INPUT.scan(/\[([^\]]+)\]\:\s/).sort
+	# @references = INPUT.scan(/\[([^\]]+)\]\:\s/).sort
+	if SELECTION.nil?
+	  @input = WORD.nil? || WORD =~ /^\s+$/ ? '' : WORD
+	else
+	  @input = SELECTION
+	end
+	refs = []
+	INPUT.scan(/\[([^\]]+)\]\:\s(.+)/).each { |res|
+	  refs << {'title' => res[0], 'link' => res[1] }
+	}
+	@references = refs.sort {|a,b| a['title'] <=> b['title']}
+	if @input.empty?
+	  @links = CLIPBOARD.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+	else
+	  @links = @input.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+	end
   end
 
   def refs_menu
@@ -61,6 +76,65 @@ class Linkage
     end
   end
 
+  # def make_ref_list
+  # 	  lines = INPUT.split("\n")
+  #     row = ENV['TM_LINE_NUMBER'].to_i
+  #     prevline = lines[row-2]
+  # 
+  #     norepeat = []
+  #     unless SELECTION =~ /\[.*?\]:\s.*?$\n/
+  #       @references.each {|ref|
+  #         norepeat.push(ref['title'])
+  #       }
+  #     end
+  #     output = []
+  #     skipped = []
+  #     @links.each {|url|
+  #       skip = false
+  #       @references.each { |ref|
+  #         if SELECTION.nil? || ! SELECTION =~ /\[#{ref['title']}\]:\s#{ref['link']}/
+  #           if ref.has_value?(url[1])
+  #             skipped.push(url[1])
+  #             skip = true
+  #           end
+  #         end
+  #       }
+  #       next if skip == true
+  #       if url[0].nil?
+  #         domain = url[1].match(/https?:\/\/([^\/]+)/)
+  #         parts = domain[1].split('.')
+  #         name = case parts.length
+  #           when 1: parts[0]
+  #           when 2: parts[0]
+  #           else parts[1]
+  #         end
+  #       else
+  #         name = url[0]
+  #       end
+  #       while norepeat.include? name
+  #         if name =~ / ?[0-9]$/
+  #           name.next!
+  #         else
+  #           name = name + " 2"
+  #         end
+  #       end
+  #       output << {'title' => name, 'link' => url[1] }
+  #       norepeat.push name
+  #     }
+  #     output = output.sort {|a,b| a['title'] <=> b['title']}
+  #     counter = 0
+  #     o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
+  #     o += "\n" if row >= lines.length
+  #     output.each { |x|
+  #       counter += 1
+  #       o += "[#{x['title']}]: #{x['link']}\n"
+  #     }
+  #     TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
+  #     replace_if_needed(o)
+  #     # print top + o + bottom
+  #   
+  # end
+
   def ps(string)
     res = `ps Ao pid,comm|awk '{match($0,/[^\\/]+$/); print substr($0,RSTART,RLENGTH)}'|grep ^#{string}$|grep -v grep;`
     return res.empty? ? false : true
@@ -75,12 +149,12 @@ class Linkage
     return links
   end
 
-  def link_word(input,refs = [])
+  def link_word(input)
     urls = scan_links(CLIPBOARD)
-    unless refs.empty?
+    unless @references.empty?
       urls.map! {|url|
         link = url.clone
-        refs.each {|ref|
+        @references.each {|ref|
           link = "["+ref['title']+"]" if url == ref['link']
         }
         link
@@ -366,18 +440,19 @@ class Linkage
 	return res['result']['returnArgument']
   end
 
-  def make_ref_list(links,refs,prevline)
+  def make_ref_list(linklist,prevline)
 	  norepeat = []
+	  linklist = scan_links(CLIPBOARD) if linklist.nil?
       unless SELECTION =~ /\[.*?\]:\s.*?$\n/
-        refs.each {|ref|
+        @references.each {|ref|
           norepeat.push(ref['title'])
         }
       end
       output = []
       skipped = []
-      links.each {|url|
+	  linklist.each {|url|
         skip = false
-        refs.each { |ref|
+        @references.each { |ref|
           if SELECTION.nil? || ! SELECTION =~ /\[#{ref['title']}\]:\s#{ref['link']}/
             if ref.has_value?(url[1])
               skipped.push(url[1])
@@ -422,6 +497,7 @@ class Linkage
 
   def additional_menu(input)
   	options = input.empty? ? [] : [		{'title' => "Link to Reference", 'name' => "reference"}]
+	options += [{'title' => "Use Clipboard", 'name' => "clipboard"}] unless scan_links(CLIPBOARD).empty?
     options += [
 					{'title' => "Get Safari Tabs", 'name' => "safari"},
 					{'title' => "Get Evernote Urls", 'name' => "evernote"},
@@ -438,6 +514,11 @@ class Linkage
 	  if choice == "reference"
 		link = self.refs_menu
 		links = [["_ref",link]]
+	  elsif choice == "clipboard"
+	  	  lines = INPUT.split("\n")
+	      row = ENV['TM_LINE_NUMBER'].to_i
+	      prevline = lines[row-2]
+		  links = scan_links(CLIPBOARD).map {|url| [nil,url] }
 	  elsif choice == "safari"
 		links = Linkage.new.tabs_to_references(input)
 		links = links.map {|url| [nil,url] }
