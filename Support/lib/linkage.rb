@@ -76,65 +76,6 @@ class Linkage
     end
   end
 
-  # def make_ref_list
-  # 	  lines = INPUT.split("\n")
-  #     row = ENV['TM_LINE_NUMBER'].to_i
-  #     prevline = lines[row-2]
-  # 
-  #     norepeat = []
-  #     unless SELECTION =~ /\[.*?\]:\s.*?$\n/
-  #       @references.each {|ref|
-  #         norepeat.push(ref['title'])
-  #       }
-  #     end
-  #     output = []
-  #     skipped = []
-  #     @links.each {|url|
-  #       skip = false
-  #       @references.each { |ref|
-  #         if SELECTION.nil? || ! SELECTION =~ /\[#{ref['title']}\]:\s#{ref['link']}/
-  #           if ref.has_value?(url[1])
-  #             skipped.push(url[1])
-  #             skip = true
-  #           end
-  #         end
-  #       }
-  #       next if skip == true
-  #       if url[0].nil?
-  #         domain = url[1].match(/https?:\/\/([^\/]+)/)
-  #         parts = domain[1].split('.')
-  #         name = case parts.length
-  #           when 1: parts[0]
-  #           when 2: parts[0]
-  #           else parts[1]
-  #         end
-  #       else
-  #         name = url[0]
-  #       end
-  #       while norepeat.include? name
-  #         if name =~ / ?[0-9]$/
-  #           name.next!
-  #         else
-  #           name = name + " 2"
-  #         end
-  #       end
-  #       output << {'title' => name, 'link' => url[1] }
-  #       norepeat.push name
-  #     }
-  #     output = output.sort {|a,b| a['title'] <=> b['title']}
-  #     counter = 0
-  #     o = prevline =~ /^(\s+|\[[^\]]+\]:\s.*?)?$/ ? '' : "\n"
-  #     o += "\n" if row >= lines.length
-  #     output.each { |x|
-  #       counter += 1
-  #       o += "[#{x['title']}]: #{x['link']}\n"
-  #     }
-  #     TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
-  #     replace_if_needed(o)
-  #     # print top + o + bottom
-  #   
-  # end
-
   def ps(string)
     res = `ps Ao pid,comm|awk '{match($0,/[^\\/]+$/); print substr($0,RSTART,RLENGTH)}'|grep ^#{string}$|grep -v grep;`
     return res.empty? ? false : true
@@ -148,6 +89,46 @@ class Linkage
     }
     return links
   end
+  
+  def find_main_link
+	linkmatch = nil
+	tunelinks = INPUT.scan(/^\[itunes ([^\]]+)\]\:\s(\S+)\s/)
+  unless tunelinks.empty?
+    if tunelinks.length == 1
+      linkmatch = tunelinks[0]
+    else
+      linklist = tunelinks.collect { |e| { 'title' => e[0].to_s, 'url' => e[1].to_s } }
+      plist = { 'menuItems' => linklist }.to_plist
+      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+      TextMate.exit_insert_text res['selectedMenuItem']['url']
+    end
+  else
+    linkmatch = INPUT.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)\s/) if linkmatch.nil?
+    linkmatch = INPUT.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)\s/) if linkmatch.nil?
+    clipboardlinks = CLIPBOARD.scan(/(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m)
+    if linkmatch.nil?
+      refs = @references
+	  unless refs.empty? && clipboardlinks.empty?
+		  clipboardlinks.each {|link| 
+			title = link[0].nil? ? link[1] : link[0]
+			skip = false
+			refs.each {|ref| skip = true if ref['link'] == link[1] }
+			refs.push([title,link[1]]) unless skip
+		  } unless clipboardlinks.empty?
+
+	      plist = { 'menuItems' => refs }.to_plist
+	      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+	      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	      TextMate.exit_insert_text res['selectedMenuItem']['link']
+	  end
+	else
+	  TextMate.exit_insert_text linkmatch[1]
+    end
+  end
+  TextMate::CoolDialog.cool_tool_tip("No links found",true)
+end
+
 
   def link_word(input)
     urls = scan_links(CLIPBOARD)

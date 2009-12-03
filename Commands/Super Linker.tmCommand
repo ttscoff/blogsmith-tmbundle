@@ -20,45 +20,6 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
 linker = Linkage.new
 
-def find_main_link
-	linkmatch = nil
-	tunelinks = INPUT.scan(/^\[itunes ([^\]]+)\]\:\s(\S+)\s/)
-  unless tunelinks.empty?
-    if tunelinks.length == 1
-      linkmatch = tunelinks[0]
-    else
-      linklist = tunelinks.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
-      plist = { 'menuItems' =&gt; linklist }.to_plist
-      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-      TextMate.exit_insert_text res['selectedMenuItem']['url']
-    end
-  else
-    linkmatch = INPUT.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)\s/) if linkmatch.nil?
-    linkmatch = INPUT.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)\s/) if linkmatch.nil?
-    clipboardlinks = CLIPBOARD.scan(/(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m)
-    if linkmatch.nil?
-      refs = linker.references
-	  unless refs.empty? &amp;&amp; clipboardlinks.empty?
-	      refs.sort! unless refs.empty?
-		  clipboardlinks.each {|link| 
-			title = link[0].nil? ? link[1] : link[0]
-			skip = false
-			refs.each {|ref| skip = true if ref.include?(link[1]) }
-			refs.push([title,link[1]]) unless refs.include?(link[1]) unless skip
-		  } unless clipboardlinks.empty?
-	      linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
-	      plist = { 'menuItems' =&gt; linklist }.to_plist
-	      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-	      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-	      TextMate.exit_insert_text res['selectedMenuItem']['url']
-	  end
-	else
-	  TextMate.exit_insert_text linkmatch[1]
-    end
-  end
-  TextMate::CoolDialog.cool_tool_tip("No links found",true)
-end
 
 def is_linked(word)
   lines = INPUT.split("\n")
@@ -187,8 +148,8 @@ end
 
     # Let's get on with it
     TextMate.exit_discard if ENV['TM_CURRENT_LINE'] =~ /^(doctype|title|categories|tags): /i
-    find_main_link if ENV['TM_CURRENT_LINE'] =~ /^[Ll]ink: /i
-    fullmatch,linkword,word_is = is_linked(linker.input) unless linker.input.nil?
+    linker.find_main_link if ENV['TM_CURRENT_LINE'] =~ /^[Ll]ink: /i
+    fullmatch,linkword,word_is = is_linked(INPUT) unless INPUT.nil?
 
     if linkword
       if word_is == "title"
