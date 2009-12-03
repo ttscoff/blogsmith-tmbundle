@@ -1,21 +1,41 @@
 #!/usr/bin/env ruby -wKU
 DIALOG = ENV['DIALOG']
-require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
-require "#{ENV['TM_SUPPORT_PATH']}/lib/escape"
-require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
-require "#{ENV['TM_SUPPORT_PATH']}/lib/osx/plist"
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
-require ENV['TM_BUNDLE_SUPPORT'] + '/lib/yahoo'
-require 'net/http'
-require 'rexml/document'
-require 'erb'
-require 'cgi'
+INPUT = STDIN.read
+CLIPBOARD = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
+SELECTION = ENV['TM_SELECTED_TEXT']
+WORD = ENV['TM_CURRENT_WORD']
+LINE = ENV['TM_CURRENT_LINE']
+
+%w[exit_codes escape ui osx/plist].each do |filename|
+  require "#{ENV['TM_SUPPORT_PATH']}/lib/#{filename}"
+end
+
+%w[cooldialog yahoo].each do |filename|
+  require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{filename}"
+end
+
+%w[net/http rexml/document erb cgi].each do |filename|
+  require filename
+end
 
 $KCODE = 'u'
 
 class Linkage
-  def initialize
 
+  attr_reader :references
+
+  def initialize
+	@references = INPUT.scan(/\[([^\]]+)\]\:\s/).sort
+  end
+
+  def refs_menu
+	input = SELECTION ? SELECTION : WORD
+	refs = @references
+	linklist = refs.collect { |e| { 'title' => e.to_s } }
+    plist = { 'menuItems' => linklist }.to_plist
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	return res['selectedMenuItem']['title']
   end
 
   def entity_escape(text)
@@ -41,10 +61,6 @@ class Linkage
     end
   end
 
-  def get_clipboard
-    %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
-  end
-
   def ps(string)
     res = `ps Ao pid,comm|awk '{match($0,/[^\\/]+$/); print substr($0,RSTART,RLENGTH)}'|grep ^#{string}$|grep -v grep;`
     return res.empty? ? false : true
@@ -60,7 +76,7 @@ class Linkage
   end
 
   def link_word(input,refs = [])
-    urls = scan_links(get_clipboard)
+    urls = scan_links(CLIPBOARD)
     unless refs.empty?
       urls.map! {|url|
         link = url.clone
@@ -88,12 +104,12 @@ class Linkage
     [input,url]
   end
 
-  def create_app_store_link(document)
+  def create_app_store_link()
     errormessage = ""
     itunes = []
-    iturls = document.scan(/^\[(itunes( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
+    iturls = INPUT.scan(/^\[(itunes( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
     errormessage += "Couldn't locate any iTunes urls. (e.g. [itunes linktitle]: http://...)\n" if iturls.empty?
-    urls = document.scan(/^\[(dev( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
+    urls = INPUT.scan(/^\[(dev( ?[^\]]+)?)\]\:\s([^\s]+)\s/)
     errormessage += "Couldn't locate any Developer urls. (e.g. [dev linktitle]: http://...)\n" if urls.empty?
     return [nil,nil,errormessage] unless errormessage == ""
     itunesurl,devurl,itunesmatch = ""
@@ -178,9 +194,9 @@ class Linkage
     if string.empty?
       phrase = TextMate::UI.request_string(:title => "Search Query",:prompt => "Enter terms to search for")
     else
-      if ENV['TM_CURRENT_LINE'] =~ /^\[([^\]]+)/
+      if LINE =~ /^\[([^\]]+)/
         phrase = $1
-        phrase = phrase.sub(/dev /,'') + " iphone" if ENV['TM_CURRENT_LINE'] =~ /^\[dev /
+        phrase = phrase.sub(/dev /,'') + " iphone" if LINE =~ /^\[dev /
       else
         phrase = string
       end
@@ -306,7 +322,7 @@ class Linkage
 	}
 	plist = { 'tags' => x }.to_plist
 
-	nib = input.empty? && ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+	nib = input.empty? && LINE =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
 
 	res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
 	TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
@@ -344,7 +360,7 @@ class Linkage
 		x << { 'title' => url[0], 'tag' => url[1] } 
 	}
 	plist = { 'tags' => x }.to_plist
-	nib = input.empty? && ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+	nib = input.empty? && LINE =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
 	res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
 	TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
 	return res['result']['returnArgument']
@@ -352,7 +368,7 @@ class Linkage
 
   def make_ref_list(links,refs,prevline)
 	  norepeat = []
-      unless ENV['TM_SELECTED_TEXT'] =~ /\[.*?\]:\s.*?$\n/
+      unless SELECTION =~ /\[.*?\]:\s.*?$\n/
         refs.each {|ref|
           norepeat.push(ref['title'])
         }
@@ -362,7 +378,7 @@ class Linkage
       links.each {|url|
         skip = false
         refs.each { |ref|
-          if ENV['TM_SELECTED_TEXT'].nil? || ! ENV['TM_SELECTED_TEXT'] =~ /\[#{ref['title']}\]:\s#{ref['link']}/
+          if SELECTION.nil? || ! SELECTION =~ /\[#{ref['title']}\]:\s#{ref['link']}/
             if ref.has_value?(url[1])
               skipped.push(url[1])
               skip = true
@@ -402,6 +418,48 @@ class Linkage
       TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
       replace_if_needed(o)
   	
+  end
+
+  def additional_menu(input)
+  	options = input.empty? ? [] : [		{'title' => "Link to Reference", 'name' => "reference"}]
+    options += [
+					{'title' => "Get Safari Tabs", 'name' => "safari"},
+					{'title' => "Get Evernote Urls", 'name' => "evernote"},
+					{'title' => "Web Search", 'name' => "websearch"},
+					{'title' => "Tag Link", 'name' => "taglink"},
+					{'title' => "Blog Link", 'name' => "bloglink"},
+					{'title' => "Search Link", 'name' => "searchlink"}
+	  ]
+      plist = { 'menuItems' => options }.to_plist
+      res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+      TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	  choice = res['selectedMenuItem']['name']
+	
+	  if choice == "reference"
+		link = self.refs_menu
+		links = [["_ref",link]]
+	  elsif choice == "safari"
+		links = Linkage.new.tabs_to_references(input)
+		links = links.map {|url| [nil,url] }
+	  elsif choice == "evernote"
+		links = Linkage.new.search_evernote(input)
+		links = links.map {|url| [nil,url] }
+	  elsif choice == "websearch"
+		title,link = Linkage.new.web_search(input)
+		links = [[title,link]]
+	  elsif choice == "taglink"
+		title,link = Linkage.new.make_tag_link(input)
+		links = [[title,link]]
+	  elsif choice == "bloglink"
+		title,link = Linkage.new.make_blog_link(input)
+		links = [[title,link]]
+	  elsif choice == "searchlink"
+		title,link = Linkage.new.make_search_link(input)
+		links = [[title,link]]
+	  else
+		TextMate::CoolDialog.cool_tool_tip("Cancelled",true)
+	  end
+	  return links
   end
 
 end
