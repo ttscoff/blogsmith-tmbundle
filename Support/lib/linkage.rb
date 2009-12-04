@@ -46,8 +46,7 @@ class Linkage
   def refs_menu
 	input = SELECTION ? SELECTION : WORD
 	refs = @references
-	linklist = refs.collect { |e| { 'title' => e.to_s } }
-    plist = { 'menuItems' => linklist }.to_plist
+	plist = { 'menuItems' => refs }.to_plist
     res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
     TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
 	return res['selectedMenuItem']['title']
@@ -357,12 +356,12 @@ end
 	             set _tabs to every tab of window 1
 	             set _urls to {}
 	             repeat with _tab in _tabs
-	             set end of _urls to {title:name of _tab, URL:URL of _tab}
+                   set end of _urls to {title:name of _tab, URL:URL of _tab}
 	             end repeat
 	             set output to ""
 	             repeat with _item in _urls
-	             if URL of _item is not "" then
-	               set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
+	             if title of _item is not "Untitled" then
+                 set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
 	             end if
 	             end repeat
 	             return output
@@ -523,5 +522,103 @@ end
 	  end
 	  return links
   end
+
+def is_linked(word)
+  lines = INPUT.split("\n")
+  row = ENV['TM_LINE_NUMBER'].to_i
+  line = lines[row-1]
+  cursor = ENV['TM_LINE_INDEX'].to_i
+  ds = []
+  if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sh word}(?:[^\]]+)?)\])/
+    line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sh word}(?:[^\]]+)?)\])/).each {|w|
+      idx = line.index(w[0]).to_i
+      if idx > cursor
+        d = idx - cursor
+      else
+        right = idx + w[0].length
+        if right > cursor
+          d = 0
+        else
+          d = cursor - right
+        end
+      end
+      ds << { 'matchstring' => w[1], 'distance' => d, 'fullmatch' => w[0] }
+    }
+    ret = ds.sort{|a,b| a['distance'] <=> b['distance']}[0]
+    return [ret['fullmatch'], ret['matchstring'],"link"]
+  elsif line =~ /(\[((?:\w+)?#{e_sh word}(?:\w+)?)\]\[([^\]]+)\])/
+    line.scan(/(\[((?:\w+)?#{e_sh word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
+      idx = line.index(w[0]).to_i
+      if idx > cursor
+        d = idx - cursor
+      else
+        right = idx + w[0].length
+        if right > cursor
+          d = 0
+        else
+          d = cursor - right
+        end
+      end
+      ds << { 'matchstring' => w[2], 'distance' => d, 'fullmatch' => w[0] }
+    }
+    matchstring = ds.sort{|a,b| a['distance'] <=> b['distance']}[0]['matchstring']
+    return [ret['fullmatch'], ret['matchstring'],"title"] unless ret.nil?
+  end
+  return [nil,false,nil]
+end
+
+def replace_whole_ref(string,replacement)
+  lines = INPUT.split("\n")
+  row = ENV['TM_LINE_NUMBER'].to_i
+  before = lines[0..row-2].join("\n")
+  after = lines[row..-1].join("\n")
+  line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
+  puts before + "\n" + line + "\n" + after
+end
+
+def replace_if_needed(text)
+  if SELECTION.nil? && ! WORD.nil?
+    lines = INPUT.split("\n")
+    row = ENV['TM_LINE_NUMBER'].to_i
+    currentLine = lines[row-1]
+    cursor = ENV['TM_LINE_INDEX'].to_i
+    curwordlen = WORD.length.to_i
+    counter = cursor
+    testword = currentLine[counter..counter+curwordlen]
+    until testword =~ /#{e_sh(WORD)}/
+      counter -= 1
+      testword = currentLine[counter..counter+curwordlen]
+    end
+    before = []
+    (row-1).times do before << lines.shift end
+      lastline = counter > 0 ? lines[0][0..counter-1] : ""
+      before << lastline
+      line_end = lines.shift[counter+curwordlen..-1]
+      print before.join("\n") + text + line_end + "\n" + lines.join("\n")
+	  oldcol = counter%ENV['TM_COLUMNS'].to_i
+	  # TextMate.exit_show_tool_tip("Counter: #{counter}, Oldcol: #{oldcol}")
+	  `open "txmt://open?line=#{row}&column=#{counter+text.length+1}"`
+      elsif SELECTION.nil? && LINE =~ /^(\s+)?$/
+        lines = INPUT.split("\n")
+        row = ENV['TM_LINE_NUMBER'].to_i
+        before = row > 1 ? lines[0..row-1].join("\n") : ""
+        after = lines.length > row ? lines[row..-1].join("\n") : ""
+        print before + text + "\n" + after
+		`open "txmt://open?line=#{row+text.split("\n").length.to_i}&column=0"`
+      else
+        print text
+      end
+    end
+
+    def find_headers(lines)
+      in_headers = false
+      lines.each_with_index {|line, i|
+        if line =~ /^\S[^\:]+\: .*$/
+          in_headers = true
+        elsif in_headers === true
+          return i
+        end
+      }
+    end
 
 end

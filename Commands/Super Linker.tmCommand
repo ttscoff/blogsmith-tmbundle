@@ -20,230 +20,130 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
 linker = Linkage.new
 
+if ENV['TM_SELECTED_TEXT'].nil?
+	left_edge = ENV['TM_LINE_INDEX'].to_i-2 &lt; 1 ? 0 : ENV['TM_LINE_INDEX'].to_i-2
+	left_char = ENV['TM_CURRENT_LINE'].slice(left_edge..ENV['TM_LINE_INDEX'].to_i)
+	if left_char =~ /\s?\b([stbwn])\b/
+		case $1
+		when "w" then
+			title,url = linker.web_search("")
+		when "t" then
+			title,url = linker.make_tag_link("")
+		when "b" then
+			title,url = linker.make_blog_link("")
+		when "s" then
+			title,url = linker.make_search_link("")
+		# when "n" then puts "news search"
+		end
+		TextMate.exit_discard if title == false
+		if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^[stbwn]\b(\s+)?$/
+			linker.replace_if_needed("[#{title}]: #{url}")
+		else
+			linker.replace_if_needed("[#{title}](#{url})")
+		end
+		exit
+	end
+end
 
-def is_linked(word)
-  lines = INPUT.split("\n")
-  row = ENV['TM_LINE_NUMBER'].to_i
-  line = lines[row-1]
-  cursor = ENV['TM_LINE_INDEX'].to_i
-  ds = []
-  if line =~ /(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/
-    line.scan(/(\[[^\]]+\]\[((?:[^\]]+)?#{e_sn word}(?:[^\]]+)?)\])/).each {|w|
-      idx = line.index(w[0]).to_i
-      if idx &gt; cursor
-        d = idx - cursor
-      else
-        right = idx + w[0].length
-        if right &gt; cursor
-          d = 0
-        else
-          d = cursor - right
-        end
-      end
-      ds &lt;&lt; { 'matchstring' =&gt; w[1], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }
-    }
-    ret = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]
-    return [ret['fullmatch'], ret['matchstring'],"link"]
-  elsif line =~ /(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/
-    line.scan(/(\[((?:\w+)?#{e_sn word}(?:\w+)?)\]\[([^\]]+)\])/).each {|w|
-      idx = line.index(w[0]).to_i
-      if idx &gt; cursor
-        d = idx - cursor
-      else
-        right = idx + w[0].length
-        if right &gt; cursor
-          d = 0
-        else
-          d = cursor - right
-        end
-      end
-      ds &lt;&lt; { 'matchstring' =&gt; w[2], 'distance' =&gt; d, 'fullmatch' =&gt; w[0] }
-    }
-    matchstring = ds.sort{|a,b| a['distance'] &lt;=&gt; b['distance']}[0]['matchstring']
-    return [ret['fullmatch'], ret['matchstring'],"title"] unless ret.nil?
+# Let's get on with it
+TextMate.exit_discard if ENV['TM_CURRENT_LINE'] =~ /^(doctype|title|categories|tags): /i
+linker.find_main_link if ENV['TM_CURRENT_LINE'] =~ /^[Ll]ink: /i
+fullmatch,linkword,word_is = linker.is_linked(INPUT) unless INPUT.nil?
+
+if linkword
+  if word_is == "title"
+    TextMate::CoolDialog.cool_tool_tip("Run the linker in the link portion of the reference - #{linkword}",true)
+  elsif word_is == "link"
+    references = linker.references.clone.delete_if {|x| x['title'] == linkword }
+    linklist = references.collect { |e| { 'title' =&gt; e['title'].to_s } }
+    plist = { 'menuItems' =&gt; linklist }.to_plist
+    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+    TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+    newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{res['selectedMenuItem']['title']}]"
+    linker.replace_whole_ref(fullmatch,newlink)
+    exit
+  else
+    TextMate::CoolDialog.cool_tool_tip("Not linked",true)
   end
-  return [nil,false,nil]
 end
 
-def replace_whole_ref(string,replacement)
+if linker.links.empty? &amp;&amp; linker.input.empty? then
+  links = linker.additional_menu("")
   lines = INPUT.split("\n")
   row = ENV['TM_LINE_NUMBER'].to_i
-  before = lines[0..row-2].join("\n")
-  after = lines[row..-1].join("\n")
-  line = lines[row-1].gsub(/#{e_sh string}/,"#{replacement}")
-  puts before + "\n" + line + "\n" + after
-end
-
-def replace_if_needed(text)
-	document = INPUT
-	sel = SELECTION
-	word = WORD
-  if sel.nil? &amp;&amp; ! word.nil?
-    lines = document.split("\n")
-    row = ENV['TM_LINE_NUMBER'].to_i
-    currentLine = lines[row-1]
-    cursor = ENV['TM_LINE_INDEX'].to_i
-    curwordlen = word.length.to_i
-    counter = cursor
-    testword = currentLine[counter..counter+curwordlen]
-    until testword =~ /#{e_sn(word)}/
-      counter -= 1
-      testword = currentLine[counter..counter+curwordlen]
-    end
-    before = []
-    (row-1).times do before &lt;&lt; lines.shift end
-      lastline = counter &gt; 0 ? lines[0][0..counter-1] : ""
-      before &lt;&lt; lastline
-      line_end = lines.shift[counter+curwordlen..-1]
-      print before.join("\n") + text + line_end + "\n" + lines.join("\n")
-	 # `open "txmt://open?line=#{row}&amp;column=#{counter+(text.length+1)}"`
-      elsif SELECTION.nil? &amp;&amp; LINE =~ /^(\s+)?$/
-        lines = document.split("\n")
-        row = ENV['TM_LINE_NUMBER'].to_i
-        before = row &gt; 1 ? lines[0..row-1].join("\n") : ""
-        after = lines.length &gt; row ? lines[row..-1].join("\n") : ""
-        print before + text + "\n" + after
-		# `open "txmt://open?line=#{row+1}&amp;column=0"`
-      else
-        print text
+  prevline = lines[row-2]
+  linker.make_ref_list(links,prevline)
+  exit
+elsif linker.input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+  TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
+elsif linker.links.empty?
+  if CLIPBOARD =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
+    input,url = linker.link_word(linker.input)
+    is_ref = url =~ /^\[.*?\]$/ ? true : false
+    if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+      domain = url.match(/https?:\/\/([^\/]+)/)
+      parts = domain[1].split('.')
+      name = case parts.length
+        when 1: parts[0]
+        when 2: parts[0]
+        else parts[1]
       end
-    end
-
-    def find_headers(lines)
-      in_headers = false
-      lines.each_with_index {|line, i|
-        if line =~ /^\S[^\:]+\: .*$/
-          in_headers = true
-        elsif in_headers === true
-          return i
+      linker.replace_if_needed("[#{name}]: #{url}\n")
+    elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
+      skip = false
+      linker.references.each { |ref|
+        if ref.has_value?(url)
+          TextMate::CoolDialog.cool_tool_tip("Repeat url: #{url}\nRepeat of reference: [#{ref['title']}]",false)
+          skip = true
         end
       }
-    end
-
-if ENV['TM_SELECTED_TEXT'].nil?
-left_edge = ENV['TM_LINE_INDEX'].to_i-2 &lt; 1 ? 0 : ENV['TM_LINE_INDEX'].to_i-2
-left_char = ENV['TM_CURRENT_LINE'].slice(left_edge..ENV['TM_LINE_INDEX'].to_i)
-# TextMate::CoolDialog.cool_tool_tip("Left: #{left_edge}, Line length: #{ENV['TM_CURRENT_LINE'].length} Left chars: #{left_char}",true)
-if left_char =~ /\s?\b([stbwn])\b/
-	case $1
-	when "w" then
-		title,url = Linkage.new.web_search("")
-	when "t" then
-		title,url = Linkage.new.make_tag_link("")
-	when "b" then
-		title,url = Linkage.new.make_blog_link("")
-	when "s" then
-		title,url = Linkage.new.make_search_link("")
-	# when "n" then puts "news search"
-	end
-	TextMate.exit_discard if title == false
-	if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^[stbwn]\b(\s+)?$/
-		replace_if_needed("[#{title}]: #{url}")
-	else
-		replace_if_needed("[#{title}](#{url})")
-	end
-	exit
-end
-end
-
-    # Let's get on with it
-    TextMate.exit_discard if ENV['TM_CURRENT_LINE'] =~ /^(doctype|title|categories|tags): /i
-    linker.find_main_link if ENV['TM_CURRENT_LINE'] =~ /^[Ll]ink: /i
-    fullmatch,linkword,word_is = is_linked(INPUT) unless INPUT.nil?
-
-    if linkword
-      if word_is == "title"
-        TextMate::CoolDialog.cool_tool_tip("Run the linker in the link portion of the reference - #{linkword}",true)
-      elsif word_is == "link"
-        references = linker.references.clone.delete_if {|x| x['title'] == linkword }
-        linklist = references.collect { |e| { 'title' =&gt; e['title'].to_s } }
-        plist = { 'menuItems' =&gt; linklist }.to_plist
-        res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-        TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
-        newlink = fullmatch.slice(0..fullmatch.index('][')) + "[#{res['selectedMenuItem']['title']}]"
-        replace_whole_ref(fullmatch,newlink)
-        exit
+      if skip == true || is_ref
+        TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
+        TextMate.exit_discard
       else
-        TextMate::CoolDialog.cool_tool_tip("Not linked",true)
-      end
-    end
-    if linker.links.empty? &amp;&amp; linker.input.empty? then
-	  links = Linkage.new.additional_menu("")
-	  lines = INPUT.split("\n")
-      row = ENV['TM_LINE_NUMBER'].to_i
-      prevline = lines[row-2]
-	  Linkage.new.make_ref_list(links,prevline)
-	  exit
-    elsif linker.input.empty? &amp;&amp; ! ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-      TextMate::CoolDialog.cool_tool_tip("I wouldn't do that in the middle of a paragraph…",true)
-    elsif linker.links.empty?
-      if CLIPBOARD =~ /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
-        input,url = Linkage.new.link_word(linker.input)
-        is_ref = url =~ /^\[.*?\]$/ ? true : false
-        if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-          domain = url.match(/https?:\/\/([^\/]+)/)
-          parts = domain[1].split('.')
-          name = case parts.length
-            when 1: parts[0]
-            when 2: parts[0]
-            else parts[1]
-          end
-          replace_if_needed("[#{name}]: #{url}\n")
-        elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
-          skip = false
-          linker.references.each { |ref|
-            if ref.has_value?(url)
-              TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}\nRepeat of reference: [#{ref['title']}]",false)
-              skip = true
-            end
-          }
-          if skip == true || is_ref
-            TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
-            TextMate.exit_discard
-          else
-            replace_if_needed("[#{input}]: #{url}")
-          end
-        else
-          linker.references.each {|ref|
-            if ref.has_value?(url)
-              replace_if_needed("[#{input}][#{ref['title']}]")
-              exit
-            end
-          }
-          if is_ref
-            out = "[#{linker.input}]#{url}"
-          else
-            out = "[#{linker.input}](#{url})"
-            # TODO: if the link isn't already a reference, insert a new ref link at the top or under existing refs, incrementing title as necessary
-            # TODO: replace current word with ref link
-          end
-          replace_if_needed(out)
-        end
-      else
-        if linker.links.empty?
-          if CLIPBOARD =~ /\[?([^\]]+)\]?(?:.*?)?/
-            linkword = $1
-            linker.references.each {|ref|
-              if ref['title'] == $1
-                replace_if_needed("[#{linker.input}][#{ref['title']}]")
-                exit
-              end
-            }
-          end
-		  links = Linkage.new.additional_menu(linker.input)
-		  o = links[0][0] == "_ref" ? "[#{linker.input}][#{links[0][1]}]" : "[#{linker.input}](#{links[0][1]})"
-		  replace_if_needed(o)
-		  exit
-        end
+        linker.replace_if_needed("[#{input}]: #{url}")
       end
     else
-      links = Linkage.new.additional_menu('')
-	  lines = INPUT.split("\n")
-      row = ENV['TM_LINE_NUMBER'].to_i
-      prevline = lines[row-2]
-	  Linkage.new.make_ref_list(links,prevline)
-	  exit
+      linker.references.each {|ref|
+        if ref.has_value?(url)
+          linker.replace_if_needed("[#{input}][#{ref['title']}]")
+          exit
+        end
+      }
+      if is_ref
+        out = "[#{linker.input}]#{url}"
+      else
+        out = "[#{linker.input}](#{url})"
+        # TODO: if the link isn't already a reference, insert a new ref link at the top or under existing refs, incrementing title as necessary
+        # TODO: replace current word with ref link
+      end
+      linker.replace_if_needed(out)
     end
+  else
+    if linker.links.empty?
+      if CLIPBOARD =~ /\[?([^\]]+)\]?(?:.*?)?/
+        linkword = $1
+        linker.references.each {|ref|
+          if ref['title'] == $1
+            linker.replace_if_needed("[#{linker.input}][#{ref['title']}]")
+            exit
+          end
+        }
+      end
+	links = linker.additional_menu(linker.input)
+	o = links[0][0] == "_ref" ? "[#{linker.input}][#{links[0][1]}]" : "[#{linker.input}](#{links[0][1]})"
+	linker.replace_if_needed(o)
+	exit
+    end
+  end
+else
+	links = linker.additional_menu('')
+	lines = INPUT.split("\n")
+	row = ENV['TM_LINE_NUMBER'].to_i
+	prevline = lines[row-2]
+	linker.make_ref_list(links,prevline)
+	exit
+end
 </string>
 	<key>fallbackInput</key>
 	<string>document</string>
