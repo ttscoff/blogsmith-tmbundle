@@ -140,7 +140,7 @@ end
         link
       }
     end
-    return [input,''] unless urls.length > 0
+    return [INPUT,''] unless urls.length > 0
     if urls.length == 1
       url = urls[0]
     else
@@ -155,7 +155,7 @@ end
       TextMate::CoolDialog.cool_tool_tip("Cancelled",true) unless res.has_key? 'selectedMenuItem'
       url = res['selectedMenuItem']['url']
     end
-    [input,url]
+    return [INPUT,url]
   end
 
   def create_app_store_link()

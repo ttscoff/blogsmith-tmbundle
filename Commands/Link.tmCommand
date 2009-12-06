@@ -10,7 +10,6 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 # require 'erb'
 
 input = STDIN.read
-
 input,url = Linkage.new.link_word(input)
 if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
   puts "[${1:title}]: ${2:#{url}}"
