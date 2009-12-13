@@ -20,7 +20,7 @@ clipboard = %x{__CF_USER_TEXT_ENCODING=$UID:0x8000100:0x8000100 pbpaste}.strip
 # document = STDIN.read
 # refs = document.scan(/\[([^\]]+)\]\:\s/)
 # refs.sort!
-input = STDIN.read
+input = INPUT
 
 if input.empty? 
 	links = clipboard.scan /(?:\[([^\]]+)\]\: )?(https?:\/\/[^ \n"]+)/m
@@ -62,6 +62,7 @@ links.each {|url|
 	else
 		name = url[0]
 	end
+    name = "itunes" if url[1] =~ /(itunes|phobos).apple.com/
 	while norepeat.include? name
 		if name =~ / ?[0-9]$/
 			name.next!

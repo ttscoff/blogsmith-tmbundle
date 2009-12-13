@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -W0 -KU
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + "/lib/progress"
+require 'cgi'
+require 'net/http'
+require 'net/https'
+require 'rexml/document'
+
+def spell_req(text)
+    '&lt;spellrequest textalreadyclipped="0" ignoredups="0" ignoredigits="1" ignoreallcaps="0"&gt;&lt;text&gt;'+REXML::Text.new(text).to_s+'&lt;/text&gt;&lt;/spellrequest&gt;'
+end
+
+def check_spelling(text)
+$out = text.clone
+h = Net::HTTP.new("www.google.com", 443)
+h.use_ssl=true
+resp, body = h.post("/tbproxy/spell?lang=en&amp;hl=en", spell_req(text))
+
+if resp.code.to_i == 200
+    body.scan(/&lt;c o="(\d+)" l="(\d+)" s="(\d+)"&gt;(\w+).*?&lt;\/c&gt;/) {|o, l, s, t| $out.sub!(text[o.to_i, l.to_i], t)}
+    return $out
+else
+	return nil
+end
+end
+
+
+def get_def(phrase)
+  TextMate.call_with_progress(:title =&gt; "Contacting Aonaware Dictionary", :message =&gt; "Looking up #{phrase}") do
+	escapedUrl = "http://services.aonaware.com/DictService/DictService.asmx/Define?word=#{CGI.escape(phrase).gsub(/\\'/,'%27')}"
+	xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+	doc = REXML::Document.new(xml_data)
+	res = Hash.new("")
+	doc.elements.each('WordDefinition/Definitions/Definition') do |definition|
+		dict = definition.get_elements('Dictionary/Name')[0].text
+		res[dict] = [] unless res.has_key?(dict)
+		res[dict] &lt;&lt; definition.get_elements('WordDefinition')[0].text
+	end
+	return res
+  end
+end
+
+def get_words(phrase)
+	defs = get_def(phrase)
+	if defs.length == 1
+		defs.each {|dict,defn| return [defn,dict]}
+	elsif defs.length &gt; 1
+		dictlist = []
+		dictlist &lt;&lt; {'title' =&gt; 'All results' }
+		defs.each {|dict,defn| 
+			dictlist &lt;&lt; {'title' =&gt; dict, 'defn' =&gt; defn }
+		}
+		plist = { 'menuItems' =&gt; dictlist }.to_plist
+		res = OSX::PropertyList::load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+		TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+		if res['selectedMenuItem']['title'] == "All results"
+			return [defs,"All"]
+		else
+			dictname = res['selectedMenuItem']['title']
+			defsel = res['selectedMenuItem']['defn']
+			return [defsel,dictname]
+		end
+	else
+		newphrase = check_spelling(phrase)
+		unless newphrase.nil?
+			unless newphrase == phrase
+				res = TextMate::UI.request_confirmation(:button1 =&gt; "Yes, fix my spelling", :button2 =&gt; "No, it's not", :title =&gt; "Did you mean something else?",:prompt =&gt; "Is #{newphrase} the word you were looking for?")
+				if res == true
+					print newphrase
+					TextMate.exit_replace_text
+				end
+			end
+
+	end
+	TextMate.exit_show_tool_tip "Nothing found"
+end
+return [words,dictname]
+end
+
+phrase = STDIN.read
+words,dictname = get_words(phrase)
+
+b = &lt;&lt;HTML
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;link rel="stylesheet" href="tm-file://#{ENV['TM_SUPPORT_PATH']}/css/default.css" type="text/css" media="screen" title="no title" charset="utf-8" /&gt;
+&lt;style type="text/css" media="screen"&gt;
+	body {background-color: #366;color:#FFC;}
+	pre {font-family:"Myriad Pro";font-size:14px;line-height:18px;}
+	.dict {background:white;color:#333;padding:1px 10px;-webkit-border-radius: 15px;}
+	.defn {border-bottom:dotted 2px #ccc;}
+&lt;/style&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+HTML
+e = &lt;&lt;HTML
+  &lt;/body&gt;
+&lt;/html&gt;
+HTML
+output = b
+if dictname == "All"
+	words.each do |dict,defn|
+		output += %Q{&lt;h4&gt;Results for "#{phrase}" in #{dict}&lt;/h4&gt;&lt;div class="dict"&gt;\n}
+		defn.each do |a_def|
+			output += %Q{&lt;div class="defn"&gt;}
+			output += "&lt;pre&gt;#{a_def}&lt;/pre&gt;\n"
+			output += "&lt;/div&gt;\n"
+		end
+		output += "&lt;/div&gt;\n"
+	end
+else
+	output += %Q{&lt;h4&gt;Results for "#{phrase}" in #{dictname}&lt;/h4&gt;&lt;div class="dict"&gt;\n}
+	words.each do |defn|
+		output += %Q{&lt;div class="defn"&gt;}
+		output += "&lt;pre&gt;#{defn}&lt;/pre&gt;\n"
+		output += "&lt;/div&gt;\n"
+	end
+	output += "&lt;/div&gt;\n"
+end
+output += e
+
+# TextMate.exit_create_new_document output
+TextMate.exit_show_html output</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Dict.org Lookup</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>C52DC58C-A1C6-424C-A9C4-5016EDA0179D</string>
+</dict>
+</plist>

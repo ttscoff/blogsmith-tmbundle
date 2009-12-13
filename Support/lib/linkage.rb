@@ -171,7 +171,7 @@ end
       urls.each{|url|
         urlmatch = url[1] ? url[1].strip.downcase.to_s : "blank"
         itunesmatch = itmatch[1] ? itmatch[1].strip.downcase.to_s : "blank"
-        devurl = url[0].strip if urlmatch === itunesmatch || urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
+        devurl = url[0].strip if urlmatch === itunesmatch # || urlmatch.gsub(/ ?\d+$/,'') === itunesmatch.gsub(/ ?\d+$/,'')
       }
       if devurl.nil?
         errormessage += "Couldn't find a match for iTunes url #{itmatch[1].strip.downcase}"
@@ -184,6 +184,7 @@ end
       iturl = nil
       errormessage += "No sets of dev/itunes links found"
     elsif itunes.length === 1
+      return [nil,nil,"Selected iTunes link is not an App Store link"] if itunes[0]['url'] !~ /(itunes|phobos).apple.com/
       url = itunes[0]['dev']
       iturl = itunes[0]['ref']
     else
@@ -194,15 +195,17 @@ end
         url = nil
         errormessage = [nil,nil,"Cancelled"]
       else
+  	    return [nil,nil,"Selected iTunes link is not an App Store link"] if res['selectedMenuItem']['url'] !~ /(itunes|phobos).apple.com/
         iturl = res['selectedMenuItem']['ref']
         url = res['selectedMenuItem']['dev']
       end
     end
-    if itunes[0]['url'] !~ /(itunes|phobos).apple.com/
-      return [nil,nil,"Selected iTunes link is not an App Store link"]
-    else
-      return [url,iturl,errormessage]
-    end
+	
+    input = SELECTION || WORD
+    replace_if_needed("[#{input}][#{url}] [[iTunes link][#{iturl}]]")
+    exit
+      # return [url,iturl,errormessage]
+  
   end
 
   def do_web_search(offset,phrase)
@@ -288,7 +291,7 @@ end
       res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
       TextMate::CoolDialog.cool_tool_tip("Cancelled",true) unless res.has_key? 'selectedMenuItem'
       url = res['selectedMenuItem']['url']
-      title = res['selectedMenuItem']['title']
+      title = "tag" + res['selectedMenuItem']['title']
       return [title,url]
     end
     return false
@@ -316,7 +319,7 @@ end
       output += "</ul>"
       TextMate::CoolDialog.cool_tool_tip(output)
       title = string.empty? ? res : string
-      return [title, url]
+      return ["search" + title, url]
 
     else
       TextMate::CoolDialog.cool_tool_tip("Less than 3 links found for #{searchstring}, try another search phrase",false)
@@ -344,8 +347,9 @@ end
 		return false
 	else
 	    url = res['selectedMenuItem']['url']
+		blog = blogsite.split('.')[-2]
 	    title = string.empty? ? answer.chomp : string
-	    return [title,url]
+	    return [blog + title,url]
 	end
   end
 
@@ -468,7 +472,8 @@ end
       # o += "\n" if row >= lines.length
       output.each { |x|
         counter += 1
-        o += "[#{x['title']}]: #{x['link']}\n"
+		name = x['link'] =~ /(itunes|phobos).apple.com/ ? "itunes " + x['title'] : x['title']
+        o += "[#{name}]: #{x['link']}\n"
       }
       TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
       replace_if_needed(o)

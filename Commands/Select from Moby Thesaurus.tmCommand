@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -W0 -KU
+DIALOG = ENV['DIALOG']
+require "#{ENV['TM_SUPPORT_PATH']}/lib/progress.rb"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/ui.rb"
+require 'cgi'
+require 'net/http'
+require 'net/https'
+require 'rexml/document'
+
+def spell_req(text)
+    '&lt;spellrequest textalreadyclipped="0" ignoredups="0" ignoredigits="1" ignoreallcaps="0"&gt;&lt;text&gt;'+REXML::Text.new(text).to_s+'&lt;/text&gt;&lt;/spellrequest&gt;'
+end
+
+def check_spelling(text)
+$out = text.clone
+h = Net::HTTP.new("www.google.com", 443)
+h.use_ssl=true
+resp, body = h.post("/tbproxy/spell?lang=en&amp;hl=en", spell_req(text))
+
+if resp.code.to_i == 200
+    body.scan(/&lt;c o="(\d+)" l="(\d+)" s="(\d+)"&gt;(\w+).*?&lt;\/c&gt;/) {|o, l, s, t| $out.sub!(text[o.to_i, l.to_i], t)}
+    return $out
+else
+	return nil
+end
+end
+
+def get_thes(phrase)
+  TextMate.call_with_progress(:title =&gt; "Contacting Aonaware Dictionary", :message =&gt; "Looking up #{phrase} in Moby Thesaurus") do
+	escapedUrl = "http://services.aonaware.com/DictService/DictService.asmx/DefineInDict?word=#{CGI.escape(phrase).gsub(/\\'/,'%27')}&amp;dictid=moby-thes"
+    xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+	doc = REXML::Document.new(xml_data)
+	defs = []
+	doc.elements.each('WordDefinition/Definitions/Definition/WordDefinition') do |definition|
+		return definition.text
+	end
+	return false
+  end
+end
+
+phrase = STDIN.read
+words = get_thes(phrase)
+if words == false then
+	newphrase = check_spelling(phrase)
+	unless newphrase.nil?
+		res = TextMate::UI.request_confirmation(:button1 =&gt; "Yes, it is", :button2 =&gt; "No, it's not", :title =&gt; "Did you mean something else?",:prompt =&gt; "Is #{newphrase} the word you were looking for?")
+		words = get_thes(newphrase) if res == true
+	end
+end
+TextMate.exit_show_tool_tip "Nothing found" if words == false
+words = words.gsub(/[\t\n]/,"").gsub(/\s{2,}/,"")
+words = words.split(":")
+words.shift
+words = words.join("")
+words = words.split(",")
+words = words.map { |word| { 'title' =&gt; word.strip,'word' =&gt; word.strip } }
+plist = { 'menuItems' =&gt; words }.to_plist
+
+res = OSX::PropertyList::load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+
+if phrase =~ /^[A-Z]/ then
+if phrase =~ /[A-Z]{2,}/ then
+print res['selectedMenuItem']['word'].gsub(/(.+)/){ $1.upcase }
+else
+print res['selectedMenuItem']['word'].capitalize
+end
+else
+print res['selectedMenuItem']['word']
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Select from Moby Thesaurus</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>01BF4831-F104-4C72-945B-4AF8D6E95097</string>
+</dict>
+</plist>

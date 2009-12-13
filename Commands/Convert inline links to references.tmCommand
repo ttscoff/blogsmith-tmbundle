@@ -6,16 +6,12 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
-SUPPORT = ENV['TM_SUPPORT_PATH']
-require SUPPORT + '/lib/exit_codes'
-require SUPPORT + '/lib/escape'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage"
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog"
 
 def find_headers(lines)
     in_headers = false
     lines.each_with_index {|line, i|
-        if line =~ /^\S[^\:]+\: .*$/
+        if line =~ /^\S[^\:]+\:( .*?)?$/
             in_headers = true
         elsif in_headers === true
             return i
@@ -23,7 +19,7 @@ def find_headers(lines)
     }
 end
 
-input = STDIN.read
+input = INPUT.clone
 links = input.scan(/\((https?:\/\/([^\)]+))\)/)
 refs = input.scan(/^\[([^\]]+)\]: (\S+)$/)
 lines = input.split("\n")

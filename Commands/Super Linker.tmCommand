@@ -88,8 +88,9 @@ elsif linker.links.empty?
         when 2: parts[0]
         else parts[1]
       end
+	 name = "itunes " + name if url =~ /(itunes|phobos).apple.com/
       linker.replace_if_needed("[#{name}]: #{url}\n")
-    elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sn(input)})?$/
+    elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{e_sh(input)})?$/
       skip = false
       linker.references.each { |ref|
         if ref.has_value?(url)
@@ -101,6 +102,7 @@ elsif linker.links.empty?
         TextMate::CoolDialog.cool_tool_tip("Repeat reference url: #{url}",false) if is_ref
         TextMate.exit_discard
       else
+    	input = "itunes " + input if url =~ /(itunes|phobos).apple.com/
         linker.replace_if_needed("[#{input}]: #{url}")
       end
     else

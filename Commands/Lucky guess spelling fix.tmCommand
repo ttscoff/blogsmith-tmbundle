@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -W0 -KU
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + "/lib/progress"
+require 'cgi'
+require 'net/http'
+require 'net/https'
+require 'rexml/document'
+
+def spell_req(text)
+    '&lt;spellrequest textalreadyclipped="0" ignoredups="0" ignoredigits="1" ignoreallcaps="0"&gt;&lt;text&gt;'+REXML::Text.new(text).to_s+'&lt;/text&gt;&lt;/spellrequest&gt;'
+end
+
+def check_spelling(text)
+$out = text.clone
+h = Net::HTTP.new("www.google.com", 443)
+h.use_ssl=true
+resp, body = h.post("/tbproxy/spell?lang=en&amp;hl=en", spell_req(text))
+
+if resp.code.to_i == 200
+    body.scan(/&lt;c o="(\d+)" l="(\d+)" s="(\d+)"&gt;(\w+).*?&lt;\/c&gt;/) {|o, l, s, t| $out.sub!(text[o.to_i, l.to_i], t)}
+    return $out
+else
+	return nil
+end
+end
+
+phrase = STDIN.read
+newphrase = check_spelling(phrase)
+TextMate.exit_show_tool_tip "Looks fine to me…" if newphrase == phrase
+unless newphrase.nil?
+	print newphrase 
+	TextMate.exit_replace_text
+else
+	TextMate.exit_show_tool_tip "Nothing found"
+end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>~D</string>
+	<key>name</key>
+	<string>Lucky guess spelling fix</string>
+	<key>output</key>
+	<string>showAsTooltip</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>0C3DA311-B9CE-4029-B153-4069712D85F5</string>
+</dict>
+</plist>

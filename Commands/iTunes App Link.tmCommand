@@ -7,23 +7,19 @@
 	<key>command</key>
 	<string>#!/usr/bin/env ruby -rjcode -Ku
 
-SUPPORT = ENV['TM_SUPPORT_PATH']
-require SUPPORT + '/lib/escape'
-require SUPPORT + '/lib/exit_codes'
-require SUPPORT + '/lib/ui'
+
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage.rb"
 
-document = STDIN.read
-input = ENV['TM_SELECTED_TEXT'] # ? ENV['TM_SELECTED_TEXT'] : ENV['TM_CURRENT_WORD']
-url,iturl,errormessage = Linkage.new.create_app_store_link(document)
-unless errormessage == ""
-	TextMate.exit_show_tool_tip errormessage if url.nil? || iturl.nil?
-else
-	TextMate.exit_show_tool_tip "iTunes and Dev links need to be specified, see help" if url.nil? || iturl.nil?
-end
-print ERB.new(ENV['TM_ITUNES_REF_FORMAT']).result</string>
+
+	url,iturl,errormessage = Linkage.new.create_app_store_link()
+	unless errormessage == ""
+		TextMate.exit_show_tool_tip errormessage if url.nil? || iturl.nil?
+	else
+		TextMate.exit_show_tool_tip "iTunes and Dev links need to be specified, see help" if url.nil? || iturl.nil?
+	end
+</string>
 	<key>fallbackInput</key>
-	<string>word</string>
+	<string>document</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
@@ -31,7 +27,7 @@ print ERB.new(ENV['TM_ITUNES_REF_FORMAT']).result</string>
 	<key>name</key>
 	<string>iTunes App Link</string>
 	<key>output</key>
-	<string>insertAsSnippet</string>
+	<string>replaceSelectedText</string>
 	<key>scope</key>
 	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
 	<key>uuid</key>

@@ -44,14 +44,19 @@ res.each { |var|
 	}
 }
 
-options = {:case_insensitive =&gt; false}
-TextMate::UI.complete(completions, options)</string>
+TextMate::UI.complete(completions, :case_insensitive =&gt; true, :initial_filter =&gt; ENV['TM_CURRENT_WORD'], :extra_chars =&gt; ' ')
+
+# options = {:case_insensitive =&gt; true}
+# res[TextMate::UI.complete(completions,options)]
+
+# selected = completions[TextMate::UI.menu(completions)] rescue exit
+# print selected.sub(/\A#{Regexp.escape(ENV['TM_CURRENT_WORD'].to_s)}/, "")</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
-	<string>^</string>
+	<string></string>
 	<key>name</key>
 	<string>Complete App Name</string>
 	<key>output</key>
