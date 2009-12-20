@@ -6,8 +6,10 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage"
-
+# require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/linkage"
+%w[exit_codes escape].each do |filename|
+  require "#{ENV['TM_SUPPORT_PATH']}/lib/#{filename}"
+end
 def find_headers(lines)
     in_headers = false
     lines.each_with_index {|line, i|
@@ -19,7 +21,7 @@ def find_headers(lines)
     }
 end
 
-input = INPUT.clone
+input = STDIN.read
 links = input.scan(/\((https?:\/\/([^\)]+))\)/)
 refs = input.scan(/^\[([^\]]+)\]: (\S+)$/)
 lines = input.split("\n")
@@ -73,7 +75,7 @@ o = []
 
 output.each_with_index { |x,i| 
 	o.push("[#{x['title']}]: #{x['link']}")
-	bottom = bottom.gsub(/\((#{e_sn x['orig']}|#{e_sn x['link']})\)/,"[#{e_sn x['title']}]").gsub(/\[#{e_sn x['orig']}\]/,"[#{e_sn x['title']}]")
+	bottom = bottom.gsub(/\((#{e_sh x['orig']}|#{e_sh x['link']})\)/,"[#{x['title']}]").gsub(/\[#{e_sh x['orig']}\]/,"[#{x['title']}]")
 }
 puts top + "\n#{o.join("\n")}\n" + bottom</string>
 	<key>fallbackInput</key>

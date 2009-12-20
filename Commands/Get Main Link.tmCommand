@@ -40,7 +40,7 @@ else
 	linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
 	plist = { 'menuItems' =&gt; linklist }.to_plist
 	res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-	TextMate.exit_discard unless res.has_key? 'selectedMenuItem'
+	TextMate.exit_insert_text "link: " unless res.has_key? 'selectedMenuItem'
 	TextMate.exit_insert_text "link: " + res['selectedMenuItem']['url']
 end
 end</string>

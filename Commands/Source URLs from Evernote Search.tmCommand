@@ -8,82 +8,31 @@
 	<string>90A7F438-5416-4EA5-92B6-4E76B28AC9B7</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby -wKU
-SUPPORT = ENV['TM_SUPPORT_PATH']
-DIALOG = ENV['DIALOG']
-require SUPPORT + '/lib/ui'
-require SUPPORT + '/lib/osx/plist'
-require SUPPORT + '/lib/escape'
-require SUPPORT + '/lib/exit_codes'
+require ENV['TM_BUNDLE_SUPPORT'] + '/lib/linkage.rb'
+linker = Linkage.new
 
-searchterms = TextMate::UI.request_string(:title =&gt; "Search Evernote Notes", :prompt =&gt; "Enter search terms")
+links = linker.search_evernote(linker.input)
+links = links.map {|url| [nil,url] }
 
-urllist = %x{osascript &lt;&lt;-APPLESCRIPT
-tell application "Evernote"
-	set _notes to find notes "#{searchterms} source:web.clip"
-	set _urls to {}
-	repeat with _note in _notes
-		if source URL of _note is not missing value then
-			set end of _urls to {title:title of _note, URL:source URL of _note}
-		end if
-	end repeat
-	set output to ""
-	repeat with _item in _urls
-		set output to output &amp; (title of _item) &amp; "&gt;&gt;&gt;" &amp; (URL of _item) &amp; "|||"
-	end repeat
-	return output
-end tell
-APPLESCRIPT }.chomp
-TextMate.exit_show_tool_tip "No results" if urllist.empty?
-urls = urllist.split('|||')
-x = []
-urls.each {|url| 
-	url = url.split("&gt;&gt;&gt;")
-	x &lt;&lt; { 'title' =&gt; url[0], 'tag' =&gt; url[1] } 
-}
-plist = { 'tags' =&gt; x }.to_plist
-res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} select_evernote`)
-TextMate.exit_discard if res['returnButton'] == "Cancel"
-links = res['result']['returnArgument']
-
-if links.empty? then
-	TextMate.exit_discard
+# output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
+if links.length == 1 &amp;&amp; ! linker.input.empty?
+  linker.replace_if_needed("[#{linker.input}](#{links[0][1]})")
 else
-	norepeat = []
-output = []
-links.each {|url| 
-	domain = url.match(/https?:\/\/([^\/]+)/)
-	parts = domain[1].split('.')
-	name = case parts.length
-		when 1: parts[0]
-		when 2: parts[0]
-		else parts[1]
-	end
-	while norepeat.include? name
-		if name =~ / [0-9]$/
-			name.next!
-		else 
-			name = name + " 2"
-		end
-	end
-	output &lt;&lt; {'title' =&gt; name, 'link' =&gt; url }
-	norepeat.push name
-}
-output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
-counter = 0
-output.each { |x| 
-	counter += 1
-	puts "[${#{counter}:#{x['title']}}]: #{x['link']}" 
-}
-
+  lines = INPUT.split("\n")
+  row = ENV['TM_LINE_NUMBER'].to_i
+  prevline = lines[row-2]
+  linker.make_ref_list(links,prevline)
 end</string>
+	<key>fallbackInput</key>
+	<string>word</string>
 	<key>input</key>
-	<string>none</string>
+	<string>document</string>
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
 	<string>Source URLs from Evernote Search</string>
 	<key>output</key>
-	<string>insertAsSnippet</string>
+	<string>replaceDocument</string>
 	<key>scope</key>
 	<string>text.html.markdown,text.html.markdown.multimarkdown</string>
 	<key>tabTrigger</key>
