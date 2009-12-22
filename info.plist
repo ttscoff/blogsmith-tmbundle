@@ -40,7 +40,6 @@
 			<string>C5C14986-D767-4E67-8589-106110ADEB7E</string>
 			<string>C02F06D8-FB9D-416E-BAB8-6FB2413F01A3</string>
 			<string>3A0D6DA6-0C63-4DB1-84F4-259123064279</string>
-			<string>6E088D62-39AB-47DD-AB76-8D767BEE125C</string>
 			<string>CA222487-63C6-46DB-830E-603B1447DDA3</string>
 			<string>------------------------------------</string>
 			<string>ED253253-930E-4D7C-A022-7B8BBEF2BB9A</string>
@@ -52,6 +51,7 @@
 			<dict>
 				<key>items</key>
 				<array>
+					<string>6E088D62-39AB-47DD-AB76-8D767BEE125C</string>
 					<string>A350595A-C95E-48AD-85DA-132429747C64</string>
 					<string>5C7201E6-9DF2-4E32-8D06-1E707C02D789</string>
 					<string>66D64733-D941-4B0B-AFA1-497C77BB03F1</string>

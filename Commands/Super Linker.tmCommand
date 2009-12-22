@@ -21,8 +21,6 @@ Linkage.new.do_superlink</string>
 	<string>replaceSelectedText</string>
 	<key>scope</key>
 	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
-	<key>tabTrigger</key>
-	<string>refs</string>
 	<key>uuid</key>
 	<string>6E088D62-39AB-47DD-AB76-8D767BEE125C</string>
 </dict>
