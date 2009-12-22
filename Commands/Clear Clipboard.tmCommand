@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>echo ''|pbcopy</string>
+	<key>input</key>
+	<string>none</string>
+	<key>keyEquivalent</key>
+	<string>^~l</string>
+	<key>name</key>
+	<string>Clear Clipboard</string>
+	<key>output</key>
+	<string>discard</string>
+	<key>uuid</key>
+	<string>113066C8-B526-49CE-992E-0FEF4D698643</string>
+</dict>
+</plist>
