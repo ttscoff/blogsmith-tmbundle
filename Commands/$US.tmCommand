@@ -6,9 +6,12 @@
 	<string>nop</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby
-SUPPORT = ENV['TM_SUPPORT_PATH']
-BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
-require "#{SUPPORT}/lib/exit_codes.rb"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/progress"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
+require "#{ENV['TM_SUPPORT_PATH']}/lib/escape"
+require 'net/http'
+require 'date'
 require 'erb'
 
 input = STDIN.read
@@ -24,7 +27,58 @@ def shift_dec(int)
 	mynum
 end
 
-if input.match(/^[\%\$\d\*\/\+\-,\. \(\)]+$/)
+class Float
+  def round_to(x)
+    (self * 10**x).round.to_f / 10**x
+  end
+
+  def ceil_to(x)
+    (self * 10**x).ceil.to_f / 10**x
+  end
+
+  def floor_to(x)
+    (self * 10**x).floor.to_f / 10**x
+  end
+end
+
+def pad_num(x)
+	if x.to_s.split('.')[1].length == 1
+		return (x.to_s + '0')
+	else
+		return x
+	end
+end
+
+def get_qty(input)
+	input.scan(/([\d\.]+)/) {|num|
+		TextMate.exit_show_tool_tip "Please select a numeric quantity (Euros)" if num == nil
+		return num[0]
+	}
+end
+
+if input =~ /[\d\.]+\s?(€|Eu(ro)?)/i
+	date = Time.now - (60*60*24)
+	day = date.day
+	month = date.month
+	year = date.year
+	rate = 0
+
+	TextMate.call_with_progress(:title =&gt; "Contacting Bank of Italy", :message =&gt; "Retrieving Exchange Rate") do
+		response = Net::HTTP.get_response(URI.parse("http://uif.bancaditalia.it/UICFEWebroot/QueryOneDateAllCur?lang=en&amp;rate=0&amp;initDay=#{day}&amp;initMonth=#{month}&amp;initYear=#{year}&amp;refCur=euro&amp;R1=csv"))
+		if response.body =~ /^UNITED STATES/
+			response.body.split("\n").each {|line|
+				rows = line.split(',')
+				if rows[2].to_s.strip == "USD"
+					rate = rows[4].to_f
+					num = get_qty(input).to_i
+					print "$#{pad_num(num*rate.round_to(2))}US"
+				end
+			}
+		end
+	end
+	TextMate::UI.tool_tip("&lt;p style=\"background:black; color:white; -webkit-border-radius: 15px; padding:1em;\"&gt;Exchange rate (Euro:USD) = #{rate}&lt;/p&gt;", {:transparent =&gt; true, :format =&gt; :html})
+  exit
+elsif input.match(/^[\%\$\d\*\/\+\-,\. \(\)]+$/)
 	num = ts(eval(input.gsub(/[\$\,]/,'').gsub(/(^|[^\d])(\.\d+)/,'\10\2').gsub(/([\d\.]+)(?:\s+?)?([+-])(?:\s+?)?([\d\.]+)%([^\d]|$)/,'\1\2(\1*(\3.to_f * 0.01))\4')).to_s)
 	print ERB.new(ENV['TM_MONEY_FORMAT']).result
 else

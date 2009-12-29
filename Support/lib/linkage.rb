@@ -617,7 +617,7 @@ class Linkage
         row = ENV['TM_LINE_NUMBER'].to_i
         before = row > 1 ? lines[0..row-1].join("\n") : ""
         after = lines.length > row ? lines[row..-1].join("\n") : ""
-        print before + text + "\n" + after
+        print before + "\n" + text + "\n" + after
         `open "txmt://open?line=#{row+text.split("\n").length.to_i}&column=0"`
       else
         print text
