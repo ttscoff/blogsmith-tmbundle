@@ -55,18 +55,20 @@ def do_search(keyword,offset)
     TextMate.exit_show_tool_tip "Cancelled" unless res.has_key? 'result'
     sel = res['result']['returnArgument'][0]['title']
     url = res['result']['returnArgument'][0]['url']
+    price = res['result']['returnArgument'][0]['price']
   end
   if url == ""
     offset += 15
     do_search(keyword,offset)
   else
-    return [sel,url]
+    return [sel,url,price]
   end
 end
 
 keyword = phrase.empty? ? TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find App Store link for:") : phrase
 TextMate.exit_discard if keyword.nil? || keyword.empty?
-sel,url = do_search(keyword,offset)
+sel,url,price = do_search(keyword,offset)
+
 input = phrase.empty? ? keyword : phrase
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(#{phrase})?(\s+)?$/
