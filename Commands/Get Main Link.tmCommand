@@ -28,8 +28,8 @@ unless tunelinks.empty?
 	end
 else
 # linkmatch = document.match(/^\[itunes(?: [^\]]+)?\]\:\s(\S+)\s/)
-linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)\s/) if linkmatch.nil?
-linkmatch = document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)\s/) if linkmatch.nil?
+linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)/) if linkmatch.nil?
+linkmatch = document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)/) if linkmatch.nil?
 # linkmatch = document.match(/^\[[^\]]+\]\:\s(\S+)\s/) if linkmatch.nil?
 # linkmatch = document.match(/(http:\/\/[^\s\)]+)/) if linkmatch.nil?
 unless linkmatch.nil?
