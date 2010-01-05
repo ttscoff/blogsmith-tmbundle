@@ -19,6 +19,7 @@ tunelinks = document.scan(/^\[itunes ([^\]]+)\]\:\s(\S+)\s/)
 unless tunelinks.empty?
 	if tunelinks.length == 1
 		linkmatch = tunelinks[0]
+		TextMate.exit_insert_text "link: " + tunelinks[0][1]
 	else
 		linklist = tunelinks.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
 		plist = { 'menuItems' =&gt; linklist }.to_plist
@@ -27,22 +28,19 @@ unless tunelinks.empty?
 		TextMate.exit_insert_text "link: " + res['selectedMenuItem']['url']
 	end
 else
-# linkmatch = document.match(/^\[itunes(?: [^\]]+)?\]\:\s(\S+)\s/)
-linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)/) if linkmatch.nil?
-linkmatch = document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)/) if linkmatch.nil?
-# linkmatch = document.match(/^\[[^\]]+\]\:\s(\S+)\s/) if linkmatch.nil?
-# linkmatch = document.match(/(http:\/\/[^\s\)]+)/) if linkmatch.nil?
-unless linkmatch.nil?
-	print "link: " + linkmatch[1]
-else
-	refs = document.scan(/\[([^\]]+)\]\:\s(\S+)/)
-	refs.sort!
-	linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
-	plist = { 'menuItems' =&gt; linklist }.to_plist
-	res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-	TextMate.exit_insert_text "link: " unless res.has_key? 'selectedMenuItem'
-	TextMate.exit_insert_text "link: " + res['selectedMenuItem']['url']
-end
+	linkmatch = document.match(/^\[link(?: [^\]]+)?\]\:\s(\S+)/) if linkmatch.nil?
+	linkmatch = document.match(/^\[[^\]]+\]\:\s(http:\/\/itunes.apple.com\S+)/) if linkmatch.nil?
+	unless linkmatch.nil?
+		print "link: " + linkmatch[1]
+	else
+		refs = document.scan(/\[([^\]]+)\]\:\s(\S+)/)
+		refs.sort!
+		linklist = refs.collect { |e| { 'title' =&gt; e[0].to_s, 'url' =&gt; e[1].to_s } }
+		plist = { 'menuItems' =&gt; linklist }.to_plist
+		res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+		TextMate.exit_insert_text "link: " unless res.has_key? 'selectedMenuItem'
+		TextMate.exit_insert_text "link: " + res['selectedMenuItem']['url']
+	end
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
