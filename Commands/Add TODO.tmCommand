@@ -70,10 +70,16 @@ else
 	  before = []
 	  (row-1).times do before &lt;&lt; lines.shift end
 	  lastline = cursor &gt; 0 ? lines[0][0..cursor-1] : " "
+	  lastline = "" if row &gt; lines.length &amp;&amp; currentLine.nil?
 	  before &lt;&lt; lastline
+	if currentLine.nil?
+		puts before.join("\n")
+		print "&lt;#{m+1}&gt; ${1:Unattached note}$0"
+		TextMate.exit_insert_snippet
+	end
 	  line_end = lines.shift[cursor..-1]
 	  endgap = m &gt; 0 ? "\n" : "\n\n"
-	  print e_sn(before.join("\n") + "&lt;#{m+1}&gt;#{line_end}\n" + lines.join("\n")) + "#{endgap}&lt;#{m+1}&gt; $0"
+	  print e_sn(before.join("\n") + "&lt;#{m+1}&gt;#{line_end}\n" + lines.join("\n")) + "#{endgap}&lt;#{m+1}&gt; ${1:Note ##{m+1}}$0"
 	end
 end</string>
 	<key>input</key>
