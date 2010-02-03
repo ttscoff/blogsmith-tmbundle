@@ -14,7 +14,7 @@ Linkage.new.do_superlink</string>
 	<key>input</key>
 	<string>document</string>
 	<key>keyEquivalent</key>
-	<string>~l</string>
+	<string>^l</string>
 	<key>name</key>
 	<string>SuperLinker</string>
 	<key>output</key>
