@@ -24,26 +24,35 @@ query = e_url(answer + " -inurl:tag -inurl:?q= -inurl:rss.xml -inurl:bloggers si
 yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
 
 ysuggest = []
-    yahoo.parse_results.each {|result| 
-        ysuggest &lt;&lt; { 
-          'title' =&gt; result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,''),
-          'url' =&gt; result['Url']}
-    }
-    plist = { 'menuItems' =&gt; ysuggest }.to_plist
+yahoo.parse_results.each {|result|
+  if result['Url'] =~ /.*?\/(\d{4})\/(\d{2})\/(\d{2})\/.*/
+    postdate = "\t\t#{$2}-#{$3}-#{$1}"
+	title = result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,'')
+	title = title[0..50]+"…" if title.length &gt; 50
+	((60 - title.length) / 4).to_i.times {|i| title += "\t" }
+	title += postdate
+    ysuggest &lt;&lt; {
+		'title' =&gt; title,
+		'url' =&gt; result['Url']
+	}
+  end
+}
+plist = { 'menuItems' =&gt; ysuggest }.to_plist
 
-    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
 
-    TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
-    url = res['selectedMenuItem']['url']
-    title = res['selectedMenuItem']['title']
+TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
+url = res['selectedMenuItem']['url']
+title = res['selectedMenuItem']['title']
 
-   if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-	input = "blog" + answer.chomp.gsub(/\s+/,"_")
-	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
+  input = "blog" + answer.chomp.gsub(/\s+/,"_")
+  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
-	input = res if input.empty?
-    print ERB.new(ENV['TM_BLINK_FORMAT']).result
-end</string>
+  input = res if input.empty?
+  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
