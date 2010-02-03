@@ -14,6 +14,7 @@ require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'erb'
+require 'date'
 
 input = STDIN.read
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
@@ -26,17 +27,20 @@ yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
 ysuggest = []
 yahoo.parse_results.each {|result|
   if result['Url'] =~ /.*?\/(\d{4})\/(\d{2})\/(\d{2})\/.*/
-    postdate = "\t\t#{$2}-#{$3}-#{$1}"
+     postdate = "\t\t#{$2}-#{$3}-#{$1}"
+	sortdate = "#{$1}/#{$2}/#{$3}"
 	title = result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,'')
 	title = title[0..50]+"…" if title.length &gt; 50
 	((60 - title.length) / 4).to_i.times {|i| title += "\t" }
 	title += postdate
     ysuggest &lt;&lt; {
 		'title' =&gt; title,
-		'url' =&gt; result['Url']
+		'url' =&gt; result['Url'],
+		'date' =&gt; sortdate
 	}
   end
 }
+ysuggest.sort! { |a,b| Date.parse(b['date']) &lt;=&gt; Date.parse(a['date']) }
 plist = { 'menuItems' =&gt; ysuggest }.to_plist
 
 res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
