@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env php
+&lt;?php
+$input = file_get_contents('php://stdin');
+$terms = urlencode($input.' site:wikipedia.org');
+$url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&amp;filter=1&amp;rsz=small&amp;"
+    . "q=$terms";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_REFERER, "TextMate Wikify");
+$body = curl_exec($ch);
+curl_close($ch);
+
+$json = json_decode($body,TRUE);
+echo "[$input](".$json['responseData']['results'][0]['url'].")";
+?&gt;</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Wikipedia Quick Link</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown, text.html.markdown</string>
+	<key>uuid</key>
+	<string>9FDA5CBE-7FF5-4854-A893-B512980FC2C6</string>
+</dict>
+</plist>
