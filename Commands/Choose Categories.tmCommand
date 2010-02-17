@@ -37,11 +37,11 @@ def process_source(catsource)
 	catsource.gsub!(/^(?:\n+)?getBrowseCatsOK\("(.*)"\)$/m,"\\1")
 	catsource.gsub!(/&lt;h4(?:[^&gt;]+)?&gt;([^&gt;]+)&lt;\/h4&gt;/,"****\\1\n")
 	catsource = catsource.split("****")
-	catsource.shift if catsource[0].empty?
+	catsource.shift if catsource[0].empty? || catsource[0] == "\n"
 	catlist = []
 	catsource.each {|section|
 		parent_title = section.match(/^([^\n]+)\n/)[1]
-		children = section.scan(/(?:&lt;ul&gt;)?&lt;li&gt;&lt;a id=\\"(\d+)\\"[^&gt;]+&gt;([^&lt;]+)&lt;\/a&gt;&lt;\/li&gt;(?:&lt;\/ul&gt;)?/m)
+		children = section.scan(/(?:&lt;ul&gt;)?&lt;li&gt;&lt;a id=\\?"(\d+)\\?"[^&gt;]+&gt;([^&lt;]+)&lt;\/a&gt;&lt;\/li&gt;(?:&lt;\/ul&gt;)?/m)
 		cats = []
 		children.each {|child|
 			cats &lt;&lt; { 'id' =&gt; child[0], 'title' =&gt; child[1] }
