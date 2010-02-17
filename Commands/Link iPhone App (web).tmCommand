@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/ui'
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'erb'
+
+input = STDIN.read
+blogsite = "itunes.apple.com"
+answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find iPhone apps with keywords:",:default =&gt; input)
+TextMate.exit_discard unless answer
+query = e_url(answer + " inurl:/app/ site:#{blogsite}")
+yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
+
+ysuggest = []
+yahoo.parse_results.each {|result|
+	title = result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,'')
+	title = title[0..50]+"…" if title.length &gt; 50
+    ysuggest &lt;&lt; {
+		'title' =&gt; title,
+		'url' =&gt; result['Url'].gsub(/\?mt=8$/,''),
+	}
+}
+
+plist = { 'menuItems' =&gt; ysuggest }.to_plist
+
+res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+
+TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
+url = res['selectedMenuItem']['url']
+title = res['selectedMenuItem']['title']
+
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
+  input = "itunes " + answer.chomp.gsub(/\s+/,"_")
+  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+else
+  input = res if input.empty?
+  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+end
+</string>
+	<key>fallbackInput</key>
+	<string>word</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Link iPhone App (web)</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown, text.html.textile, text.bbcode, text.moinmoin, text.restructuredtext</string>
+	<key>uuid</key>
+	<string>59B540E7-5B7F-4DDA-B932-1D0E4F80A5FD</string>
+</dict>
+</plist>
