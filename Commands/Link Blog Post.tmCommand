@@ -19,7 +19,7 @@ require 'date'
 input = STDIN.read
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 # input = "Search text" if input.empty?
-answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find TUAW posts relating to keywords:",:default =&gt; input)
+answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find posts on #{blogsite} with keywords:",:default =&gt; input)
 TextMate.exit_discard unless answer
 query = e_url(answer + " -inurl:tag -inurl:?q= -inurl:rss.xml -inurl:bloggers site:#{blogsite}")
 yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
