@@ -1,7 +1,7 @@
 To update the category listing:
 
 1. Log in to BlogSmith in your web browser
-2. Paste this URL into the browser: http://blogsmith.aol.com/?a=ajax-post-get-browse-cats&postblogid=16
+2. Paste this URL into the browser: http://beta.blogsmith.aol.com/?a=ajax-post-get-browse-cats&postblogid=16
 	* The last number in the URL (16) is the blog id for TUAW. If you want another blog's categories, replace 16 with the blog id of your blog 
 3. View the source of the resulting page and copy the entire source to the clipboard.
 4. Paste the source code below, leaving the divider in place
