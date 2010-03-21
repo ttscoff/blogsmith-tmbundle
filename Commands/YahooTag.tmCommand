@@ -113,7 +113,12 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       }
 
       dialog.parameters = {'summary' =&gt; 'Processing','progressValue' =&gt; 90 }
-      density = KeywordDensity.new($goodtags,File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.skipwords.txt"))
+      if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.skipwords.txt"))
+        skipwordsfile = File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.skipwords.txt")
+      else
+        skipwordsfile = "#{ENV['TM_BUNDLE_SUPPORT']}/lib/skipwords.txt"
+      end
+      density = KeywordDensity.new($goodtags,skipwordsfile)
 
       density.get_keyword_density($text)
       words = density.words_count
@@ -138,6 +143,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
           'tag' =&gt; tag
         }
       }
+
       dialog.parameters = {'summary' =&gt; 'Complete!','progressValue' =&gt; 100 }
     end
 
