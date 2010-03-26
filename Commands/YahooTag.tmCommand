@@ -19,7 +19,9 @@ require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/keyword_density"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
 require 'date'
-
+require 'net/http'
+require 'rexml/document'
+require 'cgi'
 
 $line = ENV['TM_CURRENT_LINE']
 $text = STDIN.read
@@ -92,7 +94,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
       :summary =&gt; 'Contacting Yahoo...',
       :indeterminate =&gt; false,
     :cancel =&gt; lambda {TextMate.exit_discard} ) do |dialog|
-      dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 50 }
+      dialog.parameters = {'summary' =&gt; 'Getting Yahoo Tags','progressValue' =&gt; 40 }
       words = $text.gsub(/[\/\\]_/,' ').gsub(/[^A-Za-z0-9\s]/,'').split
       words.delete_if{|word| word =~ $skipwords }
       query = words.join('+')
@@ -105,7 +107,22 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
           a.upcase &lt;=&gt; b.upcase
         end
       end
+      dialog.parameters = {'summary' =&gt; 'Getting Zemanta Tags','progressValue' =&gt; 60 }
+      gateway = 'http://api.zemanta.com/services/rest/0.0/'
 
+      res = Net::HTTP.post_form(URI.parse(gateway),
+                               {
+                               'method'=&gt;'zemanta.suggest',
+                               'api_key'=&gt; 'v7wgcjng3n7a9wbyrjyrf2du',
+                               'text'=&gt; query[0..8000],
+                               'format' =&gt; 'xml'
+                               })
+      data = REXML::Document.new(res.body)
+      keywords = []
+      data.elements.each('rsp/keywords/keyword') do |ele|
+         ele.elements.each('name') {|name| keywords.push(name.text) }
+      end
+      
       tags = []
 
       $goodtags.each {|tag|
@@ -128,6 +145,7 @@ if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 
       words.each {|phrase,count| matches.push(phrase.join(' ')) if count &gt; 3 || (count &gt; 2 &amp;&amp; phrase.length &gt; 1)}
       $alwaystags.each {|tag| matches.push(tag) }
+      keywords.each {|tag| matches.push(tag) } unless keywords.nil?
       ysorted.each {|tag| matches.push(tag) } unless ysorted.nil?
       TextMate.exit_show_tool_tip "No tag matches in text" if matches.nil? || matches.empty?
       sorted = matches.sort do |a,b|
