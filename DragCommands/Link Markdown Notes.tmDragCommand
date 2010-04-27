@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+
+path = ENV['TM_DROPPED_FILEPATH']
+name = ENV['TM_DROPPED_FILE']
+
+if ENV['TM_CURRENT_LINE'] =~ /^&lt;\d+&gt; /
+	print "[#{name}](txmt://open/?url=file://#{path})"
+end</string>
+	<key>draggedFileExtensions</key>
+	<array>
+		<string>md</string>
+		<string>markdown</string>
+	</array>
+	<key>input</key>
+	<string>selection</string>
+	<key>name</key>
+	<string>Link Markdown Notes</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>uuid</key>
+	<string>DAEA38C3-E097-4E78-9194-33BE807F19D8</string>
+</dict>
+</plist>

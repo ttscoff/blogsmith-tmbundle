@@ -5,7 +5,7 @@
 	<key>content</key>
 	<string>&lt;div style="float: left; margin-right: 10px; margin-bottom: 2px;"&gt;
 &lt;script type="text/javascript"&gt;
-tweetmeme_url = http://POST-URL-Here';
+tweetmeme_url = 'http://POST-URL-Here';
 tweetmeme_source = 'tuaw';
 &lt;/script&gt;
 &lt;script type="text/javascript" src="http://tweetmeme.com/i/scripts/button.js"&gt;&lt;/script&gt;
