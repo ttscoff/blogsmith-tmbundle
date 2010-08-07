@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/ui'
+require 'net/http'
+require 'rexml/document'
+require BUNDLESUPPORT + '/lib/cooldialog.rb'
+
+input = STDIN.read
+
+TextMate.exit_show_tool_tip("Price check requires an iTunes web url to be selected") unless input =~ /^http:\/\/itunes.apple.com\/[^\/]+\/app\/.+$/
+
+source = Net::HTTP.get_response(URI.parse(input.strip)).body
+TextMate.exit_show_tool_tip("Error retrieving iTunes page") if source.nil?
+price = source.match(/&lt;div class="price"&gt;([^&lt;]+)&lt;\/div&gt;/)[1]
+print input + " \"#{price}\""</string>
+	<key>fallbackInput</key>
+	<string>scope</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>iOS App Price Check</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>168887F6-C18F-41FE-8E41-7CAA4F5094A6</string>
+</dict>
+</plist>

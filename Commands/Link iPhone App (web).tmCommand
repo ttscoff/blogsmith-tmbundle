@@ -13,13 +13,14 @@ require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
+require 'net/http'
 require 'erb'
 
 input = STDIN.read
 blogsite = "itunes.apple.com"
 answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find iPhone apps with keywords:",:default =&gt; input)
 TextMate.exit_discard unless answer
-query = e_url(answer + " inurl:/app/ site:#{blogsite}")
+query = e_url(answer + " inurl:/us/app/ site:#{blogsite}")
 yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
 
 ysuggest = []
@@ -39,13 +40,19 @@ res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
 TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
 url = res['selectedMenuItem']['url']
 title = res['selectedMenuItem']['title']
+price = ""
+if url =~ /^http:\/\/itunes.apple.com\/[^\/]+\/app\/.+$/
+  source = Net::HTTP.get_response(URI.parse(url.strip)).body
+  price = source.match(/&lt;div class="price"&gt;([^&lt;]+)&lt;\/div&gt;/)[1] unless source.nil?
+end
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+|#{input})?$/
-  input = "itunes " + answer.chomp.gsub(/\s+/,"_")
-  print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+  # input = "itunes " + answer.chomp.gsub(/\s+/,"_")
+  input = answer
+  print ERB.new(ENV['TM_APP_REF_LINK_FORMAT']).result
 else
   input = res if input.empty?
-  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+  print ERB.new(ENV['TM_APP_BLINK_FORMAT']).result
 end
 </string>
 	<key>fallbackInput</key>
