@@ -20,8 +20,7 @@
 				<key>name</key>
 				<string>TM_REF_LINK_FORMAT</string>
 				<key>value</key>
-				<string>[${1:&lt;%= e_sn input %&gt;}]: ${2:&lt;%= e_sn url %&gt;}
-</string>
+				<string>[${1:&lt;%= e_sn input %&gt;}]: ${2:&lt;%= e_sn url %&gt;}</string>
 			</dict>
 			<dict>
 				<key>name</key>
@@ -33,8 +32,7 @@
 				<key>name</key>
 				<string>TM_APP_REF_LINK_FORMAT</string>
 				<key>value</key>
-				<string>[${1:&lt;%= e_sn input %&gt;}]: &lt;%= e_sn url %&gt; "&lt;%= e_sn price %&gt;"
-</string>
+				<string>[${1:&lt;%= e_sn input %&gt;}]: &lt;%= e_sn url %&gt; "&lt;%= e_sn price %&gt;"</string>
 			</dict>
 			<dict>
 				<key>name</key>

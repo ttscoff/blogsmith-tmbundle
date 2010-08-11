@@ -52,17 +52,23 @@ norepeat = []
 output = []
 links.each {|url| 
 	if url[0].nil?
-		domain = url[1].match(/https?:\/\/([^\/]+)/)
-		parts = domain[1].split('.')
-		name = case parts.length
-			when 1: parts[0]
-			when 2: parts[0]
-			else parts[1]
+	  if url[1] =~ (/http:\/\/itunes.apple.com\/(.+?)\/app\/(.+?)\/id\d+/)
+	    name = $2
+	  elsif url[1] =~ /(itunes|phobos).apple.com/
+	    name = "itunes"
+	  else
+		  domain = url[1].match(/https?:\/\/([^\/]+)/)
+		  parts = domain[1].split('.')
+		  name = case parts.length
+			  when 1: parts[0]
+			  when 2: parts[0]
+			  else parts[1]
+		  end
 		end
 	else
 		name = url[0]
 	end
-    name = "itunes" if url[1] =~ /(itunes|phobos).apple.com/
+
 	while norepeat.include? name
 		if name =~ / ?[0-9]$/
 			name.next!
