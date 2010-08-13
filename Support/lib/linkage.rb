@@ -472,7 +472,8 @@ class Linkage
     output.each { |x|
       counter += 1
       name = x['link'] =~ /(itunes|phobos).apple.com/ ? "itunes " + x['title'] : x['title']
-      o += "[#{name}]: #{x['link']}\n"
+      o += "[#{name}]: #{x['link']}"
+      o += "\n" unless counter == output.length
     }
     TextMate::CoolDialog.cool_tool_tip("Skipped #{skipped.length.to_s} repeats",false) if skipped.length > 0
     replace_if_needed(o)
@@ -591,6 +592,8 @@ class Linkage
     end
 
     def replace_if_needed(text)
+      o = ''
+      snippet = false
       if SELECTION.nil? && ! WORD.nil?
         lines = INPUT.split("\n")
         row = ENV['TM_LINE_NUMBER'].to_i
@@ -608,20 +611,17 @@ class Linkage
         lastline = counter > 0 ? lines[0][0..counter-1] : ""
         before << lastline
         line_end = lines.shift[counter+curwordlen..-1]
-        print before.join("\n") + text + line_end + "\n" + lines.join("\n")
+        o = before.join("\n") + text + line_end + "\n" + lines.join("\n")
         oldcol = counter%ENV['TM_COLUMNS'].to_i
-        # TextMate.exit_show_tool_tip("Counter: #{counter}, Oldcol: #{oldcol}")
         `open "txmt://open?line=#{row}&column=#{counter+text.length+1}"`
       elsif SELECTION.nil? && LINE =~ /^(\s+)?$/
-        lines = INPUT.split("\n")
-        row = ENV['TM_LINE_NUMBER'].to_i
-        before = row > 1 ? lines[0..row-1].join("\n") : ""
-        after = lines.length > row ? lines[row..-1].join("\n") : ""
-        print before + "\n" + text + "\n" + after
-        `open "txmt://open?line=#{row+text.split("\n").length.to_i}&column=0"`
+        snippet = true
+        o = text + "\n$0"
       else
-        print text
+        snippet = true
+        o = "#{text}$0"
       end
+      return [snippet,o]
     end
 
         def find_headers(lines)
@@ -669,6 +669,7 @@ class Linkage
       public
 
         def do_superlink
+          TextMate.exit_show_tool_tip("Sorry, the Super Linker is not currently functional.")
           linker = Linkage.new
 
 
@@ -699,7 +700,9 @@ class Linkage
                   else parts[1]
                 end
                 name = "itunes " + name if url =~ /(itunes|phobos).apple.com/
-                linker.replace_if_needed("[#{name}]: #{url}\n")
+                snippet,output = linker.replace_if_needed("[#{name}]: #{url}\n")
+                TextMate.exit_insert_snippet(output+"$0") if snippet
+                TextMate.exit_insert_text(output)
               elsif !(ENV['TM_SCOPE'].scan(/markdown/).empty?) && LINE =~ /^(\s+|#{e_sh(input)})?$/
                 skip = false
                 linker.references.each { |ref|
@@ -718,7 +721,9 @@ class Linkage
               else
                 linker.references.each {|ref|
                   if ref.has_value?(url)
-                    linker.replace_if_needed("[#{input}][#{ref['title']}]")
+                    snippet,output = linker.replace_if_needed("[#{input}][#{ref['title']}]")
+                    TextMate.exit_insert_snippet(output) if snippet
+                    TextMate.exit_insert_text(output)
                     exit
                   end
                 }

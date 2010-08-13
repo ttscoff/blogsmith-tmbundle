@@ -9,6 +9,7 @@
 	<key>command</key>
 	<string>#!/usr/bin/env ruby -wKU
 require ENV['TM_BUNDLE_SUPPORT'] + '/lib/linkage.rb'
+require ENV['TM_SUPPORT_PATH'] + '/lib/exit_codes'
 linker = Linkage.new
 
 links = linker.search_evernote(linker.input)
@@ -16,12 +17,16 @@ links = links.map {|url| [nil,url] }
 
 # output = output.sort {|a,b| a['title'] &lt;=&gt; b['title']}
 if links.length == 1 &amp;&amp; ! linker.input.empty?
-  linker.replace_if_needed("[#{linker.input}](#{links[0][1]})")
+  snippet,output = linker.replace_if_needed("[#{linker.input}](#{links[0][1]})")
+  TextMate.exit_insert_snippet(output) if snippet
+  print output
 else
   lines = INPUT.split("\n")
   row = ENV['TM_LINE_NUMBER'].to_i
   prevline = lines[row-2]
-  linker.make_ref_list(links,prevline)
+  snippet,output = linker.make_ref_list(links,prevline)
+  TextMate.exit_insert_snippet(output) if snippet == true
+  print output
 end</string>
 	<key>fallbackInput</key>
 	<string>word</string>
