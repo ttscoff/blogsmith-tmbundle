@@ -83,7 +83,7 @@ begin
 		o += %Q{content="#{url_escape(html)}";}
 	end
 	o += %Q^if(categories){cats=unescape(categories).split(";");^
-	o += %Q^for(i=0;i&lt;cats.length;i++){addCat(document.getElementById(cats[i]));}}^
+	o += %Q^for(i=0;i&lt;cats.length;i++){try{addCat(document.getElementById(cats[i]));}catch(e){alert("Category not found");}}}^
 	o += %Q^if(title)blogsmith.setTitle(unescape(title));^
 	o += %Q^if(tags){var tagarray=unescape(tags).split(';');for(i=0;i&lt;tagarray.length;i++){blogsmith.setTags(tagarray[i]);}};^
 	o += %Q^if(link)blogsmith.setLinks(unescape(link));^
