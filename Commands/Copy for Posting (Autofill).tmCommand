@@ -11,6 +11,7 @@ require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
 # require "cgi"
 # require "FileUtils"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
+$caterror = ""
 
 # To override the command's web root detection, add a shell variable in TextMate's advanced preferences called WEB_ROOT 
 # Set the value of WEB_ROOT to an existing directory where the blogsmith.js file can be stored
@@ -27,6 +28,12 @@ if web_root_override.empty?
 	end
 else
 	WEB_ROOT = web_root_override
+end
+
+def fix_tag_format(input)
+  tagline = input.match(/[tT]ags:(.*)$/)[0]
+  return input.gsub(tagline,'') if tagline =~ /[Tt]ags: ?$/
+  return input.gsub(tagline,tagline.gsub(/,\s?/,";").strip.gsub(/;$/,'').gsub(/[Tt]ags:([^ ])?/,"tags: \\1"))
 end
 
 def e_sh(str)
@@ -48,13 +55,16 @@ end
 def get_headers(html)
 	headers = []
 	html.scan(/^(doctype|title|link|categories|tags)\: ([^\n]+)/im) { |match|
-		headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
+	  if match[0] =~ /[Cc]ategories/ &amp;&amp; match[1] =~ /[^ ;0-9]/
+	    $caterror += "Categories were set in the wrong format. They should be numeric, set by the Categories command. "
+    else
+      headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
+    end
 	}
-	# %x{echo -n "#{html.match(/^[Ll]ink: ([^\n]+)/m)[1]}"|pbcopy}
 	headers
 end
 
-html = STDIN.read
+html = fix_tag_format(STDIN.read)
 headers = get_headers(html)
 html.gsub!(/^[A-Za-z]+\: ([^\n]+)?\n+/,"")
 html = html.gsub("\342\200\230", "'").gsub("\342\200\231", "'").gsub("\342\200\234", '"').gsub("\342\200\235", '"')
@@ -90,11 +100,15 @@ begin
 	o += %Q^var oEditor1=FCKeditorAPI.GetInstance("postcontent");oEditor1.SetHTML(unescape(content));^
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
 	o += %Q^buildSlug();pageUpdated();^
+  o += %Q^if(!tags){alert("Don't forget to add some tags");}^
+  o += %Q^if(!categories){alert("#{$caterror}Don't forget to add a category");}^
+  o += %Q^if(!link){alert("Don't forget to add a main link");}^
 	o += "}"
 	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
 	output = "Javascript file saved to: "
 	output += File.expand_path("#{WEB_ROOT}/blogsmith.js")
+	output += "\n#{$caterror}" unless $caterror.empty?
 	TextMate::CoolDialog.cool_tool_tip(output)
 	exit
 rescue SystemCallError
