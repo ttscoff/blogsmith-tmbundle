@@ -87,7 +87,7 @@ html.gsub!(/[‘’]/,'\'')
 
 unless html.to_s.empty?
 begin
-	o = "function doit() {"
+	o = "(function doit() {"
 	o += "var errormsg=false;var link=false;var title=false;var categories=false;var tags=false;var content=false;var continued=false;"
 	headers.each {|h| o += %Q{#{h['title'].to_s}='#{url_escape(h['value'].to_s)}';} }
 	o += %Q^errormsg="#{url_escape($caterror)}";^ unless $caterror == ""
@@ -107,7 +107,7 @@ begin
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
 	o += %Q^buildSlug();pageUpdated();^
   o += %Q^if(errormsg){alert(unescape(errormsg));}^
-	o += "}"
+	o += "})();"
 	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
 	output = "Javascript file saved to: "
