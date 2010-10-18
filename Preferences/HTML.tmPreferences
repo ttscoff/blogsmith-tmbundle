@@ -20,7 +20,7 @@
 				<key>name</key>
 				<string>TM_MONEY_FORMAT</string>
 				<key>value</key>
-				<string>$&lt;%= num %&gt;US</string>
+				<string>US$&lt;%= num %&gt;</string>
 			</dict>
 		</array>
 	</dict>
