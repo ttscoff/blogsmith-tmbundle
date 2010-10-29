@@ -10,9 +10,9 @@
 path = ENV['TM_DROPPED_FILEPATH']
 name = ENV['TM_DROPPED_FILE']
 
-if ENV['TM_CURRENT_LINE'] =~ /^&lt;\d+&gt; /
-	print "[#{name}](txmt://open/?url=file://#{path})"
-end</string>
+# if ENV['TM_CURRENT_WORD'] =~ /^&lt;\d+&gt; /
+	print "[#{File.basename(name)}](txmt://open/?url=file://#{path})"
+# end</string>
 	<key>draggedFileExtensions</key>
 	<array>
 		<string>md</string>
@@ -24,6 +24,8 @@ end</string>
 	<string>Link Markdown Notes</string>
 	<key>output</key>
 	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown.multimarkdown meta.content.multimarkdown</string>
 	<key>uuid</key>
 	<string>DAEA38C3-E097-4E78-9194-33BE807F19D8</string>
 </dict>
