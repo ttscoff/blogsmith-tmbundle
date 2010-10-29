@@ -43,62 +43,59 @@ cat &lt;&lt;HEADER
 &lt;/head&gt;
 
 &lt;body&gt;
-	&lt;p class="hide-me"&gt;&lt;a href="#content"&gt;Skip to Content&lt;/a&gt;&lt;/p&gt;
-
-	&lt;div id="outerslice"&gt;
-		&lt;div id="slice"&gt;
-			&lt;a href="#"&gt;Your ad here. Or Psystar's. Maybe Jenny Craig.&lt;/a&gt;
+&lt;div id="dogear_promo"&gt;
+	&lt;a href="http://www.switched.com/downloads/iphone"&gt;
+		&lt;img src="http://www.blogsmithmedia.com/www.switched.com/media/app_dogear.gif" alt="Download the new Switched app for your iPhone" /&gt;
+	&lt;/a&gt;
+&lt;/div&gt;
+&lt;!-- Ad slice start --&gt;&lt;div id="outerslice"&gt;&lt;div id="slice"&gt;&lt;a href="#"&gt;Breaking news: you're not as special as you think you are.&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;!-- Ad slice end --&gt;&lt;a href="#" target="_blank" class="cobrand"&gt;AOL Tech&lt;/a&gt;
+&lt;div id="container"&gt;
+&lt;div class="topleader"&gt;
+&lt;/div&gt;&lt;!-- /topleader --&gt;&lt;div id="header"&gt;
+&lt;div id="GH_"&gt;
+	&lt;div id="GH_hat"&gt;
+		&lt;ul id="GH_hat_links" class="GH_hat_UL"&gt;
+			&lt;li class="GH_hat_LI"&gt;&lt;a target="_blank" href="http://www.aol.com" class="GH_hat_A GH_hat_links_A" id="GH_hat_A_first"&gt;AOL&lt;/a&gt;&lt;/li&gt;
+			&lt;li class="GH_hat_LI"&gt;&lt;a target="_blank" href="http://webmail.aol.com/?_AOLLOCAL=mail" class="GH_hat_A GH_hat_links_A"&gt;MAIL&lt;/a&gt;&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;ul id="GH_hat_tools" class="GH_hat_UL"&gt;&lt;/ul&gt;
+	&lt;/div&gt;
+	&lt;div id="GH_guts"&gt;
+		&lt;div id="GH_brand"&gt;&lt;a href="/" id="GH_brand_link"&gt;TUAW&lt;/a&gt;&lt;/div&gt;
+		&lt;div id="GH_search"&gt;
+		        &lt;form action="/search/" name="s_form" id="GH_search_form" method="get"&gt;
+				&lt;input type="text" name="q" value="Search for Software, Reviews and More!" id="GH_search_field"/&gt;
+				&lt;input type="hidden" name="invocationType" value="wl-tuaw" /&gt;
+				&lt;input type="submit" value="" id="GH_search_button"  /&gt;
+				&lt;div id="GH_search_results"&gt;&lt;/div&gt;
+			&lt;/form&gt;
 		&lt;/div&gt;
-	&lt;/div&gt;&lt;a href="http://www.switched.com" target="_blank" class="cobrand"&gt;AOL Tech&lt;/a&gt;
-
-	&lt;div id="container"&gt;
-		&lt;div class="topleader"&gt;&lt;/div&gt;&lt;!-- /topleader --&gt;
-
-		&lt;div id="header"&gt;
-			&lt;div id="hat" class="clear"&gt;&lt;/div&gt;
-
-			&lt;div id="headerMiddle" class="clear"&gt;
-				&lt;div id="logo"&gt;
-					&lt;h1&gt;&lt;a class="imglink" title="The Unofficial Apple Weblog (TUAW) home" href="/"&gt;The Unofficial Apple Weblog (TUAW)&lt;/a&gt;&lt;/h1&gt;
-				&lt;/div&gt;&lt;!-- /logo --&gt;
-
-
-			&lt;/div&gt;&lt;!-- /headerMiddle --&gt;
-
-			&lt;div id="headerBottom" class="clearfix"&gt;
-				&lt;ul class="category-nav"&gt;
-					&lt;li class="first parent"&gt;&lt;a href="/category/iphone/"&gt;iPhone&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="parent"&gt;&lt;a href="/category/apple-corporate/"&gt;Apple News&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="parent"&gt;&lt;a href="/category/app-store/"&gt;App Store&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="parent"&gt;&lt;a href="/category/mac-101/"&gt;Mac 101&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="parent"&gt;&lt;a href="/tag/@not-iphone/" title="Filter out iPhone posts"&gt;&lt;strike&gt;iPhone&lt;/strike&gt;&lt;/a&gt;&lt;/li&gt;
-				&lt;/ul&gt;
-
-				&lt;ul class="tools"&gt;
-					&lt;li class="first parent"&gt;&lt;a href="/tips"&gt;Send us Tips&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="feed parent"&gt;&lt;a href="/feeds"&gt;&lt;span&gt;RSS Feeds&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;
-
-					&lt;li class="parent"&gt;
-						&lt;a href="/gallery/" class="parentlink"&gt;Photos ↓&lt;/a&gt;
-
-						&lt;ul class="catlist"&gt;
-							&lt;li class="child"&gt;&lt;a href="/gallery/"&gt;TUAW Photo Gallery&lt;/a&gt;&lt;/li&gt;
-
-							&lt;li class="child"&gt;&lt;a href="http://www.flickr.com/photos/tuaw/pool/"&gt;TUAW Flickr Pool&lt;/a&gt;&lt;/li&gt;
-						&lt;/ul&gt;
-					&lt;/li&gt;
-				&lt;/ul&gt;
-			&lt;/div&gt;&lt;!-- /headerBottom --&gt;
-		&lt;/div&gt;&lt;!-- /header --&gt;
-
-		&lt;div id="main" class="clearfix"&gt;
-			&lt;div id="col-1"&gt;
-				&lt;div id="content"&gt;
+	&lt;/div&gt;
+	&lt;ul id="GH_nav"&gt;
+		&lt;li class="GH_nav_LI"&gt;&lt;a href="/" class="GH_nav_A"&gt;Main&lt;/a&gt;&lt;/li&gt;
+		&lt;!-- &lt;li class="GH_nav_LI GH_nav_list"&gt;
+			&lt;a href="/tag/reviews|FirstDrive|quickspin" class="GH_nav_A"&gt;Reviews&lt;/a&gt;
+			&lt;ul class="GH_nav_list_UL"&gt;
+				&lt;li&gt;&lt;a href="#" title="Watch free music videos"&gt;Review 1&lt;/a&gt;&lt;/li&gt;
+				&lt;li&gt;&lt;a href="#" title="Watch free music videos"&gt;Review 2&lt;/a&gt;&lt;/li&gt;
+			&lt;/ul&gt;
+		&lt;/li&gt; --&gt;
+		&lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/mac" class="GH_nav_A"&gt;Mac&lt;/a&gt;&lt;/li&gt;
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/iphone" class="GH_nav_A"&gt;iPhone&lt;/a&gt;&lt;/li&gt;
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/ipad" class="GH_nav_A"&gt;iPad&lt;/a&gt;&lt;/li&gt;
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/@video" class="GH_nav_A"&gt;Video&lt;/a&gt;&lt;/li&gt; 
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/photos/" class="GH_nav_A"&gt;Photos&lt;/a&gt;&lt;/li&gt; 
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/hub/app-reviews" class="GH_nav_A"&gt;App Reviews&lt;/a&gt;&lt;/li&gt; 
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/downloads/iphone" class="GH_nav_A"&gt;TUAW App&lt;/a&gt;&lt;/li&gt;
+                &lt;li class="GH_nav_LI"&gt;&lt;a href="/about" class="GH_nav_A"&gt;About Us&lt;/a&gt;&lt;/li&gt;
+		&lt;li id="GH_fb_link"&gt;&lt;a href="/contact/feedback" target="feedback" class="GH_nav_A"&gt;Send Tips &amp; Feedback&lt;/a&gt;&lt;/li&gt;
+		&lt;!-- &lt;li id="GH_feed_link"&gt;&lt;a href="/feeds/" class="GH_nav_A"&gt;RSS Feeds&lt;/a&gt;&lt;/li&gt; --&gt;
+	&lt;/ul&gt;
+&lt;/div&gt;
+&lt;!-- Global Header End --&gt;&lt;/div&gt;&lt;!-- /header --&gt;
+&lt;div id="main" class="clearfix"&gt;
+&lt;div id="col-1"&gt;
+&lt;div id="content"&gt;
 					&lt;div id="p1328251"&gt;
 						&lt;div class="post"&gt;
 							&lt;p class="filed-under"&gt;Filed under: &lt;a href="#"&gt;Cat 1&lt;/a&gt;, &lt;a href="#"&gt;Cat 2&lt;/a&gt;, &lt;a href="#"&gt;Cat 3&lt;/a&gt;&lt;/p&gt;

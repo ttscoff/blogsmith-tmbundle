@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>*More [Mac 101](http://www.tuaw.com/tag/Mac101/), tips and tricks for the novice Mac user.*</string>
+	<key>name</key>
+	<string>101 header</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>tabTrigger</key>
+	<string>101</string>
+	<key>uuid</key>
+	<string>F70B1DA7-639A-4143-8B29-CDDE3BFAC416</string>
+</dict>
+</plist>
