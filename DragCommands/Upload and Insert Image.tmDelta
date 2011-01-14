@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>changed</key>
+	<dict>
+		<key>command</key>
+		<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+require SUPPORT + '/lib/exit_codes'
+
+# Using this command requires inserting the secret path here:
+SEKRIT = ''
+
+TextMate.exit_show_tool_tip "Nuh uh." if SEKRIT == ''
+filename = ENV['TM_DROPPED_FILEPATH']
+
+def template_tag(url,width,height,alt)
+  return false unless url &amp;&amp; width &amp;&amp; height
+  alttext = alt ? alt : ''
+  if width.to_i &gt; 450
+    return sprintf(%Q{&lt;p style="text-align:center"&gt;&lt;img src="%s" border="0" width="%s" height="%s" alt="${1:%s}" /&gt;&lt;/p&gt;\n\n$0},url,width,height,alttext)
+  else
+    return sprintf(%Q{&lt;img border="0" src="%s" width="%s" height="%s" hspace="8" vspace="8" align="right" alt="${1:%s}" /&gt;},url,width,height,alttext)
+  end
+end
+
+if File.exists?(filename)
+  res = %x{curl -s -F "Filedata=@#{filename};type=multipart/form-data" #{SEKRIT}}.strip.gsub(%r^\\/^,'/').gsub(%r^\.com//^,'.com/')
+  if res =~ /"status":"OK"/
+    url = res.match(/"url":"([^"]+)"/)[1]
+    width = %x{sips -g pixelWidth #{filename}|awk '{print $2}'}.strip
+    height = %x{sips -g pixelHeight #{filename}|awk '{print $2}'}.strip
+    alt = File.basename(ENV['TM_DROPPED_FILE'])
+    tag = template_tag(url,width,height,alt)
+    if tag
+      TextMate.exit_insert_snippet tag
+    else
+      TextMate.exit_show_tool_tip "Error getting url information"
+    end
+  else
+    TextMate.exit_show_tool_tip "Upload failed"
+  end
+else
+  TextMate.exit_show_tool_tip "File '#{filename}' doesn't exist"
+end</string>
+	</dict>
+	<key>deleted</key>
+	<array/>
+	<key>isDelta</key>
+	<true/>
+	<key>uuid</key>
+	<string>F524A8A7-AE06-4910-BE41-C492AFBB74FE</string>
+</dict>
+</plist>
