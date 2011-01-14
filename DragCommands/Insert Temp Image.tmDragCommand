@@ -8,7 +8,7 @@
 	<string>img="$TM_DROPPED_FILE"
 imagewidth=`sips -g pixelWidth "$img"|awk '/pixelWidth/  { printf("%d",$2) }'`
 [[ $imagewidth -gt 299 ]] &amp;&amp; echo -n "&lt;div class=\"removeme\" style=\"text-align: center;\"&gt;"
-echo -n "&lt;img src=\"file:`pwd`/$img\" "
+echo -n "&lt;img class=\"removeme\" src=\"file:`pwd`/$img\" "
 
 sips -g pixelWidth -g pixelHeight "$img" \
 |awk '/pixelWidth/  { printf("width=\"%d\" ",  $2) }

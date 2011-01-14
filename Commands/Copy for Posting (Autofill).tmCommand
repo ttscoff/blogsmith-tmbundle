@@ -77,7 +77,7 @@ html = html.gsub(/^&lt;\d+&gt; .*$/,'').gsub(/&lt;\d+&gt;/,'')
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?)
 	html = %x{echo #{e_sh html}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
 end
-html.gsub!(/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?/,'')
+html.gsub!(/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img class="removeme"[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?/,'')
 
 # remove common unicode punctuation
 html.gsub!(/…/,'...')
