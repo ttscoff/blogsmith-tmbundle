@@ -22,6 +22,7 @@ def ts( st )
   mynum = dec[0].to_s + '.' + dec[1].to_s.ljust(2, '0')[0,2] if dec[1]
   mynum
 end
+
 def shift_dec(int)
 	mynum = int.to_f * 0.01
 	mynum

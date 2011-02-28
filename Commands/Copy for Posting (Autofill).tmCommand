@@ -8,12 +8,11 @@
 	<string>#!/usr/bin/env ruby
 require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes"
 require "#{ENV['TM_SUPPORT_PATH']}/lib/ui"
-# require "cgi"
-# require "FileUtils"
 require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/cooldialog.rb"
 $caterror = ""
 
-# To override the command's web root detection, add a shell variable in TextMate's advanced preferences called WEB_ROOT 
+# To override the command's web root detection, add a shell variable in TextMate's 
+# advanced preferences called WEB_ROOT 
 # Set the value of WEB_ROOT to an existing directory where the blogsmith.js file can be stored
 # if you set/change this, you'll need to modify the bookmarklet accordingly
 web_root_override = ENV['WEB_ROOT'] ? ENV['WEB_ROOT'] : ''
@@ -88,7 +87,7 @@ html.gsub!(/[‘’]/,'\'')
 unless html.to_s.empty?
 begin
 	o = "(function doit() {"
-	o += "var errormsg=false;var link=false;var title=false;var categories=false;var tags=false;var content=false;var continued=false;"
+	o += "var errormsg=false,link=false,title=false,categories=false,tags=false,content=false,continued=false;"
 	headers.each {|h| o += %Q{#{h['title'].to_s}='#{url_escape(h['value'].to_s)}';} }
 	o += %Q^errormsg="#{url_escape($caterror)}";^ unless $caterror == ""
 	content = nil
@@ -99,17 +98,21 @@ begin
 		o += %Q{content="#{url_escape(html)}";}
 	end
 	o += %Q^if(categories){cats=unescape(categories).split(";");^
-	o += %Q^for(i=0;i&lt;cats.length;i++){try{addCat(document.getElementById(cats[i]));}catch(e){alert("Category not found");}}}^
+	o += %Q^for(i=0;i&lt;cats.length;i++){try{addCat(document.getElementById(cats[i]));}catch(e){console.log(e);}}}^
 	o += %Q^if(title)blogsmith.setTitle(unescape(title));^
 	o += %Q^if(tags){var tagarray=unescape(tags).split(';');for(i=0;i&lt;tagarray.length;i++){blogsmith.setTags(tagarray[i]);}};^
 	o += %Q^if(link)blogsmith.setLinks(unescape(link));^
+  o += %Q^if(typeof FCKeditorAPI!='undefined'){^
 	o += %Q^var oEditor1=FCKeditorAPI.GetInstance("postcontent");oEditor1.SetHTML(unescape(content));^
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
+	o += %Q^}else{CKEDITOR.instances.postcontent.setData(unescape(content));^
+	o += %Q^if(continued){CKEDITOR.instances.postcontinued.setData(unescape(continued));}}^
 	o += %Q^buildSlug();pageUpdated();^
   o += %Q^if(errormsg){alert(unescape(errormsg));}^
 	o += "})();"
 	jsfile = File.new(File.expand_path("#{WEB_ROOT}/blogsmith.js"),'w')
 	jsfile.puts o
+	jsfile.close
 	output = "Javascript file saved to: "
 	output += File.expand_path("#{WEB_ROOT}/blogsmith.js")
 	output += "\n#{$caterror.gsub(/WARNING:/,"&lt;span style='color:red;font-weight:bold'&gt;WARNING:&lt;/span&gt;")}" unless $caterror == ""
