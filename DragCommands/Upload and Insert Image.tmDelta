@@ -10,7 +10,7 @@ SUPPORT = ENV['TM_SUPPORT_PATH']
 require SUPPORT + '/lib/exit_codes'
 
 # Using this command requires inserting the secret path here:
-SEKRIT = ''
+SEKRIT = ENV['UPLOAD_SEKRIT']
 
 TextMate.exit_show_tool_tip "Nuh uh." if SEKRIT == ''
 filename = ENV['TM_DROPPED_FILEPATH']
@@ -26,7 +26,7 @@ def template_tag(url,width,height,alt)
 end
 
 if File.exists?(filename)
-  res = %x{curl -s -F "Filedata=@#{filename};type=multipart/form-data" #{SEKRIT}}.strip.gsub(%r^\\/^,'/').gsub(%r^\.com//^,'.com/')
+  res = %x{curl -s -F "Filedata=@#{filename};type=multipart/form-data" #{SEKRIT}}.strip.gsub(%r^\\/^,'/')
   if res =~ /"status":"OK"/
     url = res.match(/"url":"([^"]+)"/)[1]
     width = %x{sips -g pixelWidth #{filename}|awk '{print $2}'}.strip
