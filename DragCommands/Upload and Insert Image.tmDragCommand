@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>changed</key>
-	<dict>
-		<key>command</key>
-		<string>#!/usr/bin/env ruby -rjcode -Ku
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
 SUPPORT = ENV['TM_SUPPORT_PATH']
 require SUPPORT + '/lib/exit_codes'
 
@@ -44,12 +44,21 @@ if File.exists?(filename)
 else
   TextMate.exit_show_tool_tip "File '#{filename}' doesn't exist"
 end</string>
-	</dict>
-	<key>deleted</key>
-	<array/>
-	<key>isDelta</key>
-	<true/>
+	<key>draggedFileExtensions</key>
+	<array>
+		<string>png</string>
+		<string>jpg</string>
+		<string>gif</string>
+	</array>
+	<key>input</key>
+	<string>selection</string>
+	<key>name</key>
+	<string>Upload and Insert Image</string>
+	<key>output</key>
+	<string>insertAsSnippet</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
 	<key>uuid</key>
-	<string>F524A8A7-AE06-4910-BE41-C492AFBB74FE</string>
+	<string>27024EDD-F98E-4149-AE4C-7676532BF41C</string>
 </dict>
 </plist>
