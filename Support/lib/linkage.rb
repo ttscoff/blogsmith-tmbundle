@@ -350,42 +350,56 @@ class Linkage
       return [blog + title,url]
     end
   end
-
+  
+  def app_running?(app)
+    not `ps ax|grep -i "#{app}.app"|grep -v grep`.empty?
+  end
+  
+  def webkit_running?
+    return false if `ps ax|grep -i "Safari.app"|grep -v grep`.empty?
+    not `ps ax|grep -i "/Applications/Webkit.app"|grep -v grep`.empty?
+  end
+  
   def tabs_to_references(sel_or_word)
-    input = sel_or_word
-    urllist = %x{osascript <<-APPLESCRIPT
-                 tell application "Safari"
-                 set _tabs to every tab of window 1
-                 set _urls to {}
-                 repeat with _tab in _tabs
-                 set end of _urls to {title:name of _tab, URL:URL of _tab}
-                 end repeat
-                 set output to ""
-                 repeat with _item in _urls
-                 if title of _item is not "Untitled" then
-                   set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
-                 end if
-                 end repeat
-                 return output
-                 end tell
-                 APPLESCRIPT }.chomp
-    TextMate::CoolDialog.cool_tool_tip("No tabs returned by Safari. Is it open?",true) if urllist.empty?
-    urls = urllist.split('|||')
-    x = []
-    urls.each {|url|
-      url = url.split(">>>")
-      x << { 'title' => url[0], 'tag' => url[1] }
-    }
-    plist = { 'tags' => x }.to_plist
+    if app_running?("Safari")
+      browser = webkit_running? ? "Webkit" : "Safari"
+      input = sel_or_word
+      urllist = %x{osascript <<-APPLESCRIPT
+                   tell application "#{browser}"
+                   set _tabs to every tab of window 1
+                   set _urls to {}
+                   repeat with _tab in _tabs
+                   set end of _urls to {title:name of _tab, URL:URL of _tab}
+                   end repeat
+                   set output to ""
+                   repeat with _item in _urls
+                   if title of _item is not "Untitled" then
+                     set output to output & (title of _item) & ">>>" & (URL of _item) & "|||"
+                   end if
+                   end repeat
+                   return output
+                   end tell
+                   APPLESCRIPT }.chomp
+      TextMate::CoolDialog.cool_tool_tip("No tabs returned by #{browser}. Is it open?",true) if urllist.empty?
+      urls = urllist.split('|||')
+      x = []
+      urls.each {|url|
+        url = url.split(">>>")
+        x << { 'title' => url[0], 'tag' => url[1] }
+      }
+      plist = { 'tags' => x }.to_plist
 
-    nib = input.empty? && LINE =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
+      nib = input.empty? && LINE =~ /^(#{input})?(\s+)?$/ ? 'select_evernote' : 'select_single'
 
-    res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
-    TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
-    links = res['result']['returnArgument']
+      res = OSX::PropertyList::load(`#{e_sh DIALOG} -mp #{e_sh plist} #{nib}`)
+      TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if res['returnButton'] == "Cancel"
+      links = res['result']['returnArgument']
 
-    TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if links.empty?
-    return links
+      TextMate::CoolDialog.cool_tool_tip("Cancelled",true) if links.empty?
+      return links
+    else
+      TextMate::CoolDialog.cool_tool_tip("Safari isn't running.",true)
+    end
   end
 
   def search_evernote(sel_or_word)
