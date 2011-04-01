@@ -114,7 +114,7 @@ elsif ENV['TM_CURRENT_LINE'] =~ /^\[(dev )?#{string}/
 else
   if ENV['TM_CURRENT_LINE'] =~ /\[(([^\]]+)?#{string})/
 	string = phrase if string.empty?
-	print "${1:#{string}}](#{url}) $0"
+	print "${1:#{string}}](#{url})$0"
   else
 	print ERB.new(ENV['TM_BLINK_FORMAT']).result
   end

@@ -16,7 +16,7 @@ require 'erb'
 
 document = STDIN.read
 ENV['TM_SELECTED_TEXT'] ? input = ENV['TM_SELECTED_TEXT'] : input = ENV['TM_CURRENT_WORD']
-refs = document.scan(/\[([^\]]+)\]\:\s/)
+refs = document.scan(/^\[([^\]]+)\]\:\s/)
 refs.sort!
 linklist = refs.collect { |e| { 'title' =&gt; e.to_s } }
 

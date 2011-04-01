@@ -50,7 +50,7 @@ end</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
-	<string>~D</string>
+	<string>^D</string>
 	<key>name</key>
 	<string>Lucky guess spelling fix</string>
 	<key>output</key>
