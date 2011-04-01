@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+
+SUPPORT = ENV['TM_SUPPORT_PATH']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/osx/plist'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/progress'
+require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/porter_stemming"
+load "#{ENV['TM_BUNDLE_SUPPORT']}/lib/utilities.rb"
+require SUPPORT + "/lib/web_preview.rb"
+
+def strip_comments(str)
+	str.gsub(/^&lt;\d+&gt; .*$/,'').gsub(/&lt;\d+&gt;/,'')
+end
+
+input = strip_comments(STDIN.read)
+
+def readwords(wordfile)
+	if File.exist?(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+	  wordlist = IO.readlines(File.expand_path("~/Library/Preferences/com.macromates.textmate.blogsmith.#{wordfile}"))
+	else
+	  wordlist = IO.readlines("#{ENV['TM_BUNDLE_SUPPORT']}/lib/#{wordfile}")
+	end
+	return wordlist.map {|aword| aword = aword.strip }
+end
+
+def e_sh(str)
+	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+end
+
+def strip_em(str)
+   str = str.strip.gsub(/[\*_]{1,3}([^\#\*_]+)[\*_]{1,3}/m, '\\1')
+   str = str.gsub(/\#{1,6}\s+([^#]+)\s\#{1,6}/,'')
+   str.gsub(/\[([^\]]+)\][\[\(][^\]\)]+[\]\)]/,'\\1')
+end
+
+def strip_headers(str)
+   str.gsub!(/&lt;!--\s?more\s?--&gt;/,"")
+   str.gsub(/^[^\[ ]+\: [^\n]+/, "")
+end
+
+def strip_html(str)
+   str.gsub(/&lt;[^&gt;]+&gt;/m, '')
+end
+
+def analyze(line,c)
+	words = line.gsub(/[\/\\_\-]/,' ').gsub(/\s?(\-\-|\.\.\.)\s?/,' ').gsub(/'s/,'').split
+	words = words.map {|word| word.gsub(/^\W+|\W+$/,'').strip.downcase }
+	lc_skipwords = $skipwords.map {|skipword| skipword.downcase }
+	words.delete_if{|word| lc_skipwords.include? word.gsub(/[^A-Za-z0-9\s]/,'').downcase }
+	porterwords = words.map{|word| Text::PorterStemming.stem(word).downcase}
+	similar = Hash.new
+	words.each { |word| 
+		pword = Text::PorterStemming.stem(word).downcase
+		similar[pword] = [] if similar[pword].nil?
+		similar[pword].push word if porterwords.include? pword
+	}
+	similar.delete_if {|key,value| value.length &lt; 2 }
+ 	wordlist = []
+	replaced = []
+	similar.each {|w,a|
+		wordlist &lt;&lt; {'word' =&gt; w, 'freq' =&gt; a.length}
+		a.each {|word|
+			unless replaced.include? word
+				line.gsub!(/([\s&gt;\-])(#{word})([[:punct:]\s])/im,"\\1&lt;span class=\"word-#{w.downcase}#{c} #{w.downcase}x\"&gt;\\2&lt;/span&gt;\\3")
+				replaced.push word
+			end
+		}
+	}
+	wordlist.sort! do |a,b|
+      a['freq'] &lt;=&gt; b['freq']
+    end
+	[wordlist.reverse,line]
+end
+
+chunks = []
+counter = 0
+stripped = strip_headers(strip_html(input.gsub(/^\[[^\]]+\]\: [^\n]+/,"")))
+
+stripped.each {|line|
+	counter += 1
+	chunks &lt;&lt; {'linenum' =&gt; counter, 'text' =&gt; strip_em(line) } unless line =~ /^\n/
+	}
+
+$skipwords = readwords("skipwords.txt")
+html = %x{echo #{e_sh strip_headers(input.strip)}|"#{ENV['TM_SUPPORT_PATH']}/bin/Markdown.pl"}
+$text = strip_html(html)
+TextMate.exit_show_tool_tip "Error, no text returned" if $text.to_s.empty?
+
+# strip missed reference links
+# $text.gsub!(/\[([^\]]+)\]\[[^\]]+\]/,"\\1")
+
+
+html_header("Word Repetition Check")
+
+puts &lt;&lt;-HTML
+  &lt;script src="file://#{ENV['TM_BUNDLE_SUPPORT']}/lib/jquery.js" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+  &lt;script src="file://#{ENV['TM_BUNDLE_SUPPORT']}/lib/jqueryui.js" type="text/javascript" charset="utf-8"&gt;&lt;/script&gt;
+  &lt;style&gt;
+	body {background: #fff !important;color:#666 !important;}
+	a {color:#09C;text-decoration:none;}
+	span {color: #222 !important;}
+	.highlighted {color:#C0C !important;}
+	hr {visibility:hidden;clear:both;margin:15px 0;}
+	div.paragraph {border-bottom:2px dashed #ddd;}
+	#brettsbar {width:400px;background:#444;opacity: 0.8;padding-top:5px;text-align:center;line-height:1em;position:fixed;top:58px;right:-20px;-webkit-border-bottom-left-radius:10px;-webkit-border-bottom-right-radius:10px}
+	#brettsbar ul {list-style-type: none}
+	#brettsbar li {color:white;display:block;padding:5px;float:left;cursor:pointer;margin-left:10px}
+  &lt;/style&gt;
+  &lt;div id="brettsbar"&gt;&lt;ul&gt;&lt;li class="show"&gt;Toggle word lists&lt;/li&gt;&lt;li class="toggledoc"&gt;Document statistics&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+  &lt;div id="mainoutput"&gt;
+HTML
+
+c = 0
+chunks.each {|line|
+	puts "&lt;div class=\"paragraph\"&gt;"
+	c += 1
+	unless line['text'].empty?
+	wordlist, text = analyze(line['text'],c)
+	puts "\n&lt;hr /&gt;"
+	puts "&lt;ul class=\"ulhide\" style=\"display:none\"&gt;"
+	wordlist.each {|w| puts "&lt;li&gt;&lt;span class=\"word-#{w['word']}#{c}\"&gt;#{w['word']} (#{w['freq']})&lt;/span&gt;&lt;/li&gt;"}
+	puts "&lt;/ul&gt;"
+	puts "&lt;p&gt;#{text}&lt;a href=\"txmt://open?line=#{line['linenum']}\"&gt; &amp;#x21D2; &lt;/a&gt;&lt;/p&gt;"
+	end
+	puts "&lt;/div&gt;"
+}
+puts "&lt;/div&gt;&lt;div id=\"docoutput\" style=\"display:none\"&gt;"
+puts "&lt;h3&gt;Full-Document Analysis&lt;/h3&gt;"
+puts "&lt;p&gt;Because this analysis covers word repetition across the entire document, as opposed to within one paragraph, the numbers are different than the paragraph results. Highlighting a less-common word may show no results on the content page.&lt;/p&gt;"
+wordlist, text = analyze(strip_html(html.strip),c)
+puts "&lt;ul&gt;"
+wordlist.each {|w| puts "&lt;li&gt;&lt;span class=\"#{w['word']}x\"&gt;#{w['word']} (#{w['freq']})&lt;/span&gt;&lt;/li&gt;"}
+puts "&lt;/ul&gt;"
+	
+puts &lt;&lt;-HTML
+&lt;/div&gt; &lt;!-- end docoutput --&gt;
+&lt;script type="text/javascript" charset="utf-8"&gt;
+	$('span').click(function () {
+			$('span').removeClass("highlighted");
+			$('.'+$(this).attr('class').split(' ')[0]).addClass("highlighted");
+			$('.highlighted').effect("highlight", {}, 1000);
+		});
+	$('.show').click(function () {
+		$('.ulhide').slideToggle("slow");
+	});
+	$('.toggledoc').click(function () {
+		$('#docoutput').toggle("slow");
+		$('#mainoutput').toggle("slow");
+		if ($(this).html() == "Show content") {
+			$(this).html("Document statistics");
+			$('.show').show("fast");
+		} else {
+			$(this).html("Show content");
+			$('.show').hide("fast");
+		}
+	});
+	&lt;/script&gt; 
+HTML
+html_footer</string>
+	<key>input</key>
+	<string>document</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Word Repetition Check</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>scope</key>
+	<string>text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>171851C5-3E21-4773-848B-8932EED3BB68</string>
+</dict>
+</plist>

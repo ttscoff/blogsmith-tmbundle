@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+require "#{ENV['TM_SUPPORT_PATH']}/lib/exit_codes.rb"
+
+input = STDIN.read
+TextMate.exit_show_tool_tip "Please select some text with links" if input.empty?
+# links = input.scan /(https?:\/\/[^" \n]+)/m
+links = input.scan /(https?:\/\/([^\s",;]+)\..{2,4}(\/[^\s",;!]+))/mi
+TextMate.exit_show_tool_tip "Please select some text with links" if links.empty?
+# links.each {|link| puts link[0]}
+links.each {|link| %x{osascript -e 'tell application "Safari" to open location "#{link[0]}"'}}
+# links.each {|link| %x{osascript -e 'open location "#{link[0]}"'}}</string>
+	<key>fallbackInput</key>
+	<string>none</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Open Links In Selection</string>
+	<key>output</key>
+	<string>discard</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown,text.html</string>
+	<key>uuid</key>
+	<string>F33AAF3A-B233-472C-99D2-6C4239B6D608</string>
+</dict>
+</plist>

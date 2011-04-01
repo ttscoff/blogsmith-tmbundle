@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby -rjcode -Ku
+SUPPORT = ENV['TM_SUPPORT_PATH']
+BUNDLESUPPORT = ENV['TM_BUNDLE_SUPPORT']
+DIALOG = ENV['DIALOG']
+require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/exit_codes'
+require SUPPORT + '/lib/ui'
+require 'net/http'
+require 'rexml/document'
+require "#{BUNDLESUPPORT}/lib/cooldialog.rb"
+
+input = STDIN.read
+response = TextMate::UI.request_string(:title =&gt; "Enter your query",:prompt =&gt; "Ask a question, any question:",:default =&gt; input)
+TextMate.exit_discard unless response
+phrase = e_url(response)
+
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{phrase}&amp;sources=instantanswer"
+xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+
+doc = REXML::Document.new(xml_data)
+answer = nil
+doc.elements.each('SearchResponse/ia:InstantAnswer/ia:Results/ia:InstantAnswerResult/ia:InstantAnswerSpecificData/enc:Encarta') do |result|
+	answer = result.elements['enc:Value'].text
+end
+
+TextMate.exit_show_tool_tip "No results" if answer.nil?
+# %x{echo -n "#{answer.gsub(/&lt;[^&gt;]+&gt;/,'')}"|pbcopy}
+# TextMate::CoolDialog.cool_tool_tip(answer.gsub(/&lt;[^&gt;]+&gt;/,'') + "\nAnswer in clipboard")
+b = &lt;&lt;HTML
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;link rel="stylesheet" href="tm-file://#{ENV['TM_SUPPORT_PATH']}/css/default.css" type="text/css" media="screen" title="no title" charset="utf-8" /&gt;
+&lt;style type="text/css" media="screen"&gt;
+	body {background-color: #366;color:#FFC;}
+	pre {font-family:"Myriad Pro";font-size:14px;line-height:18px;}
+	.dict {background:white;color:#333;padding:1px 10px;-webkit-border-radius: 15px;}
+	.defn {border-bottom:dotted 2px #ccc;}
+&lt;/style&gt;
+
+  &lt;script type="text/javascript" charset="utf-8"&gt;
+    window.resizeTo(500,300);
+  &lt;/script&gt;
+
+  &lt;/head&gt;
+  &lt;body&gt;
+HTML
+e = &lt;&lt;HTML
+  &lt;/body&gt;
+&lt;/html&gt;
+HTML
+
+output = b
+
+output += %Q{&lt;div class="defn"&gt;}
+output += "&lt;ul&gt;"+answer.gsub(/- (.+?)&lt;BR\/&gt;/,'&lt;li&gt;\1&lt;/li&gt;')+"&lt;/ul&gt;"
+output += "&lt;/div&gt;\n"
+
+print output
+
+</string>
+	<key>fallbackInput</key>
+	<string>none</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Instant Answer (Bing)</string>
+	<key>output</key>
+	<string>showAsHTML</string>
+	<key>scope</key>
+	<string>text.html, text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>1A0DFAA3-ECC5-45F0-8D22-1A5B65A53EC4</string>
+</dict>
+</plist>
