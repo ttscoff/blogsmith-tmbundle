@@ -10,7 +10,7 @@
       &lt; template_in.mmd &gt; "$TM_NEW_FILE"
 fi</string>
 	<key>extension</key>
-	<string>blogsmith.markdown</string>
+	<string>mmd</string>
 	<key>keyEquivalent</key>
 	<string>~@P</string>
 	<key>name</key>
