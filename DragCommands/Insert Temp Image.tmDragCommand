@@ -7,17 +7,17 @@
 	<key>command</key>
 	<string>img="$TM_DROPPED_FILE"
 imagewidth=`sips -g pixelWidth "$img"|awk '/pixelWidth/  { printf("%d",$2) }'`
-[[ $imagewidth -gt 299 ]] &amp;&amp; echo -n "&lt;div class=\"removeme\" style=\"text-align: center;\"&gt;"
+[[ $imagewidth -gt 449 ]] &amp;&amp; echo -n "&lt;div class=\"removeme\" style=\"text-align: center;\"&gt;"
 echo -n "&lt;img class=\"removeme\" src=\"file:`pwd`/$img\" "
 
 sips -g pixelWidth -g pixelHeight "$img" \
 |awk '/pixelWidth/  { printf("width=\"%d\" ",  $2) }
       /pixelHeight/ { printf("height=\"%d\" ", $2) }'
-[[ $imagewidth -lt 300 ]] &amp;&amp; echo -n "class=\"right top\" "
+[[ $imagewidth -lt 450 ]] &amp;&amp; echo -n "align=\"right\" hspace=\"8\" vspace=\"8\" "
 base=${img##*/}
 alt=$(tr &lt;&lt;&lt;${base%.*} '[_-]' ' '|perl -pe 's/(\w+)/\u$1/g')
 echo -n "alt=\"$alt\" /&gt;"
-[[ $imagewidth -gt 299 ]] &amp;&amp; echo -n "&lt;/div&gt;"</string>
+[[ $imagewidth -gt 449 ]] &amp;&amp; echo -n "&lt;/div&gt;"</string>
 	<key>draggedFileExtensions</key>
 	<array>
 		<string>png</string>
