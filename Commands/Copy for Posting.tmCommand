@@ -8,7 +8,7 @@
 	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
 	bodytext=`cat $STDIN|perl -pe '
 	s/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;
-	s/&lt;!--\s?more\s?--&gt;//g;
+	s/&lt;!--\s?more\s?--&gt;//ig;
 	s/^&lt;\d+&gt; .*$//g;
 	s/&lt;\d+&gt;//g;
 	if($img = /(&lt;img[^&gt;]+&gt;)/) {
@@ -20,6 +20,7 @@ else
 		s/(&lt;div class="removeme"[^&gt;]+&gt;)?(.*)?(&lt;p([^&gt;]+)?&gt;(.*)?)?&lt;img class="removeme"[^&gt;]+&gt;(&lt;\/p&gt;)?(&lt;\/div&gt;)?(\s+)?//g;
 	}'`
 fi
+bodytext=`echo "$bodytext"|sed -e '/&lt;!-- end --&gt;/,$ s/.*//'| awk 'NF{print $0 ""}'`
 bodytext=`echo "$bodytext"|sed s/[“”]/\"/g|sed s/[‘’]/\'/g|sed s/…/\ ...\ /g|sed s/–/-/g|sed s/—/\ --\ /g`
 fullHTML=`echo "$bodytext"|grep -i "&lt;body&gt;"`
 if [ $fullHTML ]
