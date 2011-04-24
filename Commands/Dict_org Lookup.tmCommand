@@ -97,10 +97,15 @@ b = &lt;&lt;HTML
   &lt;head&gt;
     &lt;link rel="stylesheet" href="tm-file://#{ENV['TM_SUPPORT_PATH']}/css/default.css" type="text/css" media="screen" title="no title" charset="utf-8" /&gt;
 &lt;style type="text/css" media="screen"&gt;
-	body {background-color: #366;color:#FFC;}
-	pre {font-family:"Myriad Pro";font-size:14px;line-height:18px;}
-	.dict {background:white;color:#333;padding:1px 10px;-webkit-border-radius: 15px;}
-	.defn {border-bottom:dotted 2px #ccc;}
+	body {background-color: #fff;color:#222;}
+	pre {
+		font-family: Georgia;
+		font-size: 13px;
+		line-height: 17px;
+		}
+	.dict {background:white;color:#333;padding:1px 10px;-webkit-border-radius: 8px;border:solid 1px #ccc}
+	.defn {margin-bottom:15px}
+	h4 {font-family: 'helvetica neue', sans-serif;font-size: 0.8em;margin-bottom: 0px;text-transform: uppercase;}
 &lt;/style&gt;
   &lt;/head&gt;
   &lt;body&gt;

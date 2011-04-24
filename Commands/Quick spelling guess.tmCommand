@@ -40,11 +40,11 @@ phrase = STDIN.read
 newphrase = check_spelling(phrase)
 TextMate.exit_show_tool_tip "Looks fine to me…" if newphrase == phrase
 unless newphrase.nil?
-	res = TextMate::UI.request_confirmation(:button1 =&gt; "Yes, it is", :button2 =&gt; "No, it's not", :title =&gt; "The I Feel Lucky Spell Check",:prompt =&gt; "Is #{newphrase} the word you were looking for?")
-	if res == true
+#	res = TextMate::UI.request_confirmation(:button1 =&gt; "Yes, it is", :button2 =&gt; "No, it's not", :title =&gt; "The I Feel Lucky Spell Check",:prompt =&gt; "Is #{newphrase} the word you were looking for?")
+#	if res == true
 		print newphrase 
 		TextMate.exit_replace_text
-	end
+#	end
 else
 	TextMate.exit_show_tool_tip "Nothing found"
 end

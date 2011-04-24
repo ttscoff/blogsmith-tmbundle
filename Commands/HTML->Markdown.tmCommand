@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/php
+&lt;?php
+require(getenv('TM_BUNDLE_SUPPORT').'/lib/markdownify_extra.php');
+
+// $input = file_get_contents('php://stdin');
+
+$input = stream_get_contents(STDIN);
+
+$linksAfterEachParagraph = true;
+$bodyWidth = 0;
+$keepHTML = false;
+
+$parser = new Markdownify_Extra($linksAfterEachParagraph, $bodyWidth, $keepHTML);
+
+echo $parser-&gt;parseString($input) ."\n";</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>keyEquivalent</key>
+	<string>^@w</string>
+	<key>name</key>
+	<string>Convert HTML to Markdown</string>
+	<key>output</key>
+	<string>replaceSelectedText</string>
+	<key>scope</key>
+	<string>text.html,text.html.markdown, text.html.markdown.multimarkdown</string>
+	<key>uuid</key>
+	<string>C8A638B1-7B9B-4C03-B1FB-02DDDE85142F</string>
+</dict>
+</plist>

@@ -9,7 +9,7 @@
 
 input = STDIN.read
 
-print input.gsub(/\[([^\]]+)\]\: .*?$/,"\\1").gsub(/\[([^\]]+)\]\(.*?\)/,"\\1")</string>
+print input.gsub(/^\s*\[([^\]]+)\]\: .*?$/,"\\1").gsub(/\[([^\]]+)\]\(.*?\)/,"\\1").gsub(/\[(.*?)\]\[\S*?\]/,"\\1")</string>
 	<key>input</key>
 	<string>selection</string>
 	<key>keyEquivalent</key>
