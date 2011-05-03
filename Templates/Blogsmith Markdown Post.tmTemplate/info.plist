@@ -7,10 +7,10 @@
    TM_YEAR=`date +%Y` \
    TM_DATE=`date +%Y-%m-%d` \
    perl -pe 's/\$\{([^}]*)\}/$ENV{$1}/g' \
-      &lt; template_in.mmd &gt; "$TM_NEW_FILE"
+      &lt; template_in.md &gt; "$TM_NEW_FILE"
 fi</string>
 	<key>extension</key>
-	<string>mmd</string>
+	<string>md</string>
 	<key>keyEquivalent</key>
 	<string>~@P</string>
 	<key>name</key>
