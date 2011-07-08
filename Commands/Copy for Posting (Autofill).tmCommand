@@ -53,7 +53,7 @@ end
 
 def get_headers(html)
 	headers = []
-	html.scan(/^(doctype|title|link|categories|tags)\: ([^\n]+)?/im) { |match|
+	html.scan(/^(doctype|title|link|categories|tags|appid|excerpt)\: ([^\n]+)?/im) { |match|
 	  if match[0] =~ /[Cc]ategories/ &amp;&amp; match[1] =~ /[^ ;0-9]/
 	    $caterror += "WARNING: Categories were entered in the wrong format. They should be numeric and separated by semicolons, as created by the Categories command.\n\n"
     elsif match[1] =~ /^[\s\n]*$/ || match[1].nil?
@@ -62,7 +62,7 @@ def get_headers(html)
       headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
     end
 	}
-	['title:','link:','categories:','tags:'].each { |header|
+	['title:','link:','categories:','tags:','appid','excerpt'].each { |header|
 	  $caterror += %Q{WARNING: No "#{header}" header\n\n} if html.scan(/#{header}/i)[0].nil?
 	}
 	headers
@@ -89,7 +89,7 @@ html.gsub!(/[‘’]/,'\'')
 unless html.to_s.empty?
 begin
 	o = "(function doit() {"
-	o += "var errormsg=false,link=false,title=false,categories=false,tags=false,content=false,continued=false;"
+	o += "var errormsg=false,link=false,title=false,categories=false,tags=false,content=false,continued=false,appid=false,excerpt=false;"
 	headers.each {|h| o += %Q{#{h['title'].to_s}='#{url_escape(h['value'].to_s)}';} }
 	o += %Q^errormsg="#{url_escape($caterror)}";^ unless $caterror == ""
 	content = nil
@@ -109,6 +109,8 @@ begin
 	o += %Q^if(continued){var oEditor2=FCKeditorAPI.GetInstance("postcontinued");oEditor2.SetHTML(unescape(continued));}^
 	o += %Q^}else{CKEDITOR.instances.postcontent.setData(unescape(content));^
 	o += %Q^if(continued){CKEDITOR.instances.postcontinued.setData(unescape(continued));}}^
+	o += %Q^if(appid)blogsmith.addMetaData('post_apptapID',unescape(appid));^
+	o += %Q^if(excerpt)blogsmith.addMetaData('post_excerpt',unescape(excerpt));^
 	o += %Q^buildSlug();pageUpdated();^
   o += %Q^if(errormsg){alert(unescape(errormsg));}^
 	o += "})();"
