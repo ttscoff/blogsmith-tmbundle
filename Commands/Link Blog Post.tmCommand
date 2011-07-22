@@ -4,57 +4,80 @@
 <dict>
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
+	<key>bundleUUID</key>
+	<string>37D5C267-16F1-4386-9E6D-47667DF151F6</string>
 	<key>command</key>
 	<string>#!/usr/bin/env ruby -rjcode -Ku
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
-require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
+require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'erb'
-require 'date'
+require 'net/http'
+require 'rexml/document'
+require 'cgi'
 
-input = STDIN.read
-blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
-# input = "Search text" if input.empty?
-answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find posts on #{blogsite} with keywords:",:default =&gt; input)
-TextMate.exit_discard unless answer
-query = e_url(answer + " -inurl:tag -inurl:?q= -inurl:rss.xml -inurl:bloggers site:#{blogsite}")
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
+string = STDIN.read
+offset = 0
+blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "mashable.com"
+phrase = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find posts with keywords:",:default =&gt; string)
+TextMate.exit_discard unless phrase
 
-ysuggest = []
-yahoo.parse_results.each {|result|
-  if result['Url'] =~ /.*?\/(\d{4})\/(\d{2})\/(\d{2})\/.*/
-     postdate = "\t\t#{$2}-#{$3}-#{$1}"
-	sortdate = "#{$1}/#{$2}/#{$3}"
-	title = result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,'')
-	title = title[0..50]+"…" if title.length &gt; 50
-	((60 - title.length) / 4).to_i.times {|i| title += "\t" }
-	title += postdate
-    ysuggest &lt;&lt; {
-		'title' =&gt; title,
-		'url' =&gt; result['Url'],
-		'date' =&gt; sortdate
-	}
+query = phrase + " site:#{blogsite} AND NOT intitle:tag"
+
+def do_search(offset,phrase)
+  escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=web&amp;web.offset=#{offset}"
+
+  xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  doc = REXML::Document.new(xml_data)
+  bings = []
+  doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+    begin
+      bings &lt;&lt; {
+        'title' =&gt; result.elements['web:Title'].text.gsub('"','&amp;raquo;').gsub("'",'&amp;rsquo;'),
+        'url' =&gt; result.elements['web:Url'].text
+      }
+    rescue
+      TextMate.exit_show_tool_tip "Error in returned data"
+    end
   end
-}
-ysuggest.sort! { |a,b| Date.parse(b['date']) &lt;=&gt; Date.parse(a['date']) }
-plist = { 'menuItems' =&gt; ysuggest }.to_plist
+  bings &lt;&lt; {
+    'title' =&gt; 'More results…',
+    'url' =&gt; ''
+  } unless bings.empty?
 
-res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  TextMate.exit_show_tool_tip "No matches" if bings.empty?
 
-TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
+  plist = { 'menuItems' =&gt; bings }.to_plist
+  res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  unless res.has_key? 'selectedMenuItem'
+	if ENV['TM_CURRENT_LINE'] =~ /^\[/
+	    TextMate.exit_insert_text "]: "
+	else
+		TextMate.exit_discard
+	end
+  end
+  if res['selectedMenuItem']['title'] == "More results…"
+    offset += 10
+    do_search(offset,phrase)
+  else
+    return res
+  end
+end
+
+res = do_search(offset,query)
 url = res['selectedMenuItem']['url']
-title = res['selectedMenuItem']['title']
+input = phrase # res['selectedMenuItem']['title']
 
-if input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/
-  input = "blog" + answer.chomp.gsub(/\s+/,"_")
+if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
+elsif ENV['TM_CURRENT_LINE'] =~ /\[(dev )?#{phrase.sub(/ iphone/,'')}/ || ENV['TM_CURRENT_LINE'] =~ /\[#{string}/
+  string = phrase if string.empty?
+  print "${1:#{string}}]: #{url}$0"
 else
-  input = res if input.empty?
-  print ERB.new(ENV['TM_BLINK_FORMAT']).result
+  print ERB.new(ENV['TM_BLINK_FORMAT']).result.strip
 end
 </string>
 	<key>fallbackInput</key>

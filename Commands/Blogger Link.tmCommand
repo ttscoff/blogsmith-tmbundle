@@ -5,36 +5,50 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env ruby -rjcode -Ku
+	<string>#!/usr/bin/ruby
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
 require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'erb'
 require 'cgi'
 require 'net/http'
+require 'rexml/document'
 
 blogger = STDIN.read
 input = blogger
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
 
-query = e_url(input + " site:#{blogsite}/bloggers -inurl:page")
+query = input + " site:#{blogsite}/editor"
 
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(query)}&amp;sources=web&amp;web.offset=0"
 
-TextMate.exit_show_tool_tip "Blogger not found, check your spelling" if yahoo.parse_results.length == 0
+xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+doc = REXML::Document.new(xml_data)
+bings = []
+doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+  begin
+    bings &lt;&lt; {
+      'title' =&gt; result.elements['web:Title'].text.gsub('"','&amp;raquo;').gsub("'",'&amp;rsquo;'),
+      'url' =&gt; result.elements['web:Url'].text
+    }
+  rescue
+    TextMate.exit_show_tool_tip "Error in returned data"
+  end
+end
+
+TextMate.exit_show_tool_tip "Blogger not found, check your spelling" if bings.empty?
 
 ysuggest = []
-yahoo.parse_results.each {|result|
-	if result['Url'].gsub(/-/,' ') =~ /#{input}/i &amp;&amp; result['Url'] =~ /^http:\/\/#{blogsite}\/bloggers\/[^\/]+\/?$/
-		blogger_name = result['Url'].match(/\/bloggers\/([^\/]+)\/?/)[1].chomp.gsub(/-/,' ').gsub(/\b([a-z])/i) {|w| w.capitalize } 
+bings.each {|result|
+	if result['url'].gsub(/-/,' ') =~ /#{input}/i &amp;&amp; result['url'] =~ /^http:\/\/#{blogsite}\/editor\/[^\/]+\/?$/
+		blogger_name = result['url'].match(/\/editor\/([^\/]+)\/?/)[1].chomp.gsub(/-/,' ').gsub(/\b([a-z])/i) {|w| w.capitalize } 
 	ysuggest &lt;&lt; { 
 	      'title' =&gt; blogger_name,
-	      'url' =&gt; result['Url']
+	      'url' =&gt; result['url']
 		}
 	end
 }

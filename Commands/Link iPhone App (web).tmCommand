@@ -5,39 +5,71 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>#!/usr/bin/env ruby -rjcode -Ku
+	<string>#!/usr/bin/ruby
 SUPPORT = ENV['TM_SUPPORT_PATH']
 DIALOG = ENV['DIALOG']
 require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require "#{ENV['TM_BUNDLE_SUPPORT']}/lib/yahoo"
 require 'net/http'
 require 'erb'
+require 'rexml/document'
 
 input = STDIN.read
 blogsite = "itunes.apple.com"
+offset = 0
 answer = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find iPhone apps with keywords:",:default =&gt; input)
 TextMate.exit_discard unless answer
-query = e_url(answer + " inurl:/us/app/ site:#{blogsite}")
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 25, 1, nil, 1)
+query = answer + " title:\"on the App Store\" site:#{blogsite}"
 
-ysuggest = []
-yahoo.parse_results.each {|result|
-	title = result['Title'].gsub('"','&amp;raquo;').gsub(/&lt;\/?b&gt;/,'')
-	title = title[0..50]+"…" if title.length &gt; 50
-    ysuggest &lt;&lt; {
-		'title' =&gt; title,
-		'url' =&gt; result['Url'].gsub(/\?mt=8$/,''),
-	}
-}
+def do_search(offset,phrase)
+  escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(phrase)}&amp;sources=web&amp;web.offset=#{offset}"
 
-plist = { 'menuItems' =&gt; ysuggest }.to_plist
+  xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+  doc = REXML::Document.new(xml_data)
+  bings = []
+  doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+		url = result.elements['web:Url'].text
+		if url =~ /\/app\//
+			title = result.elements['web:Title'].text.gsub('"','&amp;raquo;').gsub("'",'&amp;rsquo;').gsub(/&lt;\/?b&gt;/,'')
+			title = title[0..50]+"…" if title.length &gt; 50	
+	    begin
+	      bings &lt;&lt; {
+	        'title' =&gt; title,
+	        'url' =&gt; url
+	      }
+	    rescue
+	      TextMate.exit_show_tool_tip "Error in returned data"
+	    end
+		end
+  end
+  bings &lt;&lt; {
+    'title' =&gt; 'More results…',
+    'url' =&gt; ''
+  } unless bings.empty?
 
-res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  TextMate.exit_show_tool_tip "No matches" if bings.empty?
 
-TextMate.exit_show_tool_tip "No links found or nothing selected" unless res.has_key? 'selectedMenuItem'
+  plist = { 'menuItems' =&gt; bings }.to_plist
+  res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+  unless res.has_key? 'selectedMenuItem'
+	if ENV['TM_CURRENT_LINE'] =~ /^\[/
+	    TextMate.exit_insert_text "]: "
+	else
+		TextMate.exit_discard
+	end
+  end
+  if res['selectedMenuItem']['title'] == "More results…"
+    offset += 10
+    do_search(offset,phrase)
+  else
+    return res
+  end
+end
+
+res = do_search(offset,query)
+
 url = res['selectedMenuItem']['url']
 title = res['selectedMenuItem']['title']
 price = ""
@@ -62,7 +94,7 @@ end
 	<key>keyEquivalent</key>
 	<string>^@w</string>
 	<key>name</key>
-	<string>Link iPhone App (web)</string>
+	<string>Link iTunes App (web)</string>
 	<key>output</key>
 	<string>insertAsSnippet</string>
 	<key>scope</key>

@@ -8,7 +8,8 @@ title: ${1:Post Title}
 link: ${2:http://}
 categories: $3
 tags: $4
-
+appid: $5
+excerpt: $6
 $0</string>
 	<key>name</key>
 	<string>Post Headers</string>

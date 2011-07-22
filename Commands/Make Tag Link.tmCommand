@@ -12,9 +12,10 @@ require SUPPORT + '/lib/ui'
 require SUPPORT + '/lib/escape'
 require SUPPORT + '/lib/osx/plist'
 require SUPPORT + '/lib/exit_codes'
-require ENV['TM_BUNDLE_SUPPORT'] + '/lib/yahoo'
 require ENV['TM_BUNDLE_SUPPORT'] + '/lib/cooldialog'
 require 'erb'
+require 'net/http'
+require 'rexml/document'
 
 input = STDIN.read
 
@@ -25,30 +26,44 @@ end
 
 blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 blogsite = "www." + blogsite unless blogsite =~ /^www\./
+offset = 0
 linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
 elegant_exit("Cancelled") unless linktext
 
-query = e_url(linktext + " site:#{blogsite}/tag")
+query = linktext + " site:#{blogsite}/tag"
 
-yahoo = WebSearch.new('TM_YAHOO', query, 'all', 20, 1, nil, 1)
+escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(query)}&amp;sources=web&amp;web.offset=#{offset}"
 
-if yahoo.parse_results.length &gt; 0
-ysuggest = []
-    yahoo.parse_results.each {|result|
-		unless (result['Url'] =~ /bloglines|page/)
-			tag_title = result['Title'].gsub(/ -- TUAW/,'')
-        ysuggest &lt;&lt; { 
-          'title' =&gt; tag_title.gsub('"','&amp;raquo;'),
-          'url' =&gt; result['Url']}
-		end
-    }
+xml_data = Net::HTTP.get_response(URI.parse(escapedUrl)).body
+doc = REXML::Document.new(xml_data)
+bings = []
+doc.elements.each('SearchResponse/web:Web/web:Results/web:WebResult') do |result|
+	unless (result.elements['web:Title'].text =~ /bloglines|page/)
+	  begin
+			tag_title = result.elements['web:Title'].text.gsub(/ -- TUAW/,'').gsub('"','&amp;raquo;').gsub("'",'&amp;rsquo;')
+	    bings &lt;&lt; {
+	      'title' =&gt; tag_title,
+	      'url' =&gt; result.elements['web:Url'].text
+	    }
+	  rescue
+	    TextMate.exit_show_tool_tip "Error in returned data"
+	  end
+	end
+end
 
-    plist = { 'menuItems' =&gt; ysuggest }.to_plist
-    
-    res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
-    elegant_exit('cancelled') unless res.has_key? 'selectedMenuItem'
-    url = res['selectedMenuItem']['url']
-    title = res['selectedMenuItem']['title']
+elegant_exit("No related tags found in index") if bings.empty?
+
+plist = { 'menuItems' =&gt; bings }.to_plist
+res = OSX::PropertyList.load(`#{e_sh DIALOG} -up #{e_sh plist}`)
+unless res.has_key? 'selectedMenuItem'
+	if ENV['TM_CURRENT_LINE'] =~ /^\[/
+	    TextMate.exit_insert_text "]: "
+	else
+		elegant_exit('cancelled')
+	end
+end
+url = res['selectedMenuItem']['url']
+title = res['selectedMenuItem']['title']
 
 TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
 if (input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/) || ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/
@@ -57,9 +72,7 @@ if (input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp
 else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result
 end
-else
-  elegant_exit("No related tags found in index")
-end</string>
+</string>
 	<key>fallbackInput</key>
 	<string>word</string>
 	<key>input</key>
