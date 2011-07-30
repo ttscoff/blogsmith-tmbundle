@@ -21,7 +21,7 @@ require 'cgi'
 
 string = STDIN.read
 offset = 0
-blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "mashable.com"
+blogsite = ENV['BLOG_SITE'] ? ENV['BLOG_SITE'] : "www.tuaw.com"
 phrase = TextMate::UI.request_string(:title =&gt; "Enter keywords",:prompt =&gt; "Find posts with keywords:",:default =&gt; string)
 TextMate.exit_discard unless phrase
 
@@ -69,7 +69,7 @@ end
 
 res = do_search(offset,query)
 url = res['selectedMenuItem']['url']
-input = phrase # res['selectedMenuItem']['title']
+input = string # res['selectedMenuItem']['title']
 
 if !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^#{string}(\s+)?$/
   print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
