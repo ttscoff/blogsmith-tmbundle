@@ -62,7 +62,7 @@ def get_headers(html)
       headers &lt;&lt; { 'title' =&gt; match[0], 'value' =&gt; match[1].strip } unless match[0] == 'doctype'
     end
 	}
-	['title:','link:','categories:','tags:','appid','excerpt'].each { |header|
+	['title:','link:','categories:','tags:','appid:','excerpt:'].each { |header|
 	  $caterror += %Q{WARNING: No "#{header}" header\n\n} if html.scan(/#{header}/i)[0].nil?
 	}
 	headers
