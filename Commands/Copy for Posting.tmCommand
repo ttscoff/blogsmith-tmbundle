@@ -7,7 +7,7 @@
 	<key>command</key>
 	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
 	bodytext=`cat $STDIN|perl -pe '
-	s/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;
+	s/^(doctype|title|link|categories|tags|appid|excerpt)\: ?([^\n]+)?\n+//ig;
 	s/&lt;!--\s?more\s?--&gt;//ig;
 	s/^&lt;\d+&gt; .*$//g;
 	s/&lt;\d+&gt;//g;

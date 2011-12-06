@@ -30,7 +30,7 @@ offset = 0
 linktext = TextMate::UI.request_string(:title =&gt; "Search Query",:prompt =&gt; "Enter terms to create a tag link",:default =&gt; input)
 elegant_exit("Cancelled") unless linktext
 
-query = linktext + " site:#{blogsite}/tag"
+query = linktext + " site:#{blogsite} inanchor:tag"
 
 escapedUrl = "http://api.search.live.net/xml.aspx?Appid=6B9E3A4B9F0D8F963A24815A0317BF1DCA3B0E9A&amp;query=#{e_url(query)}&amp;sources=web&amp;web.offset=#{offset}"
 
@@ -67,7 +67,8 @@ title = res['selectedMenuItem']['title']
 
 TextMate.exit_replace_text url if ENV['TM_CURRENT_LINE'] =~ /^link: #{input}/
 if (input.empty? &amp;&amp; !(ENV['TM_SCOPE'].scan(/markdown/).empty?) &amp;&amp; ENV['TM_CURRENT_LINE'] =~ /^(\s+)?$/) || ENV['TM_CURRENT_LINE'] =~ /^(#{input})?(\s+)?$/
-	input = "tag" + title.chomp.gsub(/\s+/,"_")
+#	input = "tag" + title.chomp.gsub(/\s+/,"_")
+	input = "tag" + linktext
 	print ERB.new(ENV['TM_REF_LINK_FORMAT']).result
 else
     print ERB.new(ENV['TM_BLINK_FORMAT']).result

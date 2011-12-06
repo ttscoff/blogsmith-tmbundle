@@ -7,7 +7,8 @@
 	<key>command</key>
 	<string>if (`echo $TM_SCOPE|grep -iq "markdown"`) then
 	
-	bodytext=`cat $STDIN|perl -pe 's/^(doctype|title|link|categories|tags)\: ?([^\n]+)?\n+//ig;'|perl -pe 's/&lt;!--\s?more\s?--&gt;//g;'|perl -pe 's/^&lt;\d+&gt; .*$//g;'|perl -pe 's/&lt;\d+&gt;//g;'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
+	bodytext=`cat $STDIN|perl -pe 's/^(doctype|title|link|categories|tags|appid|excerpt)\: ?([^\n]+)?\n+//ig;'|perl -pe 's/&lt;!--\s?more\s?--&gt;//g;'|perl -pe 's/^&lt;\d+&gt; .*$//g;'|perl -pe 's/&lt;\d+&gt;//g;'|"$TM_BUNDLE_SUPPORT/lib/MultiMarkdown.pl"`
+	bodytext=$(echo $bodytext|perl -pe 's/&lt;!--\s?end\s?--&gt;.*//gism;')
 else
 	bodytext=`cat $STDIN`
 fi
@@ -28,230 +29,212 @@ fi
 realname="`finger -lsmp $USER|awk '{match($0,/Name\: (.*)/);print substr($0, RSTART+6, RLENGTH);}'`"
 _date=`date +%m-%d-%Y`
 cat &lt;&lt;HEADER
-&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;
+&lt;!DOCTYPE html&gt;
+
 &lt;head&gt;
-	&lt;meta name="generator" content="HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 13), see www.w3.org" /&gt;
-
-	&lt;title&gt;TUAW Preview&lt;/title&gt;
-	&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8" /&gt;
-	&lt;meta http-equiv="pragma" content="no-cache" /&gt;
-	&lt;meta http-equiv="imagetoolbar" content="no" /&gt;
-	&lt;meta name="robots" content="all" /&gt;
-	&lt;link rel="stylesheet" type="text/css" href="http://www.blogsmithmedia.com/www.tuaw.com/media/theme.css" media="screen, projection" /&gt;
-	&lt;link rel="shortcut icon" href="http://www.blogsmithmedia.com/www.tuaw.com/media/favicon-v4.png" type="image/png" /&gt;
-	&lt;link rel="apple-touch-icon" href="http://www.blogsmithmedia.com/www.tuaw.com/media/apple-touch-icon.png" type="image/png" /&gt;
-&lt;/head&gt;
-
-&lt;body&gt;
-&lt;div id="dogear_promo"&gt;
-	&lt;a href="http://www.switched.com/downloads/iphone"&gt;
-		&lt;img src="http://www.blogsmithmedia.com/www.switched.com/media/app_dogear.gif" alt="Download the new Switched app for your iPhone" /&gt;
-	&lt;/a&gt;
-&lt;/div&gt;
-&lt;!-- Ad slice start --&gt;&lt;div id="outerslice"&gt;&lt;div id="slice"&gt;&lt;a href="#"&gt;Breaking news: you're not as special as you think you are.&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;!-- Ad slice end --&gt;&lt;a href="#" target="_blank" class="cobrand"&gt;AOL Tech&lt;/a&gt;
-&lt;div id="container"&gt;
-&lt;div class="topleader"&gt;
-&lt;/div&gt;&lt;!-- /topleader --&gt;&lt;div id="header"&gt;
-&lt;div id="GH_"&gt;
-	&lt;div id="GH_hat"&gt;
-		&lt;ul id="GH_hat_links" class="GH_hat_UL"&gt;
-			&lt;li class="GH_hat_LI"&gt;&lt;a target="_blank" href="http://www.aol.com" class="GH_hat_A GH_hat_links_A" id="GH_hat_A_first"&gt;AOL&lt;/a&gt;&lt;/li&gt;
-			&lt;li class="GH_hat_LI"&gt;&lt;a target="_blank" href="http://webmail.aol.com/?_AOLLOCAL=mail" class="GH_hat_A GH_hat_links_A"&gt;MAIL&lt;/a&gt;&lt;/li&gt;
-		&lt;/ul&gt;
-		&lt;ul id="GH_hat_tools" class="GH_hat_UL"&gt;&lt;/ul&gt;
-	&lt;/div&gt;
-	&lt;div id="GH_guts"&gt;
-		&lt;div id="GH_brand"&gt;&lt;a href="/" id="GH_brand_link"&gt;TUAW&lt;/a&gt;&lt;/div&gt;
-		&lt;div id="GH_search"&gt;
-		        &lt;form action="/search/" name="s_form" id="GH_search_form" method="get"&gt;
-				&lt;input type="text" name="q" value="Search for Software, Reviews and More!" id="GH_search_field"/&gt;
-				&lt;input type="hidden" name="invocationType" value="wl-tuaw" /&gt;
-				&lt;input type="submit" value="" id="GH_search_button"  /&gt;
-				&lt;div id="GH_search_results"&gt;&lt;/div&gt;
-			&lt;/form&gt;
-		&lt;/div&gt;
-	&lt;/div&gt;
-	&lt;ul id="GH_nav"&gt;
-		&lt;li class="GH_nav_LI"&gt;&lt;a href="/" class="GH_nav_A"&gt;Main&lt;/a&gt;&lt;/li&gt;
-		&lt;!-- &lt;li class="GH_nav_LI GH_nav_list"&gt;
-			&lt;a href="/tag/reviews|FirstDrive|quickspin" class="GH_nav_A"&gt;Reviews&lt;/a&gt;
-			&lt;ul class="GH_nav_list_UL"&gt;
-				&lt;li&gt;&lt;a href="#" title="Watch free music videos"&gt;Review 1&lt;/a&gt;&lt;/li&gt;
-				&lt;li&gt;&lt;a href="#" title="Watch free music videos"&gt;Review 2&lt;/a&gt;&lt;/li&gt;
-			&lt;/ul&gt;
-		&lt;/li&gt; --&gt;
-		&lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/mac" class="GH_nav_A"&gt;Mac&lt;/a&gt;&lt;/li&gt;
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/iphone" class="GH_nav_A"&gt;iPhone&lt;/a&gt;&lt;/li&gt;
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/ipad" class="GH_nav_A"&gt;iPad&lt;/a&gt;&lt;/li&gt;
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/tag/@video" class="GH_nav_A"&gt;Video&lt;/a&gt;&lt;/li&gt; 
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/photos/" class="GH_nav_A"&gt;Photos&lt;/a&gt;&lt;/li&gt; 
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/hub/app-reviews" class="GH_nav_A"&gt;App Reviews&lt;/a&gt;&lt;/li&gt; 
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/downloads/iphone" class="GH_nav_A"&gt;TUAW App&lt;/a&gt;&lt;/li&gt;
-                &lt;li class="GH_nav_LI"&gt;&lt;a href="/about" class="GH_nav_A"&gt;About Us&lt;/a&gt;&lt;/li&gt;
-		&lt;li id="GH_fb_link"&gt;&lt;a href="/contact/feedback" target="feedback" class="GH_nav_A"&gt;Send Tips &amp; Feedback&lt;/a&gt;&lt;/li&gt;
-		&lt;!-- &lt;li id="GH_feed_link"&gt;&lt;a href="/feeds/" class="GH_nav_A"&gt;RSS Feeds&lt;/a&gt;&lt;/li&gt; --&gt;
-	&lt;/ul&gt;
-&lt;/div&gt;
-&lt;!-- Global Header End --&gt;&lt;/div&gt;&lt;!-- /header --&gt;
-&lt;div id="main" class="clearfix"&gt;
-&lt;div id="col-1"&gt;
-&lt;div id="content"&gt;
-					&lt;div id="p1328251"&gt;
-						&lt;div class="post"&gt;
-							&lt;p class="filed-under"&gt;Filed under: &lt;a href="#"&gt;Cat 1&lt;/a&gt;, &lt;a href="#"&gt;Cat 2&lt;/a&gt;, &lt;a href="#"&gt;Cat 3&lt;/a&gt;&lt;/p&gt;
-
-							&lt;h2 class="posttitle"&gt;&lt;a href="#" rel="bookmark"&gt;&lt;span id="ppt1328251"&gt;`echo $title`&lt;/span&gt;&lt;/a&gt;&lt;/h2&gt;
-
-							&lt;p class="byline"&gt;by &lt;strong&gt;&lt;a href="/bloggers/"&gt;`echo $realname`&lt;/a&gt;&lt;/strong&gt; on `echo $_date`&lt;/p&gt;
-
-							&lt;div class="postbody"&gt;
 	
+	&lt;meta charset="utf-8"&gt;
+	&lt;meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"&gt;
+	&lt;title&gt;TUAW Preview&lt;/title&gt;
+  &lt;link rel="shortcut icon" href="http://www.blogsmithmedia.com/www.tuaw.com/media/favicon.ico" type="image/png" /&gt;
+    	&lt;link rel="apple-touch-icon-precomposed" href="http://www.blogsmithmedia.com/www.tuaw.com/media/apple-touch-icon.png"&gt;
+  	&lt;link rel="stylesheet" href="http://www.blogsmithmedia.com/www.tuaw.com/media/style.css?v=99" /&gt;
+  	&lt;/head&gt;
+
+&lt;body class="perm"&gt;
+
+&lt;div id="hat" class="group"&gt;
+	&lt;div class="inner"&gt;
+
+	&lt;ul id="gh-hat"&gt;
+	
+		&lt;li class="aol"&gt;&lt;a href="#"&gt;AOL&lt;/a&gt; |&lt;/li&gt;
+		&lt;li class="mail"&gt;&lt;a href="#"&gt;Mail&lt;/a&gt; |&lt;/li&gt;
+		&lt;li class="more-sites"&gt;You might also like: &lt;a href="#"&gt;Engadget&lt;/a&gt;, &lt;a href="#"&gt;HuffPost Tech&lt;/a&gt; and &lt;a href="#" id="moretrigger" class="trigger"&gt;more &lt;img src="/media/icon-drparw.png" alt="" /&gt;&lt;/a&gt;
+			
+			&lt;div id="topdropdown" class="more-box" style="display: none;"&gt;
+				&lt;div class="inner group"&gt;
+			
+				&lt;p&gt;More Sites You Might Like&lt;/p&gt;
+				
+				&lt;ul&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Engadget HD&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Engadget Mobile&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;TechCrunch&lt;/a&gt;&lt;/li&gt;
+                                        &lt;li&gt;&lt;a href="#"&gt;Huffingpost&lt;/a&gt;&lt;/li&gt;
+                                        &lt;li&gt;&lt;a href="#"&gt;Huffingpost Tech&lt;/a&gt;&lt;/li&gt;
+				&lt;/ul&gt;
+				
+				&lt;ul&gt;
+                                        &lt;li&gt;&lt;a href="#"&gt;Joystiq&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Massively&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;WoW&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Autoblog&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Autoblog Green&lt;/a&gt;&lt;/li&gt;
+				&lt;/ul&gt;
+				
+				&lt;ul class="last"&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Daily Finance&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Mapquest&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Moviefone&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;AOL Television&lt;/a&gt;&lt;/li&gt;
+					&lt;li&gt;&lt;a href="#"&gt;Stylelist&lt;/a&gt;&lt;/li&gt;
+				&lt;/ul&gt;
+				
+				&lt;/div&gt; &lt;!-- inner --&gt;
+			&lt;/div&gt; &lt;!-- more-box --&gt;
+			
+		&lt;/li&gt;
+
+               &lt;a href="#" target="_blank" class="cobrand"&gt;AOL Tech&lt;/a&gt;
+	
+	&lt;/ul&gt;
+
+&lt;/div&gt;
+
+&lt;/div&gt; &lt;!-- global header --&gt;
+&lt;div class="leader"&gt;
+&lt;/div&gt; &lt;!-- 728x90 ad --&gt;
+
+&lt;div id="frame"&gt;
+
+&lt;div id="container"&gt;
+
+    &lt;div id="header" class="group"&gt;
+    
+    	&lt;a class="logo" href="#" title="TUAW"&gt;TUAW&lt;/a&gt;
+          
+        &lt;form action="#" name="s_form" method="get" id="search-form"&gt;
+&lt;input class="query" type="text" name="q" value="" id="search-field"/&gt;
+&lt;input type="hidden" name="invocationType" value="wl-tuaw" /&gt;
+&lt;input type="submit" value="Search" id="search-button"  /&gt;
+&lt;/form&gt; &lt;!-- search --&gt;
+
+     &lt;/div&gt; &lt;!-- header --&gt;
+
+     &lt;div id="nav" class="group"&gt;
+    
+    	&lt;ul class="main"&gt;
+    		&lt;li&gt;&lt;a href="#" title="Back to Main"&gt;Main&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="Reviews"&gt;Reviews&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="How-To"&gt;How-To&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="Video"&gt;Video&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="Deals"&gt;Deals&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="Events"&gt;Events&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="About Us"&gt;About Us&lt;/a&gt;&lt;/li&gt;
+    		&lt;li&gt;&lt;a href="#" title="Send us feedback"&gt;Contact&lt;/a&gt;&lt;/li&gt;    		
+    	&lt;/ul&gt;
+    	
+    	&lt;div class="social"&gt;
+    		&lt;a class="rss" href="#" title="Subscribe via RSS"&gt;&lt;img src="/media/rss_16.png" /&gt;&lt;/a&gt;
+    		&lt;a class="fb" href="#" title="Friend us on Facebook"&gt;&lt;img src="/media/facebook_16.png" /&gt;&lt;/a&gt;
+    		&lt;a class="tw" href="#" title="Follow us on Twitter"&gt;&lt;img src="/media/twitter_16.png" /&gt;&lt;/a&gt;
+                &lt;a href="#" style="text-decoration: none;" title="Follow us on G+"&gt;&lt;img src="https://ssl.gstatic.com/images/icons/gplus-16.png" width="16" height="16" style="border: 0;"/&gt;&lt;/a&gt;
+    	&lt;/div&gt;
+
+        &lt;div class="tools"&gt;
+        &lt;a class="tipus" href="#" title="Send us a tip"&gt;Tip Us&lt;/a&gt;
+        &lt;/div&gt;
+    
+&lt;/div&gt; &lt;!-- nav --&gt;
+
+      &lt;!-- breakingnews --&gt; 
+    
+      &lt;div id="content"&gt;
+
+        &lt;div id="main-content"&gt;
+
+        &lt;div id="post" class="article"&gt;
+
+&lt;div class="header"&gt;
+  &lt;h1 class="posttitle"&gt;`echo $title`&lt;/h1&gt;
+  &lt;p class="byline group"&gt;&lt;span class="author"&gt;by &lt;a href="#"&gt;`echo $realname`&lt;/a&gt;&lt;/span&gt; &lt;span class="timestamp"&gt;`echo $_date`&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="body"&gt;
 HEADER
 
 echo "$bodytext"
 
 cat &lt;&lt;-'FOOTER'
-&lt;/div&gt;
 
-&lt;div class="postmeta"&gt;
-	&lt;p class="posttags"&gt;&lt;strong&gt;Tags:&lt;/strong&gt; &lt;a href="#"&gt;Tag 1&lt;/a&gt;, &lt;a href="#"&gt;Tag 2&lt;/a&gt;&lt;/p&gt;
+&lt;div class="view-tags"&gt;&lt;a class="trigger" href="#"&gt;View Tags&lt;/a&gt;
+&lt;div class="collapse" style="display: none;"&gt;
+&lt;p&gt;&lt;a href="#"&gt;tag&lt;/a&gt;, &lt;a href="#"&gt;tag&lt;/a&gt;,&lt;a href="#"&gt;tag&lt;/a&gt;&lt;/p&gt;
 
-	&lt;div class="navbar clearfix"&gt;
-		&lt;ul&gt;
-			&lt;li class="permalink"&gt;&lt;a href="#"&gt;Source&lt;/a&gt;&lt;/li&gt;
+&lt;/div&gt; &lt;!-- /collapse --&gt;
+&lt;/div&gt; &lt;!-- /view-tags --&gt;
 
-			&lt;li class="email-this"&gt;&lt;a href="#" title="Send this entry to a friend via email"&gt;Email this&lt;/a&gt;&lt;/li&gt;
+&lt;div id="source" class="source"&gt;&lt;p&gt;&lt;strong&gt;Source&lt;/strong&gt;: TextMate. Where else?&lt;a href="#"&gt;&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt; &lt;!-- /body --&gt;
 
-			&lt;li&gt;
-				&lt;!-- AddThis Button BEGIN --&gt;&lt;script type="text/javascript"&gt;
-//&lt;![CDATA[
-				addthis_pub     = 'weblogsinc'; addthis_options = 'digg, facebook, delicious, myspace, aolfav, propeller, google, live, stumbleupon, reddit, favorites, technorati, aim, more'; 
-				//]]&gt;
-				&lt;/script&gt; &lt;a class="sharelink" href="#"&gt;Share&lt;/a&gt;
-			&lt;/li&gt;
+&lt;/div&gt; &lt;!-- article post --&gt; 
+        &lt;div id="meta-bar"&gt; 
+        &lt;div class="related"&gt;
+&lt;h2&gt;Related Stories&lt;/h2&gt;
+&lt;ul&gt;					
+							
+	&lt;li&gt;&lt;a href="#" title="Read The costly gamble of designing iOS cases based on rumors"&gt;The costly gamble of designing iOS cases based on rumors&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Read Holiday Gift Guide: Accessories for all"&gt;Holiday Gift Guide: Accessories for all&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Read Chrono Trigger screenshots out, with touch controls and redone menus"&gt;Chrono Trigger screenshots out, with touch controls and redone menus&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;
+&lt;/div&gt; 
+         &lt;div class="cats"&gt;
+	&lt;h2&gt;Categories&lt;/h2&gt;
+	&lt;p&gt;&lt;a href="#"&gt;Cat 1&lt;/a&gt;&amp;nbsp;&lt;a href="#"&gt;Cat 2&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;        
+&lt;div class="quotes"&gt;
+         &lt;blockquote&gt;He's never early, he's always late. First thing you learn is that you always got to wait.&lt;/blockquote&gt;
+&lt;/div&gt;                        &lt;/div&gt; &lt;!-- /close meta bar --&gt;                        &lt;div id="last"&gt;&amp;nbsp;&lt;/div&gt;
 
-			&lt;li class="comments"&gt;&lt;a href="#" title="View reader comments on this entry"&gt;Comments (&lt;em&gt;0&lt;/em&gt;)&lt;/a&gt;&lt;/li&gt;
-		&lt;/ul&gt;
-	&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;
+       
+        &lt;/div&gt; &lt;!-- main-content --&gt;
+        
+        &lt;div id="sub-content"&gt;            
+        &lt;div id="soft-updates" class="r-mod group"&gt;
+            	&lt;div class="header group"&gt;&lt;h3&gt;Software Updates&lt;/h3&gt; &lt;a href="#" class="all"&gt;more updates&lt;/a&gt;&lt;/div&gt;
+            
+            	&lt;div class="inner group"&gt;&lt;ul&gt;&lt;li&gt;&lt;a href="#" title="Apple updates Keynote to address Lion issues"&gt;Apple updates Keynote to address Lion issues&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Google Search app gets new look on iPad"&gt;Google Search app gets new look on iPad&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Apple releases Apple TV Software Update 4.4.3"&gt;Apple releases Apple TV Software Update 4.4.3&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Camera+ updated, VolumeSnap returns at last"&gt;Camera+ updated, VolumeSnap returns at last&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="MacBook Pro, AirPort Base Station and Time Capsule firmware updated"&gt;MacBook Pro, AirPort Base Station and Time Capsule firmware updated&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="#" title="Apple releases new Digital Camera RAW update"&gt;Apple releases new Digital Camera RAW update&lt;/a&gt;&lt;/li&gt;            	&lt;/ul&gt;&lt;/div&gt; &lt;!-- inner --&gt;
+            	
+            &lt;/div&gt; &lt;!-- r-mod --&gt; 
+        &lt;div id="featured-stories" class="r-mod group"&gt;
+            	&lt;div class="header group"&gt;&lt;h3&gt;Popular Stories&lt;/h3&gt;&lt;/div&gt;
+            
+            	&lt;div class="inner group"&gt;&lt;div class="item first group"&gt;&lt;img src="http://www.blogcdn.com//media/2011/11/clinic-denver-cjr_93x75.jpg" /&gt; &lt;p&gt;&lt;a href="#"&gt;Debunked: Ridiculous claims of 'pro-life' bias in Siri (Update: Apple responds)&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;&lt;div class="item first group"&gt;&lt;img src="http://www.blogcdn.com//media/2011/12/1202colbert_93x75.jpg" /&gt; &lt;p&gt;&lt;a href="#"&gt;Stephen Colbert exposes Siri biases&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;&lt;div class="item first group"&gt;&lt;img src="http://www.blogcdn.com//media/2011/11/transparent-4s-cjr_93x75.jpg" /&gt; &lt;p&gt;&lt;a href="#"&gt;iFixit offers transparent rear panels for iPhone 4S&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;&lt;div class="item first group"&gt;&lt;img src="http://www.blogcdn.com/www.tuaw.com/media/2011/10/iomegamc-1_93x75.jpg" /&gt; &lt;p&gt;&lt;a href="#"&gt;Holiday Gift Guide: External Disk Drives&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;            	&lt;/div&gt; &lt;!-- inner --&gt;
+            	
+            &lt;/div&gt; &lt;!-- r-mod --&gt;
+          
+                 
 
+        &lt;/div&gt; &lt;!-- sub-content --&gt;
 
+      &lt;div class="footer group" id="footer" style="clear: both;"&gt;
+     
+      &lt;/div&gt;
 
+      &lt;div class="footer group" id="super-footer"&gt;
 
+           
 
+      &lt;/div&gt;
+  &lt;/div&gt; &lt;!-- content --&gt;
+&lt;div&gt; &lt;!-- container --&gt;
 
-&lt;div id="comments"&gt;
-&lt;h3 id="addcomments"&gt;Add your comments&lt;/h3&gt;
+&lt;/div&gt; &lt;!-- frame --&gt;
 
-&lt;form action="#comments" id="commentform" name="commentform" method="post" onsubmit="return inputValidation();"&gt;
-&lt;div id="cmttabs"&gt;
-	&lt;ul&gt;
-		&lt;li id="cmtutab_email"&gt;&lt;a href="#" onclick="tabTo('email');return false;"&gt;New Readers&lt;/a&gt;&lt;/li&gt;
+     &lt;div id="aol-branding"&gt;
+  &lt;p id="aol-footer-logo"&gt;
+    &lt;img src="http://www.blogsmithmedia.com/www.tuaw.com/media/aol-footer-logo.png" alt="AOL Tech" /&gt;
+  &lt;/p&gt;
+  &lt;div class="right"&gt;
+  &lt;p&gt;&amp;copy; 2011 AOL Inc. All Rights Reserved.&lt;/p&gt;
+  &lt;ul&gt;
+  		&lt;li&gt;&lt;a href="#"&gt;Privacy Policy&lt;/a&gt;&lt;/li&gt;
+  		&lt;li&gt;&lt;a href="#"&gt;Terms of Use&lt;/a&gt;&lt;/li&gt;
+  		&lt;li&gt;&lt;a href="#"&gt;Trademarks&lt;/a&gt;&lt;/li&gt;
+  		&lt;li&gt;&lt;a href="#"&gt;AOL A-Z HELP&lt;/a&gt;&lt;/li&gt;
+  		&lt;li class="last"&gt;&lt;a href="#"&gt;Advertise With Us&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;/div&gt;
+&lt;/div&gt; &lt;!-- legal --&gt;
 
-		&lt;li id="cmtutab_blogsmith" class="currenttab"&gt;&lt;a href="#" onclick="tabTo('blogsmith');return false;"&gt;Returning&lt;/a&gt;&lt;/li&gt;
-
-		&lt;li id="cmtutab_sns"&gt;&lt;a href="#" onclick="tabTo('sns');return false;" class="cmtaol" title="Sign in with your AOL/AIM username!"&gt;&lt;b&gt;AOL&lt;/b&gt;&lt;/a&gt;&lt;/li&gt;
-	&lt;/ul&gt;
-&lt;/div&gt;
-
-&lt;div id="formerrors" class='formerrors'&gt;&lt;/div&gt;&lt;!-- email --&gt;
-
-&lt;div id="cmtuinfo_email" class="cmtuinfo clearfix" style="display: none;"&gt;
-	&lt;p class="instructions"&gt;First time? A confirmation email will be sent to you after submitting.&lt;/p&gt;&lt;label for="AuthorName" class="first"&gt;Name:&lt;br /&gt;
-	&lt;input type="text" name="AuthorName" id="AuthorName" class="form" value="" /&gt;&lt;/label&gt; &lt;label for="AuthorEmail"&gt;E-mail:&lt;br /&gt;
-	&lt;input type="text" name="AuthorEmail" id="AuthorEmail" class="form" value="" /&gt;&lt;/label&gt;
-&lt;/div&gt;&lt;!-- /email --&gt;
-&lt;!-- blogsmith --&gt;
-
-&lt;div id="cmtuinfo_blogsmith" class="cmtuinfo clearfix" style="display: none;"&gt;
-	&lt;p class="instructions"&gt;Members enter your username and password.&lt;/p&gt;&lt;label for="C_Author" class="first"&gt;E-mail:&lt;br /&gt;
-	&lt;input id="C_AuthorEmail" type="text" class="formtext" name="C_AuthorEmail" value="" /&gt;&lt;/label&gt; &lt;label for="C_AuthorPass"&gt;Password:&lt;br /&gt;
-	&lt;input id="C_AuthorPass" type="password" class="formtext" name="AuthorPassword" value="" /&gt;&lt;/label&gt;
-&lt;/div&gt;&lt;!-- /blogsmith --&gt;
-&lt;!-- SNS --&gt;
-
-&lt;div id="cmtuinfo_sns" class="cmtuinfo clearfix" style="display: none;"&gt;
-	&lt;p class="instructions"&gt;Enter your AOL or AIM screenname and password.&lt;/p&gt;
-
-	&lt;div id="sns"&gt;
-		&lt;p align="center"&gt;&lt;img src="/media/loading.gif" /&gt;&lt;/p&gt;
-	&lt;/div&gt;&lt;!--&lt;input id="snslogin" type="button" onclick="sns.calls.login();" value="Login"&gt;--&gt;
-&lt;/div&gt;&lt;!-- /SNS --&gt;
-
-&lt;div id="cmtmain"&gt;
-	&lt;div id="replyindicator"&gt;&lt;/div&gt;
-
-	&lt;div&gt;
-		&lt;label for="Comments"&gt;Your comments:&lt;/label&gt; 
-		&lt;textarea name="Comments" id="Comments" rows="8" style="width:98%"&gt;
-&lt;/textarea&gt;
-	&lt;/div&gt;
-
-	&lt;div class="cmtchecks"&gt;
-		&lt;input type="checkbox" checked="checked" id="RememberMeYes" name="RememberMe" /&gt; &lt;label for="RememberMeYes"&gt;Remember me&lt;/label&gt;
-	&lt;/div&gt;
-
-	&lt;div class="cmtchecks"&gt;
-		&lt;input type="checkbox" checked="checked" id="EmailMe" name="EmailMe" /&gt; &lt;label for="EmailMe"&gt;E-Mail me when someone replies to this comment&lt;/label&gt;
-	&lt;/div&gt;
-
-	&lt;div id="cmtbuttons"&gt;
-		&lt;input type="submit" id="addCommentButton" value="Add Comment" /&gt;
-	&lt;/div&gt;&lt;input type="hidden" name="Form" value="Comments" /&gt;&lt;input type="hidden" name="ButtonSave" value="Save" /&gt; &lt;input type="hidden" id="sourceID" name="SourceID" value="" /&gt; &lt;input type="hidden" id="postID" name="PostID" value="" /&gt;
-&lt;/div&gt;
-
-&lt;div id="instructions"&gt;
-	&lt;p class="preamble"&gt;Please keep your comments relevant to this blog entry. &lt;strong&gt;Email addresses are never displayed, but they are required to confirm your comments.&lt;/strong&gt;&lt;/p&gt;
-
-	&lt;p&gt;When you enter your name and email address, you'll be sent a link to confirm your comment, and a password. To leave another comment, just use that password.&lt;/p&gt;
-
-	&lt;p&gt;To create a live link, simply type the URL (including http://) or email address and we will make it a live link for you. You can put up to 3 URLs in your comments. Line breaks and paragraphs are automatically converted — no need to use &amp;lt;p&amp;gt; or &amp;lt;br /&amp;gt; tags.&lt;/p&gt;
-&lt;/div&gt;&lt;input type="hidden" name="referer" value="http://www.tuaw.com:1080/2008/09/29/facebook-v2-for-iphone-goes-live/" /&gt;
-&lt;/form&gt;
-&lt;/div&gt;
-&lt;/div&gt;&lt;!-- /content --&gt;
-&lt;/div&gt;&lt;!-- /col-1 --&gt;
-
-&lt;div id="col-2"&gt;
-
-
-&lt;/div&gt;
-
-&lt;div id="footer"&gt;
-&lt;div class="searchform"&gt;
-&lt;ul class="searchnav clearfix"&gt;
-&lt;li id="search-tab-blog2" class="selected"&gt;&lt;a onclick="return searchTarget('/search/?q=', 0, 'search-tab-blog2');" href="#"&gt;TUAW&lt;/a&gt;&lt;/li&gt;
-
-&lt;li id="search-tab-Web2" class=""&gt;&lt;a href="http://search.aol.com/aol/search?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Web&lt;/a&gt;&lt;/li&gt;
-
-&lt;li id="search-tab-Images2" class=""&gt;&lt;a href="http://search.aol.com/aol/image?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Images&lt;/a&gt;&lt;/li&gt;
-
-&lt;li id="search-tab-Video2" class=""&gt;&lt;a href="http://search.aol.com/aol/video?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Video&lt;/a&gt;&lt;/li&gt;
-
-&lt;li id="search-tab-News2" class=""&gt;&lt;a href="http://search.aol.com/aol/news?invocationType=wl-tuaw-ft&amp;amp;query="&gt;News&lt;/a&gt;&lt;/li&gt;
-
-&lt;li id="search-tab-Local2" class=""&gt;&lt;a href="http://local.aol.com/aol/local?invocationType=wl-tuaw-ft&amp;amp;query="&gt;Local&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;form name="s_form2" action="/search/"&gt;
-&lt;fieldset&gt;
-&lt;input type="text" name="q" id="queryname2" value="" class="text" /&gt;&lt;button id="searchsubmit" onclick="return submitHeaderSearch('onclick');" type="submit" name="searchsubmit" title="Search"&gt;&lt;/button&gt;&lt;input type="hidden" name="invocationType" value="wl-tuaw-ft" /&gt;
-&lt;/fieldset&gt;
-&lt;/form&gt;
-&lt;/div&gt;&lt;!-- /show-footer-search.html.php --&gt;
-
-
-&lt;div id="legal"&gt;
-&lt;a href="http://news.aol.com" target="_blank" class="cobrand-footer"&gt;AOL News&lt;/a&gt;
-
-&lt;p&gt;All contents copyright © 2003-2008, &lt;a href="http://www.weblogsinc.com/"&gt;Weblogs, Inc.&lt;/a&gt; All rights reserved&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=""&gt;The Unofficial Apple Weblog (TUAW)&lt;/a&gt; is a member of the &lt;a href="http://www.weblogsinc.com/"&gt;Weblogs, Inc. Network&lt;/a&gt;. &lt;a href="http://www.weblogsinc.com/privacy/"&gt;Privacy Policy&lt;/a&gt;, &lt;a href="http://www.weblogsinc.com/terms/"&gt;Terms of Service&lt;/a&gt;, &lt;a href="http://www.weblogsinc.com/report/"&gt;Notify AOL&lt;/a&gt;&lt;/p&gt;
-&lt;/div&gt;&lt;!-- /legal --&gt;
-&lt;/div&gt;&lt;!-- /main --&gt;
-&lt;/div&gt;&lt;!-- /container --&gt;
 
 &lt;/body&gt;
 &lt;/html&gt;
